@@ -17,11 +17,28 @@ namespace RosalEHealthcare.UI.WPF.Views
             string role = rbAdmin.IsChecked == true ? "Administrator" :
                           rbDoctor.IsChecked == true ? "Doctor" : "Receptionist";
 
-            // Placeholder auth — replace with DB logic later
             if (username == "admin" && password == "1234" && role == "Administrator")
             {
                 MessageBox.Show("Login successful!", "Welcome", MessageBoxButton.OK, MessageBoxImage.Information);
-                // TODO: Launch Dashboard window
+
+                // ✅ Open Admin Dashboard
+                var dashboard = new AdminDashboard();
+                dashboard.Show();
+
+                // ✅ Close the login window
+                this.Close();
+            }
+            else if (username == "doctor" && password == "1234" && role == "Doctor")
+            {
+                var dashboard = new DoctorDashboard();
+                dashboard.Show();
+                this.Close();
+            }
+            else if (username == "receptionist" && password == "1234" && role == "Receptionist")
+            {
+                var dashboard = new ReceptionistDashboard();
+                dashboard.Show();
+                this.Close();
             }
             else
             {
