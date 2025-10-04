@@ -65,7 +65,7 @@
             <ScrollViewer HorizontalScrollBarVisibility="Disabled" VerticalScrollBarVisibility="Auto">
                 <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center" Margin="24">
                     <!-- Put your PNG in Resources/clinic_logo.png and set Build Action = Resource -->
-                    <Image Source="/RosalEHealthcare.UI.WPF;component/Resources/logo.jpg"
+                    <Image x:Name="Rosal_Logo" Source="/RosalEHealthcare.UI.WPF;component/Resources/logo.jpg"
                            Width="200" Height="200" Stretch="Uniform" Margin="0,0,0,20"/>
                     <TextBlock Text="ROSAL MEDICAL CLINIC" Foreground="White"
                                FontSize="26" FontWeight="Bold" TextAlignment="Center"/>

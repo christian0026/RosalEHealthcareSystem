@@ -1,0 +1,150 @@
+﻿<UserControl x:Class="RosalEHealthcare.UI.WPF.Views.MedicineInventory"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:converters="clr-namespace:RosalEHealthcare.UI.WPF.Converters"
+             
+             mc:Ignorable="d"
+             d:DesignHeight="700" d:DesignWidth="1000"
+             Background="#F5F5F5">
+
+    <UserControl.Resources>
+        <!-- converter instance for placeholder visibility -->
+        <converters:BooleanToVisibilityConverter x:Key="BoolToVis"/>
+    </UserControl.Resources>
+
+    <ScrollViewer VerticalScrollBarVisibility="Auto">
+        <StackPanel Margin="20">
+
+            <!-- SUMMARY CARDS -->
+            <UniformGrid Columns="4" Margin="0,0,0,20">
+                <Border Background="White" CornerRadius="8" Padding="16" Margin="6">
+                    <StackPanel>
+                        <TextBlock Text="Total Medicines" Foreground="Gray"/>
+                        <TextBlock Text="342" FontSize="26" FontWeight="Bold"/>
+                        <TextBlock Text="↑8% from last month" Foreground="Green"/>
+                    </StackPanel>
+                </Border>
+
+                <Border Background="White" CornerRadius="8" Padding="16" Margin="6">
+                    <StackPanel>
+                        <TextBlock Text="Low Stock Medicines" Foreground="Gray"/>
+                        <TextBlock Text="23" FontSize="26" FontWeight="Bold"/>
+                        <TextBlock Text="⚠ Requires Attention" Foreground="Orange"/>
+                    </StackPanel>
+                </Border>
+
+                <Border Background="White" CornerRadius="8" Padding="16" Margin="6">
+                    <StackPanel>
+                        <TextBlock Text="Expiring Soon" Foreground="Gray"/>
+                        <TextBlock Text="12" FontSize="26" FontWeight="Bold"/>
+                        <TextBlock Text="⚠ Requires attention" Foreground="Red"/>
+                    </StackPanel>
+                </Border>
+
+                <Border Background="White" CornerRadius="8" Padding="16" Margin="6">
+                    <StackPanel>
+                        <TextBlock Text="Out of Stock" Foreground="Gray"/>
+                        <TextBlock Text="8" FontSize="26" FontWeight="Bold"/>
+                        <TextBlock Text="⚠ Immediate Restock Needed" Foreground="DarkRed"/>
+                    </StackPanel>
+                </Border>
+            </UniformGrid>
+
+            <!-- MEDICINE RECORDS HEADER -->
+            <DockPanel Margin="0,0,0,10">
+                <TextBlock Text="Medicine Records" FontSize="18" FontWeight="Bold"
+                           DockPanel.Dock="Left" VerticalAlignment="Center"/>
+                <Button Content="➕ Add New Medicine"
+                        Background="#2E7D32" Foreground="White" Padding="10,6"
+                        HorizontalAlignment="Right" DockPanel.Dock="Right"/>
+            </DockPanel>
+
+            <!-- SEARCH & FILTER -->
+            <Border Background="White" CornerRadius="8" Padding="16" Margin="0,0,0,20">
+                <StackPanel Orientation="Horizontal">
+
+                    <!-- Search box with overlay placeholder (no UWP PlaceholderText) -->
+                    <Grid Width="220" Height="36" Margin="0,0,10,0" VerticalAlignment="Center">
+                        <TextBox x:Name="txtSearch"
+                                 VerticalAlignment="Center"
+                                 Padding="6,4"
+                                 Background="White"/>
+                        <TextBlock Text="Search by Name or Medicine ID"
+                                   Foreground="Gray"
+                                   VerticalAlignment="Center"
+                                   Margin="8,0,0,0"
+                                   IsHitTestVisible="False"
+                                   Visibility="{Binding Text, ElementName=txtSearch, Converter={StaticResource EmptyToVis}}"/>
+                    </Grid>
+
+                    <!-- Category Combo -->
+                    <ComboBox Width="160" Height="36" VerticalAlignment="Center" Margin="0,0,10,0" SelectedIndex="0">
+                        <ComboBoxItem Content="All Categories"/>
+                        <ComboBoxItem Content="Antibiotics"/>
+                        <ComboBoxItem Content="Pain Relief"/>
+                        <ComboBoxItem Content="Vitamins"/>
+                    </ComboBox>
+
+                    <!-- Status Combo -->
+                    <ComboBox Width="160" Height="36" VerticalAlignment="Center" Margin="0,0,10,0" SelectedIndex="0">
+                        <ComboBoxItem Content="All Status"/>
+                        <ComboBoxItem Content="Available"/>
+                        <ComboBoxItem Content="Out of Stock"/>
+                    </ComboBox>
+
+                    <!-- Search Button -->
+                    <Button Content="Search" Background="#009688" Foreground="White" Padding="10,4" Width="100"/>
+                </StackPanel>
+            </Border>
+
+            <!-- MEDICINE LIST -->
+            <Border Background="White" CornerRadius="8" Padding="16">
+                <StackPanel>
+                    <TextBlock Text="Medicine List" FontSize="16" FontWeight="Bold" Margin="0,0,0,10"/>
+
+                    <DataGrid x:Name="dgMedicines"
+                              AutoGenerateColumns="False"
+                              HeadersVisibility="Column"
+                              CanUserAddRows="False"
+                              IsReadOnly="True"
+                              Margin="0,10,0,0"
+                              RowHeight="50">
+                        <DataGrid.Columns>
+                            <DataGridTextColumn Header="Medicine Info" Binding="{Binding Name}" Width="200"/>
+                            <DataGridTextColumn Header="Medicine ID" Binding="{Binding ID}" Width="120"/>
+                            <DataGridTextColumn Header="Category" Binding="{Binding Category}" Width="150"/>
+                            <DataGridTextColumn Header="Stock Level" Binding="{Binding Stock}" Width="100"/>
+                            <DataGridTextColumn Header="Unit Price" Binding="{Binding Price}" Width="100"/>
+                            <DataGridTextColumn Header="Expiry Date" Binding="{Binding Expiry}" Width="120"/>
+                            <DataGridTextColumn Header="Status" Binding="{Binding Status}" Width="120"/>
+                            <DataGridTemplateColumn Header="Actions" Width="200">
+                                <DataGridTemplateColumn.CellTemplate>
+                                    <DataTemplate>
+                                        <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
+                                            <Button Content="View" Background="#0288D1" Foreground="White" Margin="2" Padding="6,2"/>
+                                            <Button Content="Edit" Background="#FFA000" Foreground="White" Margin="2" Padding="6,2"/>
+                                            <Button Content="Delete" Background="#D32F2F" Foreground="White" Margin="2" Padding="6,2"/>
+                                        </StackPanel>
+                                    </DataTemplate>
+                                </DataGridTemplateColumn.CellTemplate>
+                            </DataGridTemplateColumn>
+                        </DataGrid.Columns>
+                    </DataGrid>
+
+                    <!-- PAGINATION -->
+                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Margin="0,10,0,0">
+                        <Button Content="⏮" Margin="4"/>
+                        <Button Content="1" Background="#2E7D32" Foreground="White" Margin="4"/>
+                        <Button Content="2" Margin="4"/>
+                        <Button Content="3" Margin="4"/>
+                        <Button Content="..." Margin="4"/>
+                        <Button Content="249" Margin="4"/>
+                        <Button Content="⏭" Margin="4"/>
+                    </StackPanel>
+                </StackPanel>
+            </Border>
+        </StackPanel>
+    </ScrollViewer>
+</UserControl>

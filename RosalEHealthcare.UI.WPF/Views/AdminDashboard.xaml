@@ -87,9 +87,9 @@
 
                 <!-- nav items -->
                 <StackPanel DockPanel.Dock="Top" Margin="8,30,8,0">
-                    <Button Content="Dashboard" Style="{StaticResource SidebarButtonActive}" Margin="8"/>
-                    <Button Content="Patient Management" Style="{StaticResource SidebarButton}" Margin="8"/>
-                    <Button Content="Medicine Inventory" Style="{StaticResource SidebarButton}" Margin="8"/>
+                    <Button Content="Dashboard" Style="{StaticResource SidebarButtonActive}" Margin="8" Click="Dashboard_Click"/>
+                    <Button Content="Patient Management" Style="{StaticResource SidebarButton}" Margin="8"  Click="PatientManagement_Click"/>
+                    <Button Content="Medicine Inventory" Style="{StaticResource SidebarButton}" Margin="8"  Click="MedicineInventory_Click"/>
                     <Button Content="User Management" Style="{StaticResource SidebarButton}" Margin="8"/>
                     <Button Content="Reports &amp; Analysis" Style="{StaticResource SidebarButton}" Margin="8"/>
                     <Button Content="System Settings" Style="{StaticResource SidebarButton}" Margin="8"/>
@@ -108,12 +108,31 @@
             <!-- topbar -->
             <Border DockPanel.Dock="Top" Height="60" Background="White" Margin="0,0,0,6">
                 <Grid>
-                    <TextBlock Text="Admin Dashboard" FontSize="22" FontWeight="Bold"
-                               Foreground="#2E7D32" VerticalAlignment="Center" Margin="20,0,0,0"/>
+                    <TextBlock x:Name="txtPageTitle" 
+                   Text="Admin Dashboard" 
+                   FontSize="22" 
+                   FontWeight="Bold"
+                   Foreground="#2E7D32" 
+                   VerticalAlignment="Center" 
+                   Margin="20,0,0,0"/>
                     <Button Content="🔔" HorizontalAlignment="Right" VerticalAlignment="Center" Margin="0,0,20,0"
-                            Background="Transparent" BorderBrush="Transparent" FontSize="18"/>
+                Background="Transparent" BorderBrush="Transparent" FontSize="18"/>
                 </Grid>
             </Border>
+
+            <!-- MAIN CONTENT WRAPPER -->
+            <Grid>
+                <!-- Default Dashboard Content -->
+                <ScrollViewer x:Name="DashboardPanel" VerticalScrollBarVisibility="Auto">
+                    <StackPanel Margin="20">
+                        <!-- Your dashboard cards/charts go here -->
+                        
+                    </StackPanel>
+                </ScrollViewer>
+
+                <!-- Swappable Subpages -->
+                <ContentControl x:Name="MainContent" Visibility="Collapsed"/>
+            </Grid>
 
             <ScrollViewer VerticalScrollBarVisibility="Auto">
                 <StackPanel Margin="20">
