@@ -87,13 +87,31 @@
 
                 <!-- nav items -->
                 <StackPanel DockPanel.Dock="Top" Margin="8,30,8,0">
-                    <Button Content="Dashboard" Style="{StaticResource SidebarButtonActive}" Margin="8" Click="Dashboard_Click"/>
-                    <Button Content="Patient Management" Style="{StaticResource SidebarButton}" Margin="8"  Click="PatientManagement_Click"/>
-                    <Button Content="Medicine Inventory" Style="{StaticResource SidebarButton}" Margin="8"  Click="MedicineInventory_Click"/>
-                    <Button Content="User Management" Style="{StaticResource SidebarButton}" Margin="8"/>
-                    <Button Content="Reports &amp; Analysis" Style="{StaticResource SidebarButton}" Margin="8"/>
-                    <Button Content="System Settings" Style="{StaticResource SidebarButton}" Margin="8"/>
+                    <Button x:Name="BtnDashboard" Content="Dashboard" 
+                    Style="{StaticResource SidebarButtonActive}" 
+                    Margin="8" Click="Dashboard_Click"/>
+
+                            <Button x:Name="BtnPatientManagement" Content="Patient Management" 
+                    Style="{StaticResource SidebarButton}" 
+                    Margin="8" Click="PatientManagement_Click"/>
+
+                            <Button x:Name="BtnMedicineInventory" Content="Medicine Inventory" 
+                    Style="{StaticResource SidebarButton}" 
+                    Margin="8" Click="MedicineInventory_Click"/>
+
+                            <Button x:Name="BtnUserManagement" Content="User Management" 
+                    Style="{StaticResource SidebarButton}" 
+                    Margin="8" Click="UserManagementView_Click"/>
+
+                            <Button x:Name="BtnReports" Content="Reports &amp; Analysis" 
+                    Style="{StaticResource SidebarButton}" 
+                    Margin="8"/>
+
+                            <Button x:Name="BtnSettings" Content="System Settings" 
+                    Style="{StaticResource SidebarButton}" 
+                    Margin="8"/>
                 </StackPanel>
+
 
                 <!-- logout bottom -->
                 <StackPanel DockPanel.Dock="Bottom" Margin="16,12">

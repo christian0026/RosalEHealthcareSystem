@@ -1,21 +1,11 @@
-﻿<UserControl x:Class="RosalEHealthcare.UI.WPF.Views.MedicineInventory"
+﻿<UserControl x:Class="RosalEHealthcare.UI.WPF.Views.UserManagementView"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-             xmlns:converters="clr-namespace:RosalEHealthcare.UI.WPF.Converters"
-             
-             
-
-             
              mc:Ignorable="d"
              d:DesignHeight="700" d:DesignWidth="1000"
              Background="#F5F5F5">
-
-    <UserControl.Resources>
-        <converters:BooleanToVisibilityConverter x:Key="BoolToVis"/>
-    </UserControl.Resources>
-
 
     <ScrollViewer VerticalScrollBarVisibility="Auto">
         <StackPanel Margin="20">
@@ -24,104 +14,86 @@
             <UniformGrid Columns="4" Margin="0,0,0,20">
                 <Border Background="White" CornerRadius="8" Padding="16" Margin="6">
                     <StackPanel>
-                        <TextBlock Text="Total Medicines" Foreground="Gray"/>
-                        <TextBlock Text="342" FontSize="26" FontWeight="Bold"/>
+                        <TextBlock Text="Total Users" Foreground="Gray"/>
+                        <TextBlock Text="18" FontSize="26" FontWeight="Bold"/>
                         <TextBlock Text="↑8% from last month" Foreground="Green"/>
                     </StackPanel>
                 </Border>
 
                 <Border Background="White" CornerRadius="8" Padding="16" Margin="6">
                     <StackPanel>
-                        <TextBlock Text="Low Stock Medicines" Foreground="Gray"/>
-                        <TextBlock Text="23" FontSize="26" FontWeight="Bold"/>
-                        <TextBlock Text="⚠ Requires Attention" Foreground="Orange"/>
+                        <TextBlock Text="Doctors" Foreground="Gray"/>
+                        <TextBlock Text="3" FontSize="26" FontWeight="Bold"/>
+                        <TextBlock Text="👨‍⚕️ Active Practitioners" Foreground="Blue"/>
                     </StackPanel>
                 </Border>
 
                 <Border Background="White" CornerRadius="8" Padding="16" Margin="6">
                     <StackPanel>
-                        <TextBlock Text="Expiring Soon" Foreground="Gray"/>
-                        <TextBlock Text="12" FontSize="26" FontWeight="Bold"/>
-                        <TextBlock Text="⚠ Requires attention" Foreground="Red"/>
+                        <TextBlock Text="Receptionists" Foreground="Gray"/>
+                        <TextBlock Text="6" FontSize="26" FontWeight="Bold"/>
+                        <TextBlock Text="Front desk staff" Foreground="DarkOrange"/>
                     </StackPanel>
                 </Border>
 
                 <Border Background="White" CornerRadius="8" Padding="16" Margin="6">
                     <StackPanel>
-                        <TextBlock Text="Out of Stock" Foreground="Gray"/>
-                        <TextBlock Text="8" FontSize="26" FontWeight="Bold"/>
-                        <TextBlock Text="⚠ Immediate Restock Needed" Foreground="DarkRed"/>
+                        <TextBlock Text="Administrators" Foreground="Gray"/>
+                        <TextBlock Text="1" FontSize="26" FontWeight="Bold"/>
+                        <TextBlock Text="System management" Foreground="Red"/>
                     </StackPanel>
                 </Border>
             </UniformGrid>
 
-            <!-- MEDICINE RECORDS HEADER -->
+            <!-- USER RECORDS HEADER -->
             <DockPanel Margin="0,0,0,10">
-                <TextBlock Text="Medicine Records" FontSize="18" FontWeight="Bold"
+                <TextBlock Text="User Records" FontSize="18" FontWeight="Bold"
                            DockPanel.Dock="Left" VerticalAlignment="Center"/>
-                <Button Content="➕ Add New Medicine"
+                <Button Content="➕ Add New User"
                         Background="#2E7D32" Foreground="White" Padding="10,6"
-                        HorizontalAlignment="Right" DockPanel.Dock="Right"/>
+                        HorizontalAlignment="Right" DockPanel.Dock="Right"
+                        Margin="0,0,0,0"/>
             </DockPanel>
 
             <!-- SEARCH & FILTER -->
             <Border Background="White" CornerRadius="8" Padding="16" Margin="0,0,0,20">
-                <StackPanel Orientation="Horizontal">
-
-                    <!-- Search box with overlay placeholder (no UWP PlaceholderText) -->
-                    <Grid Width="220" Height="36" Margin="0,0,10,0" VerticalAlignment="Center">
-                        <TextBox x:Name="txtSearch"
-                                 VerticalAlignment="Center"
-                                 Padding="6,4"
-                                 Background="White"/>
-                        <TextBlock Text="Search by Name or Medicine ID"
-                                   Foreground="Gray"
-                                   VerticalAlignment="Center"
-                                   Margin="8,0,0,0"
-                                   IsHitTestVisible="False"
-                                   Visibility="{Binding Text.IsEmpty, ElementName=txtSearch, Converter={StaticResource BoolToVis}}"/>
-                    </Grid>
-
-                    <!-- Category Combo -->
+                <StackPanel Orientation="Horizontal" HorizontalAlignment="Left">
+                    <TextBox Width="220" Height="36" Margin="0,0,10,0"
+                             VerticalAlignment="Center"
+                             TextAlignment="Left"
+                             ToolTip="Search by Name or User ID"
+                             Text=""/>
                     <ComboBox Width="160" Height="36" VerticalAlignment="Center" Margin="0,0,10,0" SelectedIndex="0">
-                        <ComboBoxItem Content="All Categories"/>
-                        <ComboBoxItem Content="Antibiotics"/>
-                        <ComboBoxItem Content="Pain Relief"/>
-                        <ComboBoxItem Content="Vitamins"/>
+                        <ComboBoxItem Content="All Roles"/>
+                        <ComboBoxItem Content="Administrator"/>
+                        <ComboBoxItem Content="Doctor"/>
+                        <ComboBoxItem Content="Receptionist"/>
                     </ComboBox>
-
-                    <!-- Status Combo -->
                     <ComboBox Width="160" Height="36" VerticalAlignment="Center" Margin="0,0,10,0" SelectedIndex="0">
                         <ComboBoxItem Content="All Status"/>
-                        <ComboBoxItem Content="Available"/>
-                        <ComboBoxItem Content="Out of Stock"/>
+                        <ComboBoxItem Content="Active"/>
+                        <ComboBoxItem Content="Inactive"/>
                     </ComboBox>
-
-                    <!-- Search Button -->
                     <Button Content="Search" Background="#009688" Foreground="White" Padding="10,4" Width="100"/>
                 </StackPanel>
             </Border>
 
-            <!-- MEDICINE LIST -->
+            <!-- USERS LIST -->
             <Border Background="White" CornerRadius="8" Padding="16">
                 <StackPanel>
-                    <TextBlock Text="Medicine List" FontSize="16" FontWeight="Bold" Margin="0,0,0,10"/>
+                    <TextBlock Text="Users List" FontSize="16" FontWeight="Bold" Margin="0,0,0,10"/>
 
-                    <DataGrid x:Name="dgMedicines"
-                              AutoGenerateColumns="False"
-                              HeadersVisibility="Column"
-                              CanUserAddRows="False"
-                              IsReadOnly="True"
-                              Margin="0,10,0,0"
+                    <DataGrid x:Name="UsersDataGrid"
+                              AutoGenerateColumns="False" HeadersVisibility="Column"
+                              CanUserAddRows="False" IsReadOnly="True" Margin="0,10,0,0"
                               RowHeight="50">
                         <DataGrid.Columns>
-                            <DataGridTextColumn Header="Medicine Info" Binding="{Binding Name}" Width="200"/>
-                            <DataGridTextColumn Header="Medicine ID" Binding="{Binding ID}" Width="120"/>
-                            <DataGridTextColumn Header="Category" Binding="{Binding Category}" Width="150"/>
-                            <DataGridTextColumn Header="Stock Level" Binding="{Binding Stock}" Width="100"/>
-                            <DataGridTextColumn Header="Unit Price" Binding="{Binding Price}" Width="100"/>
-                            <DataGridTextColumn Header="Expiry Date" Binding="{Binding Expiry}" Width="120"/>
-                            <DataGridTextColumn Header="Status" Binding="{Binding Status}" Width="120"/>
+                            <DataGridTextColumn Header="User Info" Binding="{Binding Name}" Width="200"/>
+                            <DataGridTextColumn Header="User ID" Binding="{Binding UserID}" Width="120"/>
+                            <DataGridTextColumn Header="Role" Binding="{Binding Role}" Width="150"/>
+                            <DataGridTextColumn Header="Contact" Binding="{Binding Email}" Width="200"/>
+                            <DataGridTextColumn Header="Last Login" Binding="{Binding LastLogin}" Width="150"/>
+                            <DataGridTextColumn Header="Status" Binding="{Binding Status}" Width="100"/>
                             <DataGridTemplateColumn Header="Actions" Width="200">
                                 <DataGridTemplateColumn.CellTemplate>
                                     <DataTemplate>
@@ -135,6 +107,7 @@
                             </DataGridTemplateColumn>
                         </DataGrid.Columns>
                     </DataGrid>
+
 
                     <!-- PAGINATION -->
                     <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Margin="0,10,0,0">

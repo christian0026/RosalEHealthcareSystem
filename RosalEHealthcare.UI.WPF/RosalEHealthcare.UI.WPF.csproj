@@ -269,6 +269,7 @@
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
     </ApplicationDefinition>
+    <Compile Include="Converters\BooleanToVisibilityConverter.cs" />
     <Compile Include="Views\AdminDashboard.xaml.cs">
       <DependentUpon>AdminDashboard.xaml</DependentUpon>
     </Compile>
@@ -278,11 +279,17 @@
     <Compile Include="Views\LoginWindow.xaml.cs">
       <DependentUpon>LoginWindow.xaml</DependentUpon>
     </Compile>
+    <Compile Include="Views\MedicineInventory.xaml.cs">
+      <DependentUpon>MedicineInventory.xaml</DependentUpon>
+    </Compile>
     <Compile Include="Views\PatientManagementView.xaml.cs">
       <DependentUpon>PatientManagementView.xaml</DependentUpon>
     </Compile>
     <Compile Include="Views\ReceptionistDashboard.xaml.cs">
       <DependentUpon>ReceptionistDashboard.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="Views\UserManagementView.xaml.cs">
+      <DependentUpon>UserManagementView.xaml</DependentUpon>
     </Compile>
     <Page Include="MainWindow.xaml">
       <Generator>MSBuild:Compile</Generator>
@@ -308,11 +315,19 @@
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
+    <Page Include="Views\MedicineInventory.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
     <Page Include="Views\PatientManagementView.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
     <Page Include="Views\ReceptionistDashboard.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="Views\UserManagementView.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
@@ -353,10 +368,6 @@
     <ProjectReference Include="..\RosalEHealthcare.Data\RosalEHealthcare.Data.csproj">
       <Project>{9b7d2f88-762e-4c95-a47c-e71512b1c68c}</Project>
       <Name>RosalEHealthcare.Data</Name>
-    </ProjectReference>
-    <ProjectReference Include="..\RosalEHealthcare.Reports\RosalEHealthcare.Reports.csproj">
-      <Project>{a0e0155e-6228-4afe-87ec-90f05d18a480}</Project>
-      <Name>RosalEHealthcare.Reports</Name>
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
