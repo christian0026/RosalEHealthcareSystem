@@ -13,7 +13,7 @@ namespace RosalEHealthcare.Data.Migrations
         
         string IMigrationMetadata.Id
         {
-            get { return "202510071450244_InitialCreate"; }
+            get { return "202510110433327_InitialCreate"; }
         }
         
         string IMigrationMetadata.Source

@@ -4,27 +4,32 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 
 namespace RosalEHealthcare.Core.Models
 {
     public class User
     {
         [Key]
-        public int UserId { get; set; }
+        [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
+        public int Id { get; set; }
 
-        [Required, MaxLength(100)]
+        [Required]
+        [MaxLength(100)]
         public string FullName { get; set; }
 
-        [Required, MaxLength(100)]
+        [Required]
+        [MaxLength(100)]
         public string Email { get; set; }
 
-        [Required, MaxLength(255)]
+        [Required]
         public string PasswordHash { get; set; }
 
-        [Required, MaxLength(50)]
-        public string Role { get; set; } // Admin, Doctor, Receptionist
-
-        public bool IsActive { get; set; } = true;
+        [Required]
+        [MaxLength(50)]
+        public string Role { get; set; }
     }
-
 }
+
+
+    

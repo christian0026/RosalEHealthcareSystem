@@ -420,16 +420,16 @@
     <Compile Include="Form1.Designer.cs">
       <DependentUpon>Form1.cs</DependentUpon>
     </Compile>
-    <Compile Include="Migrations\202510071450244_InitialCreate.cs" />
-    <Compile Include="Migrations\202510071450244_InitialCreate.Designer.cs">
-      <DependentUpon>202510071450244_InitialCreate.cs</DependentUpon>
+    <Compile Include="Migrations\202510110433327_InitialCreate.cs" />
+    <Compile Include="Migrations\202510110433327_InitialCreate.Designer.cs">
+      <DependentUpon>202510110433327_InitialCreate.cs</DependentUpon>
     </Compile>
     <Compile Include="Migrations\Configuration.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Services\UserService.cs" />
-    <EmbeddedResource Include="Migrations\202510071450244_InitialCreate.resx">
-      <DependentUpon>202510071450244_InitialCreate.cs</DependentUpon>
+    <EmbeddedResource Include="Migrations\202510110433327_InitialCreate.resx">
+      <DependentUpon>202510110433327_InitialCreate.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="Properties\Resources.resx">
       <Generator>ResXFileCodeGenerator</Generator>

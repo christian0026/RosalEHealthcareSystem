@@ -1,48 +1,84 @@
-﻿using System.Windows;
-using MahApps.Metro.Controls;
+﻿using RosalEHealthcare.Data.Contexts;
+using RosalEHealthcare.Data.Services;
+using System.Linq;
+using System.Windows;
+using System.Windows.Input;
 
 namespace RosalEHealthcare.UI.WPF.Views
 {
-    public partial class LoginWindow : MetroWindow
+    public partial class LoginWindow : MahApps.Metro.Controls.MetroWindow
     {
         public LoginWindow()
         {
             InitializeComponent();
+            txtUsername.Focus();
         }
 
         private void SignIn_Click(object sender, RoutedEventArgs e)
         {
-            string username = txtUsername.Text?.Trim() ?? "";
+            LoginUser();
+        }
+
+        private void Window_KeyDown(object sender, KeyEventArgs e)
+        {
+            if (e.Key == Key.Enter)
+            {
+                e.Handled = true;
+                LoginUser();
+            }
+        }
+
+        private void LoginUser()
+        {
+            string email = txtUsername.Text?.Trim() ?? "";
             string password = txtPassword.Password?.Trim() ?? "";
             string role = rbAdmin.IsChecked == true ? "Administrator" :
                           rbDoctor.IsChecked == true ? "Doctor" : "Receptionist";
 
-            if (username == "admin" && password == "1234" && role == "Administrator")
+            if (string.IsNullOrWhiteSpace(email) || string.IsNullOrWhiteSpace(password))
             {
-                MessageBox.Show("Login successful!", "Welcome", MessageBoxButton.OK, MessageBoxImage.Information);
+                MessageBox.Show("Please enter both email and password.", "Login", MessageBoxButton.OK, MessageBoxImage.Warning);
+                return;
+            }
 
-                // ✅ Open Admin Dashboard
-                var dashboard = new AdminDashboard();
-                dashboard.Show();
+            try
+            {
+                using (var db = new RosalEHealthcareDbContext())
+                {
+                    var userService = new UserService(db);
+                    var user = db.Users.FirstOrDefault(u => u.Email == email);
 
-                // ✅ Close the login window
-                this.Close();
+                    if (user != null && user.Role == role && userService.ValidateUser(email, password))
+                    {
+                        MessageBox.Show($"Welcome {user.FullName}!", "Login Successful", MessageBoxButton.OK, MessageBoxImage.Information);
+
+                        if (user.Role == "Administrator")
+                        {
+                            var dashboard = new AdminDashboard();
+                            dashboard.Show();
+                        }
+                        else if (user.Role == "Doctor")
+                        {
+                            var dashboard = new DoctorDashboard();
+                            dashboard.Show();
+                        }
+                        else if (user.Role == "Receptionist")
+                        {
+                            var dashboard = new ReceptionistDashboard();
+                            dashboard.Show();
+                        }
+
+                        this.Close();
+                    }
+                    else
+                    {
+                        MessageBox.Show("Invalid email, password, or role.", "Login Failed", MessageBoxButton.OK, MessageBoxImage.Error);
+                    }
+                }
             }
-            else if (username == "doctor" && password == "1234" && role == "Doctor")
+            catch (System.Exception ex)
             {
-                var dashboard = new DoctorDashboard();
-                dashboard.Show();
-                this.Close();
-            }
-            else if (username == "receptionist" && password == "1234" && role == "Receptionist")
-            {
-                var dashboard = new ReceptionistDashboard();
-                dashboard.Show();
-                this.Close();
-            }
-            else
-            {
-                MessageBox.Show("Invalid credentials. Please try again.", "Login failed", MessageBoxButton.OK, MessageBoxImage.Warning);
+                MessageBox.Show($"Error during login: {ex.Message}", "Login Error", MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
     }

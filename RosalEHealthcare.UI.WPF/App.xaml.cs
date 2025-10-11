@@ -1,14 +1,9 @@
-﻿using RosalEHealthcare.Core.Services;
+﻿using System;
+using System.Linq;
+using System.Windows;
 using RosalEHealthcare.Data.Contexts;
 using RosalEHealthcare.Data.Services;
 using RosalEHealthcare.UI.WPF.Views;
-using System;
-using System.Collections.Generic;
-using System.Configuration;
-using System.Data;
-using System.Linq;
-using System.Threading.Tasks;
-using System.Windows;
 
 namespace RosalEHealthcare.UI.WPF
 {
@@ -18,7 +13,7 @@ namespace RosalEHealthcare.UI.WPF
         {
             base.OnStartup(e);
 
-            // SEED ADMIN ACCOUNT (Run once only)
+            // Seed (run once)
             try
             {
                 using (var db = new RosalEHealthcareDbContext())
@@ -27,27 +22,15 @@ namespace RosalEHealthcare.UI.WPF
 
                     if (!db.Users.Any(u => u.Email == "admin@rosal.com"))
                     {
-                        userService.Register(
-                            "Admin User",
-                            "admin@rosal.com",
-                            "admin123",
-                            "Admin"
-                        );
-
-                        MessageBox.Show("✅ Admin account created successfully!");
-                    }
-                    else
-                    {
-                        MessageBox.Show("ℹ️ Admin account already exists.");
+                        userService.Register("Admin User", "admin@rosal.com", "admin123", "Admin");
                     }
                 }
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"❌ Error creating admin: {ex.Message}");
+                MessageBox.Show("Error seeding admin: " + ex.Message);
             }
 
-            // Continue to your login window after seeding
             var login = new LoginWindow();
             login.Show();
         }
