@@ -1,17 +1,19 @@
-﻿using RosalEHealthcare.Data.Contexts;
-using RosalEHealthcare.Data.Services;
-using System.Linq;
+﻿using System.Linq;
 using System.Windows;
 using System.Windows.Input;
+using MahApps.Metro.Controls;
+using RosalEHealthcare.Data.Contexts;
+using RosalEHealthcare.Data.Services;
 
 namespace RosalEHealthcare.UI.WPF.Views
 {
-    public partial class LoginWindow : MahApps.Metro.Controls.MetroWindow
+    public partial class LoginWindow : MetroWindow
     {
         public LoginWindow()
         {
             InitializeComponent();
             txtUsername.Focus();
+            UpdatePasswordPlaceholder();
         }
 
         private void SignIn_Click(object sender, RoutedEventArgs e)
@@ -19,6 +21,7 @@ namespace RosalEHealthcare.UI.WPF.Views
             LoginUser();
         }
 
+        // Allow Enter to submit the form
         private void Window_KeyDown(object sender, KeyEventArgs e)
         {
             if (e.Key == Key.Enter)
@@ -50,8 +53,7 @@ namespace RosalEHealthcare.UI.WPF.Views
 
                     if (user != null && user.Role == role && userService.ValidateUser(email, password))
                     {
-                        MessageBox.Show($"Welcome {user.FullName}!", "Login Successful", MessageBoxButton.OK, MessageBoxImage.Information);
-
+                        // Open dashboard based on role
                         if (user.Role == "Administrator")
                         {
                             var dashboard = new AdminDashboard();
@@ -72,7 +74,7 @@ namespace RosalEHealthcare.UI.WPF.Views
                     }
                     else
                     {
-                        MessageBox.Show("Invalid email, password, or role.", "Login Failed", MessageBoxButton.OK, MessageBoxImage.Error);
+                        MessageBox.Show("Invalid email, password, or role.", "Login failed", MessageBoxButton.OK, MessageBoxImage.Error);
                     }
                 }
             }
@@ -80,6 +82,19 @@ namespace RosalEHealthcare.UI.WPF.Views
             {
                 MessageBox.Show($"Error during login: {ex.Message}", "Login Error", MessageBoxButton.OK, MessageBoxImage.Error);
             }
+        }
+
+        private void txtPassword_PasswordChanged(object sender, RoutedEventArgs e)
+        {
+            UpdatePasswordPlaceholder();
+        }
+
+        private void UpdatePasswordPlaceholder()
+        {
+            if (pwdPlaceholder == null || txtPassword == null) return;
+            pwdPlaceholder.Visibility = string.IsNullOrEmpty(txtPassword.Password)
+                ? Visibility.Visible
+                : Visibility.Collapsed;
         }
     }
 }

@@ -15,7 +15,7 @@
                 <Border Background="White" CornerRadius="8" Padding="16" Margin="6">
                     <StackPanel>
                         <TextBlock Text="Total Users" Foreground="Gray"/>
-                        <TextBlock Text="18" FontSize="26" FontWeight="Bold"/>
+                        <TextBlock x:Name="TotalUsersText" Text="18" FontSize="26" FontWeight="Bold"/>
                         <TextBlock Text="↑8% from last month" Foreground="Green"/>
                     </StackPanel>
                 </Border>
@@ -23,7 +23,7 @@
                 <Border Background="White" CornerRadius="8" Padding="16" Margin="6">
                     <StackPanel>
                         <TextBlock Text="Doctors" Foreground="Gray"/>
-                        <TextBlock Text="3" FontSize="26" FontWeight="Bold"/>
+                        <TextBlock x:Name="DoctorsCountText" Text="3" FontSize="26" FontWeight="Bold"/>
                         <TextBlock Text="👨‍⚕️ Active Practitioners" Foreground="Blue"/>
                     </StackPanel>
                 </Border>
@@ -31,7 +31,7 @@
                 <Border Background="White" CornerRadius="8" Padding="16" Margin="6">
                     <StackPanel>
                         <TextBlock Text="Receptionists" Foreground="Gray"/>
-                        <TextBlock Text="6" FontSize="26" FontWeight="Bold"/>
+                        <TextBlock x:Name="ReceptionistsCountText" Text="6" FontSize="26" FontWeight="Bold"/>
                         <TextBlock Text="Front desk staff" Foreground="DarkOrange"/>
                     </StackPanel>
                 </Border>
@@ -39,7 +39,7 @@
                 <Border Background="White" CornerRadius="8" Padding="16" Margin="6">
                     <StackPanel>
                         <TextBlock Text="Administrators" Foreground="Gray"/>
-                        <TextBlock Text="1" FontSize="26" FontWeight="Bold"/>
+                        <TextBlock x:Name="AdminsCountText" Text="1" FontSize="26" FontWeight="Bold"/>
                         <TextBlock Text="System management" Foreground="Red"/>
                     </StackPanel>
                 </Border>
@@ -52,29 +52,28 @@
                 <Button Content="➕ Add New User"
                         Background="#2E7D32" Foreground="White" Padding="10,6"
                         HorizontalAlignment="Right" DockPanel.Dock="Right"
-                        Margin="0,0,0,0"/>
+                        Click="AddUser_Click"/>
             </DockPanel>
 
             <!-- SEARCH & FILTER -->
             <Border Background="White" CornerRadius="8" Padding="16" Margin="0,0,0,20">
                 <StackPanel Orientation="Horizontal" HorizontalAlignment="Left">
-                    <TextBox Width="220" Height="36" Margin="0,0,10,0"
+                    <TextBox x:Name="SearchBox" Width="220" Height="36" Margin="0,0,10,0"
                              VerticalAlignment="Center"
                              TextAlignment="Left"
-                             ToolTip="Search by Name or User ID"
-                             Text=""/>
-                    <ComboBox Width="160" Height="36" VerticalAlignment="Center" Margin="0,0,10,0" SelectedIndex="0">
+                             ToolTip="Search by Name or User ID"/>
+                    <ComboBox x:Name="RoleFilter" Width="160" Height="36" VerticalAlignment="Center" Margin="0,0,10,0" SelectedIndex="0">
                         <ComboBoxItem Content="All Roles"/>
                         <ComboBoxItem Content="Administrator"/>
                         <ComboBoxItem Content="Doctor"/>
                         <ComboBoxItem Content="Receptionist"/>
                     </ComboBox>
-                    <ComboBox Width="160" Height="36" VerticalAlignment="Center" Margin="0,0,10,0" SelectedIndex="0">
+                    <ComboBox x:Name="StatusFilter" Width="160" Height="36" VerticalAlignment="Center" Margin="0,0,10,0" SelectedIndex="0">
                         <ComboBoxItem Content="All Status"/>
                         <ComboBoxItem Content="Active"/>
                         <ComboBoxItem Content="Inactive"/>
                     </ComboBox>
-                    <Button Content="Search" Background="#009688" Foreground="White" Padding="10,4" Width="100"/>
+                    <Button Content="Search" Background="#009688" Foreground="White" Padding="10,4" Width="100" Click="Search_Click"/>
                 </StackPanel>
             </Border>
 
@@ -98,16 +97,15 @@
                                 <DataGridTemplateColumn.CellTemplate>
                                     <DataTemplate>
                                         <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
-                                            <Button Content="View" Background="#0288D1" Foreground="White" Margin="2" Padding="6,2"/>
-                                            <Button Content="Edit" Background="#FFA000" Foreground="White" Margin="2" Padding="6,2"/>
-                                            <Button Content="Delete" Background="#D32F2F" Foreground="White" Margin="2" Padding="6,2"/>
+                                            <Button Content="View" Background="#0288D1" Foreground="White" Margin="2" Padding="6,2" Click="ViewUser_Click"/>
+                                            <Button Content="Edit" Background="#FFA000" Foreground="White" Margin="2" Padding="6,2" Click="EditUser_Click"/>
+                                            <Button Content="Delete" Background="#D32F2F" Foreground="White" Margin="2" Padding="6,2" Click="DeleteUser_Click"/>
                                         </StackPanel>
                                     </DataTemplate>
                                 </DataGridTemplateColumn.CellTemplate>
                             </DataGridTemplateColumn>
                         </DataGrid.Columns>
                     </DataGrid>
-
 
                     <!-- PAGINATION -->
                     <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Margin="0,10,0,0">
