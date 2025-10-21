@@ -73,9 +73,9 @@
 
                     <!-- User Info -->
                     <StackPanel Margin="0,10,0,0">
-                        <Ellipse Width="48" Height="48" Fill="LightGray"/>
-                        <TextBlock Text="Receptionist Name" Foreground="White" FontSize="14" FontWeight="Bold" Margin="0,8,0,0"/>
-                        <TextBlock Text="Receptionist" Foreground="White" FontSize="12"/>
+                        <Ellipse x:Name="ProfileEllipse" Width="48" Height="48" Fill="LightGray"/>
+                        <TextBlock x:Name="TxtUserFullName" Text="Receptionist Name" Foreground="White" FontSize="14" FontWeight="Bold" Margin="0,8,0,0"/>
+                        <TextBlock x:Name="TxtUserRole" Text="Receptionist" Foreground="White" FontSize="12"/>
                     </StackPanel>
                 </StackPanel>
 

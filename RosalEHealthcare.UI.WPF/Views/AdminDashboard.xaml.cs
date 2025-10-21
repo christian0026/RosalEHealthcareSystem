@@ -1,13 +1,18 @@
 ﻿using MahApps.Metro.Controls;
+using RosalEHealthcare.Core.Models;
+using System;
+using System.IO;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
+using System.Windows.Media.Imaging;
 
 namespace RosalEHealthcare.UI.WPF.Views
 {
     public partial class AdminDashboard : MetroWindow
     {
         private Button _activeButton;
+        private User _currentUser;
 
         public AdminDashboard()
         {
@@ -15,9 +20,49 @@ namespace RosalEHealthcare.UI.WPF.Views
             SetActiveButton(BtnDashboard); // Default active highlight
         }
 
+        // Constructor to receive logged-in user
+        public AdminDashboard(User user) : this()
+        {
+            _currentUser = user;
+            ApplyUserInfo();
+        }
+
+        // Apply user info to UI
+        private void ApplyUserInfo()
+        {
+            if (_currentUser == null) return;
+
+            // Show full name or fallback to email
+            var fullName = string.IsNullOrWhiteSpace(_currentUser.FullName)
+                ? _currentUser.Email
+                : _currentUser.FullName;
+
+            // These elements are defined in your XAML
+            TxtUserFullName.Text = fullName;
+            TxtUserRole.Text = _currentUser.Role ?? "Administrator";
+
+            // Load profile image if exists
+            if (!string.IsNullOrEmpty(_currentUser.ProfileImagePath) && File.Exists(_currentUser.ProfileImagePath))
+            {
+                try
+                {
+                    var image = new BitmapImage(new Uri(_currentUser.ProfileImagePath, UriKind.RelativeOrAbsolute));
+                    ProfileEllipse.Fill = new ImageBrush(image) { Stretch = Stretch.UniformToFill };
+                }
+                catch
+                {
+                    ProfileEllipse.Fill = Brushes.LightGray;
+                }
+            }
+            else
+            {
+                ProfileEllipse.Fill = Brushes.LightGray;
+            }
+        }
+
+        // Sets sidebar active state
         private void SetActiveButton(Button clickedButton)
         {
-            // Reset all sidebar buttons
             BtnDashboard.Style = (Style)FindResource("SidebarButton");
             BtnPatientManagement.Style = (Style)FindResource("SidebarButton");
             BtnMedicineInventory.Style = (Style)FindResource("SidebarButton");
@@ -25,9 +70,7 @@ namespace RosalEHealthcare.UI.WPF.Views
             BtnReports.Style = (Style)FindResource("SidebarButton");
             BtnSettings.Style = (Style)FindResource("SidebarButton");
 
-            // Apply the active style to the clicked button
             clickedButton.Style = (Style)FindResource("SidebarButtonActive");
-
             _activeButton = clickedButton;
         }
 
@@ -59,7 +102,7 @@ namespace RosalEHealthcare.UI.WPF.Views
 
         private void UserManagementView_Click(object sender, RoutedEventArgs e)
         {
-            txtPageTitle.Text = "UserManagement";
+            txtPageTitle.Text = "User Management";
             MainContent.Content = new UserManagementView();
             DashboardPanel.Visibility = Visibility.Collapsed;
             MainContent.Visibility = Visibility.Visible;

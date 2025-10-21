@@ -22,7 +22,6 @@ namespace RosalEHealthcare.UI.WPF.Views
             LoginUser();
         }
 
-        // Allow Enter to submit the form
         private void Window_KeyDown(object sender, KeyEventArgs e)
         {
             if (e.Key == Key.Enter)
@@ -50,24 +49,27 @@ namespace RosalEHealthcare.UI.WPF.Views
                 using (var db = new RosalEHealthcareDbContext())
                 {
                     var userService = new UserService(db);
-                    var user = db.Users.FirstOrDefault(u => u.Email == email);
+                    var user = userService.GetByEmail(email);
 
                     if (user != null && user.Role == role && userService.ValidateUser(email, password))
                     {
-                        // Open dashboard based on role
+                        // Update last login
+                        user.LastLogin = DateTime.Now;
+                        userService.UpdateUser(user);
+
                         if (user.Role == "Administrator")
                         {
-                            var dashboard = new AdminDashboard();
+                            var dashboard = new AdminDashboard(user);
                             dashboard.Show();
                         }
                         else if (user.Role == "Doctor")
                         {
-                            var dashboard = new DoctorDashboard();
+                            var dashboard = new DoctorDashboard(user);
                             dashboard.Show();
                         }
-                        else if (user.Role == "Receptionist")
+                        else // Receptionist
                         {
-                            var dashboard = new ReceptionistDashboard();
+                            var dashboard = new ReceptionistDashboard(user);
                             dashboard.Show();
                         }
 
@@ -84,7 +86,6 @@ namespace RosalEHealthcare.UI.WPF.Views
                 string details = ex.InnerException?.Message ?? ex.Message;
                 MessageBox.Show($"Error during login:\n{details}", "Login Error", MessageBoxButton.OK, MessageBoxImage.Error);
             }
-
         }
 
         private void txtPassword_PasswordChanged(object sender, RoutedEventArgs e)

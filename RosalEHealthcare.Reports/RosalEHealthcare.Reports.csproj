@@ -57,7 +57,7 @@
       <HintPath>..\packages\OpenTK.GLWpfControl.3.3.0\lib\net452\GLWpfControl.dll</HintPath>
     </Reference>
     <Reference Include="HarfBuzzSharp, Version=1.0.0.0, Culture=neutral, PublicKeyToken=0738eb9f132ed756, processorArchitecture=MSIL">
-      <HintPath>..\packages\HarfBuzzSharp.8.3.1.1\lib\net462\HarfBuzzSharp.dll</HintPath>
+      <HintPath>..\packages\HarfBuzzSharp.8.3.1.2\lib\net462\HarfBuzzSharp.dll</HintPath>
     </Reference>
     <Reference Include="LiveChartsCore, Version=2.0.0.0, Culture=neutral, PublicKeyToken=cc92a3e13d40c573, processorArchitecture=MSIL">
       <HintPath>..\packages\LiveChartsCore.2.0.0-rc6.1\lib\net462\LiveChartsCore.dll</HintPath>

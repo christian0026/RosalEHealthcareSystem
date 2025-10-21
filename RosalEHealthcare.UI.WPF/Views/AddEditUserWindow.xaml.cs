@@ -1,62 +1,70 @@
 ﻿using Microsoft.Win32;
 using RosalEHealthcare.Core.Models;
 using RosalEHealthcare.Data.Contexts;
+using RosalEHealthcare.Data.Services;
 using System;
 using System.IO;
-using System.Linq;
 using System.Windows;
-using System.Windows.Controls;
 using System.Windows.Media.Imaging;
-using BCrypt.Net;
 
 namespace RosalEHealthcare.UI.WPF.Views
 {
     public partial class AddEditUserWindow : Window
     {
+        private string imagePath = "";
+        private bool isEditMode = false;
+        private User _editingUser;
         private readonly RosalEHealthcareDbContext _db;
-        private readonly bool isEditMode = false;
-        private readonly User editingUser;
-        private string imagePath;
+        private readonly UserService _userService;
+
+        public User User { get; private set; } // will contain saved user on success
 
         public AddEditUserWindow()
         {
             InitializeComponent();
             _db = new RosalEHealthcareDbContext();
+            _userService = new UserService(_db);
+
             cbRole.SelectedIndex = 0;
             cbStatus.SelectedIndex = 0;
         }
 
-        public AddEditUserWindow(User user)
+        public AddEditUserWindow(Core.Models.User user) : this()
         {
-            InitializeComponent();
-            _db = new RosalEHealthcareDbContext();
             isEditMode = true;
-            editingUser = user;
+            _editingUser = user;
 
             txtFullName.Text = user.FullName;
             txtEmail.Text = user.Email;
 
-            foreach (ComboBoxItem roleItem in cbRole.Items)
+            // role
+            foreach (var item in cbRole.Items)
             {
-                if (roleItem.Content.ToString() == user.Role)
+                if ((item as System.Windows.Controls.ComboBoxItem)?.Content?.ToString() == user.Role)
                 {
-                    cbRole.SelectedItem = roleItem;
+                    cbRole.SelectedItem = item;
                     break;
                 }
             }
 
-            foreach (ComboBoxItem statusItem in cbStatus.Items)
+            // status
+            foreach (var item in cbStatus.Items)
             {
-                if (statusItem.Content.ToString() == user.Status)
+                if ((item as System.Windows.Controls.ComboBoxItem)?.Content?.ToString() == user.Status)
                 {
-                    cbStatus.SelectedItem = statusItem;
+                    cbStatus.SelectedItem = item;
                     break;
                 }
             }
 
-            if (!string.IsNullOrEmpty(user.ProfileImagePath) && File.Exists(user.ProfileImagePath))
+            if (!string.IsNullOrEmpty(user.ProfileImagePath))
             {
-                ProfileImage.Source = new BitmapImage(new Uri(user.ProfileImagePath));
+                try
+                {
+                    ProfileImage.Source = new BitmapImage(new Uri(user.ProfileImagePath, UriKind.RelativeOrAbsolute));
+                    imagePath = user.ProfileImagePath;
+                }
+                catch { /* ignore load failure */ }
             }
         }
 
@@ -76,9 +84,8 @@ namespace RosalEHealthcare.UI.WPF.Views
 
         private void txtPassword_PasswordChanged(object sender, RoutedEventArgs e)
         {
-            pwdPlaceholder.Visibility = string.IsNullOrWhiteSpace(txtPassword.Password)
-                ? Visibility.Visible
-                : Visibility.Collapsed;
+            pwdPlaceholder.Visibility = string.IsNullOrEmpty(txtPassword.Password)
+                ? Visibility.Visible : Visibility.Collapsed;
         }
 
         private void Save_Click(object sender, RoutedEventArgs e)
@@ -86,62 +93,88 @@ namespace RosalEHealthcare.UI.WPF.Views
             string name = txtFullName.Text.Trim();
             string email = txtEmail.Text.Trim();
             string password = txtPassword.Password.Trim();
-            string role = (cbRole.SelectedItem as ComboBoxItem)?.Content.ToString() ?? "";
-            string status = (cbStatus.SelectedItem as ComboBoxItem)?.Content.ToString() ?? "Active";
+            string role = (cbRole.SelectedItem as System.Windows.Controls.ComboBoxItem)?.Content.ToString() ?? "";
+            string status = (cbStatus.SelectedItem as System.Windows.Controls.ComboBoxItem)?.Content.ToString() ?? "";
 
             if (string.IsNullOrWhiteSpace(name) || string.IsNullOrWhiteSpace(email))
             {
-                MessageBox.Show("Please fill all fields.", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                MessageBox.Show("Please fill out name and email fields.", "Missing Info", MessageBoxButton.OK, MessageBoxImage.Warning);
                 return;
             }
 
             if (!isEditMode && string.IsNullOrWhiteSpace(password))
             {
-                MessageBox.Show("Password is required for new user.", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                MessageBox.Show("Please enter a password for the new user.", "Missing Info", MessageBoxButton.OK, MessageBoxImage.Warning);
                 return;
+            }
+
+            if (string.IsNullOrWhiteSpace(role) || string.IsNullOrWhiteSpace(status))
+            {
+                MessageBox.Show("Please select role and status.", "Missing Info", MessageBoxButton.OK, MessageBoxImage.Warning);
+                return;
+            }
+
+            // Save uploaded image to application folder (UserImages)
+            string savedImagePath = null;
+            if (!string.IsNullOrEmpty(imagePath) && File.Exists(imagePath))
+            {
+                try
+                {
+                    string appFolder = AppDomain.CurrentDomain.BaseDirectory;
+                    string imagesFolder = Path.Combine(appFolder, "UserImages");
+                    if (!Directory.Exists(imagesFolder)) Directory.CreateDirectory(imagesFolder);
+
+                    string ext = Path.GetExtension(imagePath);
+                    string fileName = $"user_{Guid.NewGuid()}{ext}";
+                    string dest = Path.Combine(imagesFolder, fileName);
+
+                    File.Copy(imagePath, dest, true);
+                    savedImagePath = dest;
+                }
+                catch (Exception ex)
+                {
+                    MessageBox.Show("Failed to save profile image: " + ex.Message, "Image Error", MessageBoxButton.OK, MessageBoxImage.Warning);
+                }
             }
 
             if (isEditMode)
             {
-                // Update existing user
-                editingUser.FullName = name;
-                editingUser.Email = email;
-                editingUser.Role = role;
-                editingUser.Status = status;
+                _editingUser.FullName = name;
+                _editingUser.Email = email;
+                _editingUser.Role = role;
+                _editingUser.Status = status;
+                if (!string.IsNullOrEmpty(savedImagePath)) _editingUser.ProfileImagePath = savedImagePath;
 
+                // if password provided, update password hash
                 if (!string.IsNullOrWhiteSpace(password))
                 {
-                    editingUser.PasswordHash = BCrypt.Net.BCrypt.HashPassword(password);
+                    _editingUser.PasswordHash = BCrypt.Net.BCrypt.HashPassword(password);
                 }
 
-                if (!string.IsNullOrEmpty(imagePath))
-                {
-                    editingUser.ProfileImagePath = imagePath;
-                }
+                _userService.UpdateUser(_editingUser);
+                User = _editingUser;
 
-                _db.Entry(editingUser).State = System.Data.Entity.EntityState.Modified;
-                _db.SaveChanges();
-
-                MessageBox.Show("User updated successfully!", "Success", MessageBoxButton.OK, MessageBoxImage.Information);
+                MessageBox.Show("User updated successfully.", "Success", MessageBoxButton.OK, MessageBoxImage.Information);
             }
             else
             {
-                // Create new user
-                var hashed = BCrypt.Net.BCrypt.HashPassword(password);
-                var newUser = new User
+                // create new user
+                var newUser = new Core.Models.User
                 {
+                    UserCode = $"USR-{new Random().Next(100, 999)}",
                     FullName = name,
                     Email = email,
-                    PasswordHash = hashed,
+                    PasswordHash = BCrypt.Net.BCrypt.HashPassword(password),
                     Role = role,
                     Status = status,
-                    ProfileImagePath = imagePath
+                    LastLogin = null,
+                    ProfileImagePath = savedImagePath
                 };
 
-                _db.Users.Add(newUser);
-                _db.SaveChanges();
+                _userService.AddUser(newUser);
+                User = newUser;
 
-                MessageBox.Show("User added successfully!", "Success", MessageBoxButton.OK, MessageBoxImage.Information);
+                MessageBox.Show("User added successfully.", "Success", MessageBoxButton.OK, MessageBoxImage.Information);
             }
 
             this.DialogResult = true;
