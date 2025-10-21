@@ -1,9 +1,10 @@
-﻿using System.Linq;
-using System.Windows;
-using System.Windows.Input;
-using MahApps.Metro.Controls;
+﻿using MahApps.Metro.Controls;
 using RosalEHealthcare.Data.Contexts;
 using RosalEHealthcare.Data.Services;
+using System;
+using System.Linq;
+using System.Windows;
+using System.Windows.Input;
 
 namespace RosalEHealthcare.UI.WPF.Views
 {
@@ -78,10 +79,12 @@ namespace RosalEHealthcare.UI.WPF.Views
                     }
                 }
             }
-            catch (System.Exception ex)
+            catch (Exception ex)
             {
-                MessageBox.Show($"Error during login: {ex.Message}", "Login Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                string details = ex.InnerException?.Message ?? ex.Message;
+                MessageBox.Show($"Error during login:\n{details}", "Login Error", MessageBoxButton.OK, MessageBoxImage.Error);
             }
+
         }
 
         private void txtPassword_PasswordChanged(object sender, RoutedEventArgs e)
