@@ -1,0 +1,168 @@
+﻿<UserControl x:Class="RosalEHealthcare.UI.WPF.Views.DoctorPatientRecords"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:conv="clr-namespace:RosalEHealthcare.UI.WPF.Converters"
+             MinWidth="700" MinHeight="500">
+    <UserControl.Resources>
+        <conv:StringNullOrEmptyToVisibilityConverter x:Key="StringNullOrEmptyToVisibilityConverter"/>
+        <conv:NameInitialsConverter x:Key="NameInitialsConverter"/>
+    </UserControl.Resources>
+
+    <Grid>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="360"/>
+            <ColumnDefinition Width="*"/>
+        </Grid.ColumnDefinitions>
+
+        <!-- LEFT: Search + Patient list -->
+        <StackPanel Grid.Column="0" Margin="10">
+            <Border Background="White" CornerRadius="10" Padding="10" Margin="0,0,0,10">
+                <Grid>
+                    <TextBox x:Name="txtSearch"
+                             Height="38" Padding="10"
+                             VerticalAlignment="Top" TextChanged="TxtSearch_TextChanged"/>
+                    <TextBlock Text="Search Patient" IsHitTestVisible="False"
+                               Margin="12,0,0,0" VerticalAlignment="Center"
+                               Visibility="{Binding Text, ElementName=txtSearch, Converter={StaticResource StringNullOrEmptyToVisibilityConverter}}"/>
+                </Grid>
+            </Border>
+
+            <ListView x:Name="lvPatients" Background="White" BorderThickness="0"
+                      SelectionChanged="LvPatients_SelectionChanged">
+                <ListView.ItemTemplate>
+                    <DataTemplate>
+                        <Border Padding="10" Margin="6" CornerRadius="6" Background="#F7F7F7">
+                            <StackPanel>
+                                <TextBlock Text="{Binding FullName}" FontWeight="SemiBold"/>
+                                <TextBlock Text="{Binding PatientId}" FontSize="11" Foreground="Gray"/>
+                                <TextBlock Text="{Binding PrimaryDiagnosis}" FontSize="11" Foreground="Gray"/>
+                                <TextBlock Text="{Binding LastVisit, StringFormat='Last Visit: {0:MMM dd, yyyy}'}" FontSize="11" Foreground="Gray"/>
+                            </StackPanel>
+                        </Border>
+                    </DataTemplate>
+                </ListView.ItemTemplate>
+            </ListView>
+        </StackPanel>
+
+        <!-- RIGHT: Selected patient details -->
+        <Grid Grid.Column="1" Margin="10">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="*"/>
+            </Grid.RowDefinitions>
+
+            <!-- Header -->
+            <Border Background="White" CornerRadius="8" Padding="12" Margin="0,0,0,10">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto"/>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="Auto"/>
+                    </Grid.ColumnDefinitions>
+
+                    <!-- ellipse with initials: use Grid overlay instead of placing content inside Ellipse -->
+                    <Grid Grid.Column="0" Width="72" Height="72" VerticalAlignment="Center">
+                        <Ellipse Fill="#2E7D32"/>
+                        <TextBlock Text="{Binding SelectedPatient.FullName, RelativeSource={RelativeSource AncestorType=UserControl}, Converter={StaticResource NameInitialsConverter}}"
+               Foreground="White" FontWeight="Bold" FontSize="18"
+               HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                    </Grid>
+
+
+
+                    <StackPanel Grid.Column="1" Margin="12,0">
+                        <TextBlock Text="{Binding SelectedPatient.FullName, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                   FontSize="18" FontWeight="Bold"/>
+                        <TextBlock Text="{Binding SelectedPatient.PatientId, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                   Foreground="Gray" FontSize="12"/>
+                        <TextBlock Text="{Binding SelectedPatient.PrimaryDiagnosis, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                   Foreground="#2E7D32" FontSize="12"/>
+                    </StackPanel>
+
+                    <StackPanel Grid.Column="2" Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center">
+                        <!-- replace Spacing with Margin on children -->
+                        <Button Content="Edit" Click="BtnEdit_Click" Padding="10,6" Margin="0,0,8,0"/>
+                        <Button Content="Archive" Click="BtnArchive_Click" Padding="10,6" Background="#E05A4F" Foreground="White"/>
+                    </StackPanel>
+                </Grid>
+            </Border>
+
+            <!-- Tabs -->
+            <StackPanel Grid.Row="1" Orientation="Horizontal" Margin="0,0,0,10">
+                <ToggleButton x:Name="tbPersonal" Content="Personal Information" IsChecked="True" Checked="Tab_Checked" Margin="0,0,8,0"/>
+                <ToggleButton x:Name="tbMedical" Content="Medical History" Checked="Tab_Checked" Margin="0,0,8,0"/>
+                <ToggleButton x:Name="tbVisits" Content="Visit History" Checked="Tab_Checked" Margin="0,0,8,0"/>
+                <ToggleButton x:Name="tbPresc" Content="Prescription" Checked="Tab_Checked"/>
+            </StackPanel>
+
+            <!-- Content -->
+            <Border Grid.Row="2" Background="White" CornerRadius="8" Padding="12">
+                <Grid>
+                    <!-- PERSONAL -->
+                    <StackPanel x:Name="panelPersonal">
+                        <Grid Margin="0,0,0,10">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+                            <StackPanel Grid.Column="0">
+                                <TextBlock Text="Full Name" Foreground="Gray"/>
+                                <TextBlock Text="{Binding SelectedPatient.FullName, RelativeSource={RelativeSource AncestorType=UserControl}}"/>
+                                <TextBlock Text="Date of Birth" Foreground="Gray" Margin="0,8,0,0"/>
+                                <TextBlock Text="{Binding SelectedPatient.BirthDate, StringFormat='{}{0:MMM dd, yyyy}', RelativeSource={RelativeSource AncestorType=UserControl}}"/>
+                                <TextBlock Text="Gender" Foreground="Gray" Margin="0,8,0,0"/>
+                                <TextBlock Text="{Binding SelectedPatient.Gender, RelativeSource={RelativeSource AncestorType=UserControl}}"/>
+                            </StackPanel>
+                            <StackPanel Grid.Column="1">
+                                <TextBlock Text="Email" Foreground="Gray"/>
+                                <TextBlock Text="{Binding SelectedPatient.Email, RelativeSource={RelativeSource AncestorType=UserControl}}"/>
+                                <TextBlock Text="Contact" Foreground="Gray" Margin="0,8,0,0"/>
+                                <TextBlock Text="{Binding SelectedPatient.Contact, RelativeSource={RelativeSource AncestorType=UserControl}}"/>
+                                <TextBlock Text="Address" Foreground="Gray" Margin="0,8,0,0"/>
+                                <TextBlock Text="{Binding SelectedPatient.Address, RelativeSource={RelativeSource AncestorType=UserControl}}" TextWrapping="Wrap"/>
+                            </StackPanel>
+                        </Grid>
+
+                        <TextBlock Text="Notes" Foreground="Gray"/>
+                        <TextBlock Text="{Binding SelectedPatient.Status, RelativeSource={RelativeSource AncestorType=UserControl}}" TextWrapping="Wrap"/>
+                    </StackPanel>
+
+                    <!-- MEDICAL -->
+                    <StackPanel x:Name="panelMedical" Visibility="Collapsed">
+                        <Grid Margin="0,0,0,10">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+                            <StackPanel Grid.Column="0">
+                                <TextBlock Text="Primary Diagnosis" Foreground="Gray"/>
+                                <TextBlock Text="{Binding SelectedPatient.PrimaryDiagnosis, RelativeSource={RelativeSource AncestorType=UserControl}}"/>
+                                <TextBlock Text="Secondary Diagnosis" Foreground="Gray" Margin="0,8,0,0"/>
+                                <TextBlock Text="{Binding SelectedPatient.SecondaryDiagnosis, RelativeSource={RelativeSource AncestorType=UserControl}}"/>
+                            </StackPanel>
+                            <StackPanel Grid.Column="1">
+                                <TextBlock Text="Blood Type" Foreground="Gray"/>
+                                <TextBlock Text="{Binding SelectedPatient.BloodType, RelativeSource={RelativeSource AncestorType=UserControl}}"/>
+                                <TextBlock Text="Allergies" Foreground="Gray" Margin="0,8,0,0"/>
+                                <TextBlock Text="{Binding SelectedPatient.Allergies, RelativeSource={RelativeSource AncestorType=UserControl}}" TextWrapping="Wrap"/>
+                            </StackPanel>
+                        </Grid>
+                    </StackPanel>
+
+                    <!-- VISITS -->
+                    <StackPanel x:Name="panelVisits" Visibility="Collapsed">
+                        <TextBlock Text="Visit History" Foreground="Gray"/>
+                        <TextBlock Text="{Binding SelectedPatient.LastVisit, StringFormat='Last Visit: {0:MMMM dd, yyyy}', RelativeSource={RelativeSource AncestorType=UserControl}}"/>
+                    </StackPanel>
+
+                    <!-- PRESCRIPTIONS -->
+                    <StackPanel x:Name="panelPresc" Visibility="Collapsed">
+                        <TextBlock Text="Prescription History" Foreground="Gray"/>
+                        <TextBlock Text="— Not implemented yet —" Foreground="Gray"/>
+                    </StackPanel>
+                </Grid>
+            </Border>
+        </Grid>
+    </Grid>
+</UserControl>

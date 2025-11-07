@@ -17,7 +17,8 @@ namespace RosalEHealthcare.UI.WPF.Views
         public AdminDashboard()
         {
             InitializeComponent();
-            SetActiveButton(BtnDashboard); // Default active highlight
+            ShowDashboard(); // Default view
+            SetActiveButton(BtnDashboard); // Highlight dashboard button
         }
 
         // Constructor to receive logged-in user
@@ -32,16 +33,13 @@ namespace RosalEHealthcare.UI.WPF.Views
         {
             if (_currentUser == null) return;
 
-            // Show full name or fallback to email
             var fullName = string.IsNullOrWhiteSpace(_currentUser.FullName)
                 ? _currentUser.Email
                 : _currentUser.FullName;
 
-            // These elements are defined in your XAML
             TxtUserFullName.Text = fullName;
             TxtUserRole.Text = _currentUser.Role ?? "Administrator";
 
-            // Load profile image if exists
             if (!string.IsNullOrEmpty(_currentUser.ProfileImagePath) && File.Exists(_currentUser.ProfileImagePath))
             {
                 try
@@ -60,7 +58,14 @@ namespace RosalEHealthcare.UI.WPF.Views
             }
         }
 
-        // Sets sidebar active state
+        // Utility: hide all panels to prevent overlap
+        private void HideAllContent()
+        {
+            DashboardPanel.Visibility = Visibility.Collapsed;
+            MainContent.Visibility = Visibility.Collapsed;
+        }
+
+        // Sidebar button highlight
         private void SetActiveButton(Button clickedButton)
         {
             BtnDashboard.Style = (Style)FindResource("SidebarButton");
@@ -74,19 +79,25 @@ namespace RosalEHealthcare.UI.WPF.Views
             _activeButton = clickedButton;
         }
 
-        private void Dashboard_Click(object sender, RoutedEventArgs e)
+        // Show only dashboard panel
+        private void ShowDashboard()
         {
             txtPageTitle.Text = "Admin Dashboard";
+            HideAllContent();
             DashboardPanel.Visibility = Visibility.Visible;
-            MainContent.Visibility = Visibility.Collapsed;
             SetActiveButton(BtnDashboard);
+        }
+
+        private void Dashboard_Click(object sender, RoutedEventArgs e)
+        {
+            ShowDashboard();
         }
 
         private void PatientManagement_Click(object sender, RoutedEventArgs e)
         {
             txtPageTitle.Text = "Patient Management";
+            HideAllContent();
             MainContent.Content = new PatientManagementView();
-            DashboardPanel.Visibility = Visibility.Collapsed;
             MainContent.Visibility = Visibility.Visible;
             SetActiveButton(BtnPatientManagement);
         }
@@ -94,8 +105,8 @@ namespace RosalEHealthcare.UI.WPF.Views
         private void MedicineInventory_Click(object sender, RoutedEventArgs e)
         {
             txtPageTitle.Text = "Medicine Inventory";
+            HideAllContent();
             MainContent.Content = new MedicineInventory();
-            DashboardPanel.Visibility = Visibility.Collapsed;
             MainContent.Visibility = Visibility.Visible;
             SetActiveButton(BtnMedicineInventory);
         }
@@ -103,10 +114,30 @@ namespace RosalEHealthcare.UI.WPF.Views
         private void UserManagementView_Click(object sender, RoutedEventArgs e)
         {
             txtPageTitle.Text = "User Management";
+            HideAllContent();
             MainContent.Content = new UserManagementView();
-            DashboardPanel.Visibility = Visibility.Collapsed;
             MainContent.Visibility = Visibility.Visible;
             SetActiveButton(BtnUserManagement);
+        }
+
+        private void Reports_Click(object sender, RoutedEventArgs e)
+        {
+            txtPageTitle.Text = "Reports & Analysis";
+            HideAllContent();
+            // Replace with your Reports view if available
+            // MainContent.Content = new ReportsView();
+            MainContent.Visibility = Visibility.Visible;
+            SetActiveButton(BtnReports);
+        }
+
+        private void Settings_Click(object sender, RoutedEventArgs e)
+        {
+            txtPageTitle.Text = "System Settings";
+            HideAllContent();
+            // Replace with your Settings view if available
+            // MainContent.Content = new SettingsView();
+            MainContent.Visibility = Visibility.Visible;
+            SetActiveButton(BtnSettings);
         }
 
         private void Logout_Click(object sender, RoutedEventArgs e)

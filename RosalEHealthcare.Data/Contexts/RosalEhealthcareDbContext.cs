@@ -12,5 +12,6 @@ namespace RosalEHealthcare.Data.Contexts
         }
 
         public DbSet<User> Users { get; set; }
+        public DbSet<Patient> Patients { get; set; }
     }
 }

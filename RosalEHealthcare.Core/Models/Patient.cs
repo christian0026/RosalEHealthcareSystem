@@ -1,8 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using System.ComponentModel.DataAnnotations;
 
 namespace RosalEHealthcare.Core.Models
@@ -10,20 +6,23 @@ namespace RosalEHealthcare.Core.Models
     public class Patient
     {
         [Key]
-        public int PatientId { get; set; }
+        public int Id { get; set; }                 // PK
+        public string PatientId { get; set; }      // PT-001
+        public string FullName { get; set; }
+        public DateTime? BirthDate { get; set; }
+        public string Gender { get; set; }         // Male / Female / Other
+        public string Contact { get; set; }
+        public string Email { get; set; }
+        public string Address { get; set; }
 
-        [Required, MaxLength(100)]
-        public string Name { get; set; }
+        // Medical fields (simple inferred fields)
+        public string PrimaryDiagnosis { get; set; }
+        public string SecondaryDiagnosis { get; set; }
+        public string Allergies { get; set; }
+        public string BloodType { get; set; }
 
-        [MaxLength(10)]
-        public string Gender { get; set; }
-
-        public DateTime BirthDate { get; set; }
-
-        [MaxLength(15)]
-        public string ContactNumber { get; set; }
-
-        [MaxLength(255)]
-        public string Condition { get; set; }
+        public DateTime? LastVisit { get; set; }
+        public string Status { get; set; }         // Active / Archived / Follow-up / etc.
+        public DateTime DateCreated { get; set; } = DateTime.Now;
     }
 }
