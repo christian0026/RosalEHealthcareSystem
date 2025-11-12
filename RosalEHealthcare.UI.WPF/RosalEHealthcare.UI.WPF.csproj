@@ -5,6 +5,7 @@
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
+    <LangVersion>latest</LangVersion>
     <ProjectGuid>{F6CED47D-F2C1-4357-99F8-BD7DB7868D66}</ProjectGuid>
     <OutputType>WinExe</OutputType>
     <RootNamespace>RosalEHealthcare.UI.WPF</RootNamespace>
@@ -206,6 +207,9 @@
     <Reference Include="MaterialDesignColors, Version=2.1.4.0, Culture=neutral, PublicKeyToken=df2a72020bd7962a, processorArchitecture=MSIL">
       <HintPath>..\packages\MaterialDesignColors.2.1.4\lib\net462\MaterialDesignColors.dll</HintPath>
     </Reference>
+    <Reference Include="MaterialDesignThemes.MahApps, Version=0.2.7.0, Culture=neutral, PublicKeyToken=df2a72020bd7962a, processorArchitecture=MSIL">
+      <HintPath>..\packages\MaterialDesignThemes.MahApps.0.2.7\lib\net462\MaterialDesignThemes.MahApps.dll</HintPath>
+    </Reference>
     <Reference Include="MaterialDesignThemes.Wpf, Version=4.9.0.0, Culture=neutral, PublicKeyToken=df2a72020bd7962a, processorArchitecture=MSIL">
       <HintPath>..\packages\MaterialDesignThemes.4.9.0\lib\net462\MaterialDesignThemes.Wpf.dll</HintPath>
     </Reference>
@@ -288,6 +292,9 @@
     <Compile Include="Views\AdminDashboard.xaml.cs">
       <DependentUpon>AdminDashboard.xaml</DependentUpon>
     </Compile>
+    <Compile Include="Views\DoctorAppointmentLists.xaml.cs">
+      <DependentUpon>DoctorAppointmentLists.xaml</DependentUpon>
+    </Compile>
     <Compile Include="Views\DoctorDashboard.xaml.cs">
       <DependentUpon>DoctorDashboard.xaml</DependentUpon>
     </Compile>
@@ -329,6 +336,10 @@
       <Generator>MSBuild:Compile</Generator>
     </Page>
     <Page Include="Views\AdminDashboard.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="Views\DoctorAppointmentLists.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>

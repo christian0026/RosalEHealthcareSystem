@@ -1,6 +1,8 @@
 ﻿using RosalEHealthcare.Core.Models;
 using RosalEHealthcare.Data.Contexts;
 using RosalEHealthcare.Data.Services;
+using System;
+using System.Linq;
 using System.Windows;
 using System.Windows.Controls;
 
@@ -14,22 +16,47 @@ namespace RosalEHealthcare.UI.WPF.Views
         public DoctorPatientRecords()
         {
             InitializeComponent();
-            var db = new RosalEHealthcareDbContext();
-            _svc = new PatientService(db);
-            LoadPatients();
-            DataContext = this;
+
+            try
+            {
+                var db = new RosalEHealthcareDbContext();
+                _svc = new PatientService(db);
+                LoadPatients();
+                DataContext = this;
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Error initializing Patient Records:\n{ex.Message}",
+                                "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
         }
 
         private void LoadPatients()
         {
-            var list = _svc.GetAll();
-            lvPatients.ItemsSource = list;
-            lvPatients.SelectedIndex = 0;
+            try
+            {
+                var list = _svc.GetAll()?.ToList() ?? new System.Collections.Generic.List<Patient>();
+                lvPatients.ItemsSource = list;
+                if (list.Any())
+                {
+                    lvPatients.SelectedIndex = 0;
+                    SelectedPatient = list.First();
+                }
+                else
+                {
+                    SelectedPatient = null;
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Error loading patients:\n{ex.Message}",
+                                "Database Error", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
         }
 
         private void TxtSearch_TextChanged(object sender, TextChangedEventArgs e)
         {
-            var q = txtSearch.Text;
+            var q = txtSearch.Text ?? "";
             var results = _svc.Search(q);
             lvPatients.ItemsSource = results;
         }
@@ -45,26 +72,27 @@ namespace RosalEHealthcare.UI.WPF.Views
         {
             if (SelectedPatient == null)
             {
-                MessageBox.Show("Select a patient first.");
+                MessageBox.Show("Please select a patient first.", "No Patient Selected", MessageBoxButton.OK, MessageBoxImage.Warning);
                 return;
             }
 
-            MessageBox.Show($"Editing {SelectedPatient.FullName} (implement your edit dialog here).");
+            MessageBox.Show($"Editing patient: {SelectedPatient.FullName}");
         }
 
         private void BtnArchive_Click(object sender, RoutedEventArgs e)
         {
             if (SelectedPatient == null)
             {
-                MessageBox.Show("Select a patient first.");
+                MessageBox.Show("Please select a patient first.", "No Patient Selected", MessageBoxButton.OK, MessageBoxImage.Warning);
                 return;
             }
 
-            if (MessageBox.Show("Archive this patient?", "Confirm", MessageBoxButton.YesNo) == MessageBoxResult.Yes)
+            if (MessageBox.Show($"Are you sure you want to archive {SelectedPatient.FullName}?",
+                                "Confirm Archive", MessageBoxButton.YesNo, MessageBoxImage.Question) == MessageBoxResult.Yes)
             {
                 _svc.ArchivePatient(SelectedPatient.Id);
                 LoadPatients();
-                MessageBox.Show("Patient archived successfully.");
+                MessageBox.Show("Patient archived successfully.", "Archived", MessageBoxButton.OK, MessageBoxImage.Information);
             }
         }
 

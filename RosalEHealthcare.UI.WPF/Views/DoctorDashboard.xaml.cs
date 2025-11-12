@@ -81,7 +81,7 @@ namespace RosalEHealthcare.UI.WPF.Views
         private void AppointmentLists_Click(object sender, RoutedEventArgs e)
         {
             txtPageTitle.Text = "Appointment Lists";
-            MainContent.Content = null; // placeholder for future page
+            MainContent.Content = new DoctorAppointmentLists();
             SetActiveButton(BtnAppointmentLists);
         }
 

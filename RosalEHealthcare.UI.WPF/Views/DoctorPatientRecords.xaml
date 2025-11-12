@@ -14,12 +14,11 @@
             <ColumnDefinition Width="*"/>
         </Grid.ColumnDefinitions>
 
-        <!-- LEFT: Search + Patient list -->
+        <!-- LEFT PANEL -->
         <StackPanel Grid.Column="0" Margin="10">
             <Border Background="White" CornerRadius="10" Padding="10" Margin="0,0,0,10">
                 <Grid>
-                    <TextBox x:Name="txtSearch"
-                             Height="38" Padding="10"
+                    <TextBox x:Name="txtSearch" Height="38" Padding="10" 
                              VerticalAlignment="Top" TextChanged="TxtSearch_TextChanged"/>
                     <TextBlock Text="Search Patient" IsHitTestVisible="False"
                                Margin="12,0,0,0" VerticalAlignment="Center"
@@ -42,9 +41,15 @@
                     </DataTemplate>
                 </ListView.ItemTemplate>
             </ListView>
+
+            <TextBlock Text="No patients found."
+                       HorizontalAlignment="Center"
+                       Foreground="Gray"
+                       Margin="0,10,0,0"
+                       Visibility="{Binding ElementName=lvPatients, Path=Items.IsEmpty, Converter={StaticResource StringNullOrEmptyToVisibilityConverter}}"/>
         </StackPanel>
 
-        <!-- RIGHT: Selected patient details -->
+        <!-- RIGHT PANEL -->
         <Grid Grid.Column="1" Margin="10">
             <Grid.RowDefinitions>
                 <RowDefinition Height="Auto"/>
@@ -52,7 +57,7 @@
                 <RowDefinition Height="*"/>
             </Grid.RowDefinitions>
 
-            <!-- Header -->
+            <!-- HEADER -->
             <Border Background="White" CornerRadius="8" Padding="12" Margin="0,0,0,10">
                 <Grid>
                     <Grid.ColumnDefinitions>
@@ -61,34 +66,35 @@
                         <ColumnDefinition Width="Auto"/>
                     </Grid.ColumnDefinitions>
 
-                    <!-- ellipse with initials: use Grid overlay instead of placing content inside Ellipse -->
-                    <Grid Grid.Column="0" Width="72" Height="72" VerticalAlignment="Center">
+                    <Grid Grid.Column="0" VerticalAlignment="Center" Width="72" Height="72">
                         <Ellipse Fill="#2E7D32"/>
-                        <TextBlock Text="{Binding SelectedPatient.FullName, RelativeSource={RelativeSource AncestorType=UserControl}, Converter={StaticResource NameInitialsConverter}}"
-               Foreground="White" FontWeight="Bold" FontSize="18"
-               HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        <TextBlock Text="{Binding SelectedPatient.FullName, 
+                              RelativeSource={RelativeSource AncestorType=UserControl}, 
+                              Converter={StaticResource NameInitialsConverter}, 
+                              TargetNullValue='N/A'}"
+                                   Foreground="White"
+                                   FontWeight="Bold"
+                                   VerticalAlignment="Center"
+                                   HorizontalAlignment="Center"/>
                     </Grid>
 
-
-
                     <StackPanel Grid.Column="1" Margin="12,0">
-                        <TextBlock Text="{Binding SelectedPatient.FullName, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                        <TextBlock Text="{Binding SelectedPatient.FullName, RelativeSource={RelativeSource AncestorType=UserControl}, TargetNullValue='No Patient Selected'}"
                                    FontSize="18" FontWeight="Bold"/>
-                        <TextBlock Text="{Binding SelectedPatient.PatientId, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                        <TextBlock Text="{Binding SelectedPatient.PatientId, RelativeSource={RelativeSource AncestorType=UserControl}}" 
                                    Foreground="Gray" FontSize="12"/>
-                        <TextBlock Text="{Binding SelectedPatient.PrimaryDiagnosis, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                        <TextBlock Text="{Binding SelectedPatient.PrimaryDiagnosis, RelativeSource={RelativeSource AncestorType=UserControl}}" 
                                    Foreground="#2E7D32" FontSize="12"/>
                     </StackPanel>
 
                     <StackPanel Grid.Column="2" Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center">
-                        <!-- replace Spacing with Margin on children -->
                         <Button Content="Edit" Click="BtnEdit_Click" Padding="10,6" Margin="0,0,8,0"/>
                         <Button Content="Archive" Click="BtnArchive_Click" Padding="10,6" Background="#E05A4F" Foreground="White"/>
                     </StackPanel>
                 </Grid>
             </Border>
 
-            <!-- Tabs -->
+            <!-- TABS -->
             <StackPanel Grid.Row="1" Orientation="Horizontal" Margin="0,0,0,10">
                 <ToggleButton x:Name="tbPersonal" Content="Personal Information" IsChecked="True" Checked="Tab_Checked" Margin="0,0,8,0"/>
                 <ToggleButton x:Name="tbMedical" Content="Medical History" Checked="Tab_Checked" Margin="0,0,8,0"/>
@@ -96,7 +102,7 @@
                 <ToggleButton x:Name="tbPresc" Content="Prescription" Checked="Tab_Checked"/>
             </StackPanel>
 
-            <!-- Content -->
+            <!-- CONTENT -->
             <Border Grid.Row="2" Background="White" CornerRadius="8" Padding="12">
                 <Grid>
                     <!-- PERSONAL -->
@@ -108,7 +114,7 @@
                             </Grid.ColumnDefinitions>
                             <StackPanel Grid.Column="0">
                                 <TextBlock Text="Full Name" Foreground="Gray"/>
-                                <TextBlock Text="{Binding SelectedPatient.FullName, RelativeSource={RelativeSource AncestorType=UserControl}}"/>
+                                <TextBlock Text="{Binding SelectedPatient.FullName, RelativeSource={RelativeSource AncestorType=UserControl}, TargetNullValue='—'}"/>
                                 <TextBlock Text="Date of Birth" Foreground="Gray" Margin="0,8,0,0"/>
                                 <TextBlock Text="{Binding SelectedPatient.BirthDate, StringFormat='{}{0:MMM dd, yyyy}', RelativeSource={RelativeSource AncestorType=UserControl}}"/>
                                 <TextBlock Text="Gender" Foreground="Gray" Margin="0,8,0,0"/>
