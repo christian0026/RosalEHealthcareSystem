@@ -3,11 +3,20 @@
                       xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
                       xmlns:controls="http://metro.mahapps.com/winfx/xaml/controls"
                       xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
-                      Title="Receptionist Dashboard"
+                      Title=""
+                      ShowTitleBar="False"
                       WindowStartupLocation="CenterScreen"
                       ResizeMode="CanResize"
-                      MinWidth="1200" MinHeight="750"
-                      Background="#F5F5F5">
+                      MinWidth="1200" 
+                      MinHeight="750"
+                      Width="1400"
+                      Height="900"
+                      Background="#F5F5F5"
+                      BorderThickness="0"
+                      GlowBrush="{x:Null}"
+                      WindowStyle="None"
+                      WindowState="Maximized"
+                      StateChanged="Window_StateChanged">
 
     <controls:MetroWindow.Resources>
         <!-- Sidebar button style -->
@@ -18,12 +27,14 @@
             <Setter Property="Padding" Value="12"/>
             <Setter Property="HorizontalContentAlignment" Value="Left"/>
             <Setter Property="FontSize" Value="14"/>
+            <Setter Property="Cursor" Value="Hand"/>
             <Setter Property="Template">
                 <Setter.Value>
                     <ControlTemplate TargetType="Button">
                         <Border Background="{TemplateBinding Background}"
                                 Padding="{TemplateBinding Padding}"
-                                CornerRadius="8">
+                                CornerRadius="8"
+                                Margin="4,2">
                             <ContentPresenter VerticalAlignment="Center"/>
                         </Border>
                         <ControlTemplate.Triggers>
@@ -41,156 +52,547 @@
 
         <!-- Active nav button style -->
         <Style x:Key="SidebarButtonActive" TargetType="Button" BasedOn="{StaticResource SidebarButton}">
-            <Setter Property="Background" Value="#3FA23F"/>
+            <Setter Property="Background" Value="#4CAF50"/>
         </Style>
 
-        <!-- Status tag style -->
-        <Style TargetType="TextBlock" x:Key="StatusTag">
-            <Setter Property="Padding" Value="6,2"/>
-            <Setter Property="Margin" Value="2"/>
-            <Setter Property="FontSize" Value="12"/>
-            <Setter Property="FontWeight" Value="Bold"/>
-            <Setter Property="TextAlignment" Value="Center"/>
+        <!-- Quick action button -->
+        <Style x:Key="QuickActionBtn" TargetType="Button">
+            <Setter Property="Margin" Value="0,6"/>
+            <Setter Property="Padding" Value="14,12"/>
+            <Setter Property="Background" Value="#4CAF50"/>
+            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border Background="{TemplateBinding Background}"
+                                Padding="{TemplateBinding Padding}"
+                                CornerRadius="8">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+            <Style.Triggers>
+                <Trigger Property="IsMouseOver" Value="True">
+                    <Setter Property="Background" Value="#45A049"/>
+                </Trigger>
+            </Style.Triggers>
         </Style>
+
+        <!-- Secondary action button -->
+        <Style x:Key="SecondaryActionBtn" TargetType="Button" BasedOn="{StaticResource QuickActionBtn}">
+            <Setter Property="Background" Value="#E0E0E0"/>
+            <Setter Property="Foreground" Value="#333"/>
+            <Style.Triggers>
+                <Trigger Property="IsMouseOver" Value="True">
+                    <Setter Property="Background" Value="#D0D0D0"/>
+                </Trigger>
+            </Style.Triggers>
+        </Style>
+
+        <!-- Window Control Button Style -->
+        <Style x:Key="WindowControlButton" TargetType="Button">
+            <Setter Property="Width" Value="46"/>
+            <Setter Property="Height" Value="32"/>
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="Foreground" Value="#666666"/>
+            <Setter Property="FontSize" Value="14"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border Background="{TemplateBinding Background}">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+            <Style.Triggers>
+                <Trigger Property="IsMouseOver" Value="True">
+                    <Setter Property="Background" Value="#E5E5E5"/>
+                </Trigger>
+            </Style.Triggers>
+        </Style>
+
+        <!-- Close Button Style -->
+        <Style x:Key="CloseButton" TargetType="Button" BasedOn="{StaticResource WindowControlButton}">
+            <Style.Triggers>
+                <Trigger Property="IsMouseOver" Value="True">
+                    <Setter Property="Background" Value="#E81123"/>
+                    <Setter Property="Foreground" Value="White"/>
+                </Trigger>
+            </Style.Triggers>
+        </Style>
+
     </controls:MetroWindow.Resources>
 
     <Grid>
-        <Grid.ColumnDefinitions>
-            <ColumnDefinition Width="240"/>
-            <ColumnDefinition Width="*"/>
-        </Grid.ColumnDefinitions>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="40"/>
+            <RowDefinition Height="*"/>
+        </Grid.RowDefinitions>
 
-        <!-- SIDEBAR -->
-        <Border Grid.Column="0" Background="#2E7D32">
-            <DockPanel>
-                <StackPanel Margin="16" DockPanel.Dock="Top">
-                    <!-- Logo & Title -->
-                    <StackPanel Orientation="Horizontal" Margin="0,4,0,12">
-                        <Ellipse Width="40" Height="40" Fill="White"/>
-                        <TextBlock Text="ROSAL eHEALTHCARE" Foreground="White" FontWeight="Bold"
-                                   VerticalAlignment="Center" Margin="10,0,0,0"/>
-                    </StackPanel>
-
-                    <!-- User Info -->
-                    <StackPanel Margin="0,10,0,0">
-                        <Ellipse x:Name="ProfileEllipse" Width="48" Height="48" Fill="LightGray"/>
-                        <TextBlock x:Name="TxtUserFullName" Text="Receptionist Name" Foreground="White" FontSize="14" FontWeight="Bold" Margin="0,8,0,0"/>
-                        <TextBlock x:Name="TxtUserRole" Text="Receptionist" Foreground="White" FontSize="12"/>
-                    </StackPanel>
+        <!-- CUSTOM TITLE BAR -->
+        <Border Grid.Row="0" 
+                Background="White" 
+                BorderBrush="#E0E0E0"
+                BorderThickness="0,0,0,1"
+                MouseLeftButtonDown="TitleBar_MouseLeftButtonDown">
+            <Grid>
+                <!-- Window Control Buttons -->
+                <StackPanel Orientation="Horizontal" 
+                            HorizontalAlignment="Right">
+                    <Button x:Name="btnMinimize" 
+                            Content="─" 
+                            Style="{StaticResource WindowControlButton}"
+                            Click="btnMinimize_Click"
+                            FontSize="16"/>
+                    <Button x:Name="btnMaximize" 
+                            Content="□" 
+                            Style="{StaticResource WindowControlButton}"
+                            Click="btnMaximize_Click"
+                            FontSize="14"/>
+                    <Button x:Name="btnClose" 
+                            Content="✕" 
+                            Style="{StaticResource CloseButton}"
+                            Click="btnClose_Click"
+                            FontSize="16"/>
                 </StackPanel>
-
-                <!-- Navigation -->
-                <StackPanel DockPanel.Dock="Top" Margin="8,30,8,0">
-                    <Button Content="Dashboard" Style="{StaticResource SidebarButtonActive}" Margin="8"/>
-                    <Button Content="Patient Registration" Style="{StaticResource SidebarButton}" Margin="8"/>
-                    <Button Content="Appointment Management" Style="{StaticResource SidebarButton}" Margin="8"/>
-                    <Button Content="System Settings" Style="{StaticResource SidebarButton}" Margin="8"/>
-                </StackPanel>
-
-                <!-- Logout -->
-                <StackPanel DockPanel.Dock="Bottom" Margin="16,12">
-                    <Button Content="Logout" Background="#A14747" Foreground="White" Padding="12"
-                            Click="Logout_Click"/>
-                </StackPanel>
-            </DockPanel>
+            </Grid>
         </Border>
 
         <!-- MAIN CONTENT -->
-        <DockPanel Grid.Column="1">
-            <!-- Topbar -->
-            <Border DockPanel.Dock="Top" Height="60" Background="White" Margin="0,0,0,6">
-                <Grid>
-                    <TextBlock Text="Receptionist Dashboard" FontSize="22" FontWeight="Bold"
-                               Foreground="#2E7D32" VerticalAlignment="Center" Margin="20,0,0,0"/>
-                    <Button Content="🔔" HorizontalAlignment="Right" VerticalAlignment="Center" Margin="0,0,20,0"
-                            Background="Transparent" BorderBrush="Transparent" FontSize="18"/>
-                </Grid>
+        <Grid Grid.Row="1">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="260"/>
+                <ColumnDefinition Width="*"/>
+            </Grid.ColumnDefinitions>
+
+            <!-- SIDEBAR -->
+            <Border Grid.Column="0" Background="#2E7D32">
+                <DockPanel>
+                    <StackPanel Margin="16,16,16,8" DockPanel.Dock="Top">
+                        <!-- Logo & Title -->
+                        <StackPanel Orientation="Horizontal" Margin="0,4,0,20">
+                            <Border Width="50" Height="50" CornerRadius="25" Background="White" Padding="2">
+                                <Image Source="/RosalEHealthcare.UI.WPF;component/Resources/rosal_logo.png"
+                                       Stretch="Uniform"/>
+                            </Border>
+                            <StackPanel VerticalAlignment="Center" Margin="12,0,0,0">
+                                <TextBlock Text="ROSAL eHEALTHCARE" 
+                                           Foreground="White" 
+                                           FontWeight="Bold"
+                                           FontSize="14"/>
+                                <TextBlock Text="Management System" 
+                                           Foreground="#E0E0E0" 
+                                           FontSize="11"/>
+                            </StackPanel>
+                        </StackPanel>
+
+                        <!-- User Profile -->
+                        <StackPanel Margin="0,10,0,0">
+                            <Border Width="60" Height="60" CornerRadius="30" 
+                                    BorderBrush="White" BorderThickness="2"
+                                    HorizontalAlignment="Center">
+                                <Ellipse x:Name="ProfileEllipse" Fill="LightGray"/>
+                            </Border>
+                            <TextBlock x:Name="TxtUserFullName" 
+                                       Text="Receptionist Name" 
+                                       Foreground="White" 
+                                       FontSize="15" 
+                                       FontWeight="Bold" 
+                                       TextAlignment="Center"
+                                       Margin="0,10,0,2"/>
+                            <TextBlock x:Name="TxtUserRole" 
+                                       Text="Receptionist" 
+                                       Foreground="#E0E0E0" 
+                                       FontSize="12"
+                                       TextAlignment="Center"/>
+                        </StackPanel>
+                    </StackPanel>
+
+                    <!-- Navigation Items -->
+                    <ScrollViewer VerticalScrollBarVisibility="Auto" 
+                                  DockPanel.Dock="Top"
+                                  Margin="8,20,8,0">
+                        <StackPanel>
+                            <Button x:Name="BtnDashboard" 
+                                    Content="📊 Dashboard" 
+                                    Style="{StaticResource SidebarButtonActive}" 
+                                    Margin="8,4" 
+                                    Click="Dashboard_Click"/>
+
+                            <Button x:Name="BtnPatientRegistration" 
+                                    Content="📝 Patient Registration" 
+                                    Style="{StaticResource SidebarButton}" 
+                                    Margin="8,4" 
+                                    Click="PatientRegistration_Click"/>
+
+                            <Button x:Name="BtnAppointmentManagement" 
+                                    Content="📅 Appointment Management" 
+                                    Style="{StaticResource SidebarButton}" 
+                                    Margin="8,4" 
+                                    Click="AppointmentManagement_Click"/>
+
+                            <Button x:Name="BtnSettings" 
+                                    Content="⚙️ System Settings" 
+                                    Style="{StaticResource SidebarButton}" 
+                                    Margin="8,4" 
+                                    Click="Settings_Click"/>
+                        </StackPanel>
+                    </ScrollViewer>
+
+                    <!-- Logout Button at Bottom -->
+                    <StackPanel DockPanel.Dock="Bottom" Margin="16,12">
+                        <Button Content="🚪 Logout" 
+                                Background="#D32F2F" 
+                                Foreground="White" 
+                                Padding="12"
+                                BorderThickness="0"
+                                Cursor="Hand"
+                                Click="Logout_Click">
+                            <Button.Style>
+                                <Style TargetType="Button">
+                                    <Setter Property="Template">
+                                        <Setter.Value>
+                                            <ControlTemplate TargetType="Button">
+                                                <Border Background="{TemplateBinding Background}"
+                                                        Padding="{TemplateBinding Padding}"
+                                                        CornerRadius="8">
+                                                    <ContentPresenter HorizontalAlignment="Center" 
+                                                                      VerticalAlignment="Center"/>
+                                                </Border>
+                                            </ControlTemplate>
+                                        </Setter.Value>
+                                    </Setter>
+                                    <Style.Triggers>
+                                        <Trigger Property="IsMouseOver" Value="True">
+                                            <Setter Property="Background" Value="#C62828"/>
+                                        </Trigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </Button.Style>
+                        </Button>
+                    </StackPanel>
+                </DockPanel>
             </Border>
 
-            <ScrollViewer VerticalScrollBarVisibility="Auto">
-                <StackPanel Margin="20">
-
-                    <!-- Summary Cards -->
-                    <UniformGrid Columns="4" Margin="0,0,0,20">
-                        <Border Background="White" CornerRadius="8" Padding="16" Margin="6">
-                            <StackPanel>
-                                <TextBlock Text="Registered Patients" Foreground="Gray"/>
-                                <TextBlock Text="1,245" FontSize="26" FontWeight="Bold"/>
-                                <TextBlock Text="↑12% from last month" Foreground="Green"/>
-                            </StackPanel>
-                        </Border>
-                        <Border Background="White" CornerRadius="8" Padding="16" Margin="6">
-                            <StackPanel>
-                                <TextBlock Text="Today's Appointments" Foreground="Gray"/>
-                                <TextBlock Text="87" FontSize="26" FontWeight="Bold"/>
-                                <TextBlock Text="↑5% from yesterday" Foreground="Blue"/>
-                            </StackPanel>
-                        </Border>
-                        <Border Background="White" CornerRadius="8" Padding="16" Margin="6">
-                            <StackPanel>
-                                <TextBlock Text="Pending Appointments" Foreground="Gray"/>
-                                <TextBlock Text="23" FontSize="26" FontWeight="Bold"/>
-                                <TextBlock Text="⚠ Requires confirmation" Foreground="OrangeRed"/>
-                            </StackPanel>
-                        </Border>
-                        <Border Background="White" CornerRadius="8" Padding="16" Margin="6">
-                            <StackPanel>
-                                <TextBlock Text="Completed Today" Foreground="Gray"/>
-                                <TextBlock Text="45" FontSize="26" FontWeight="Bold"/>
-                                <TextBlock Text="↑8% efficiency" Foreground="Green"/>
-                            </StackPanel>
-                        </Border>
-                    </UniformGrid>
-
-                    <Grid Margin="0,0,0,20">
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="3*"/>
-                            <ColumnDefinition Width="*"/>
-                        </Grid.ColumnDefinitions>
-
-                        <!-- Today's Appointment -->
-                        <Border Grid.Column="0" Background="White" CornerRadius="8" Padding="16" Margin="6">
-                            <StackPanel>
+            <!-- MAIN CONTENT AREA -->
+            <DockPanel Grid.Column="1" Background="#F5F5F5">
+                <!-- Top Bar -->
+                <Border DockPanel.Dock="Top" 
+                        Height="70" 
+                        Background="White" 
+                        BorderBrush="#E0E0E0"
+                        BorderThickness="0,0,0,1"
+                        Padding="20,0">
+                    <Grid>
+                        <TextBlock x:Name="txtPageTitle" 
+                                   Text="Receptionist Dashboard" 
+                                   FontSize="24" 
+                                   FontWeight="Bold"
+                                   Foreground="#2E7D32" 
+                                   VerticalAlignment="Center"/>
+                        <StackPanel Orientation="Horizontal" 
+                                    HorizontalAlignment="Right" 
+                                    VerticalAlignment="Center">
+                            <Border Background="#FFF3E0" 
+                                    CornerRadius="20"
+                                    Width="40"
+                                    Height="40"
+                                    Cursor="Hand">
                                 <Grid>
-                                    <TextBlock Text="Today's Appointment" FontSize="16" FontWeight="Bold"
+                                    <TextBlock Text="🔔" 
+                                               FontSize="20"
+                                               HorizontalAlignment="Center"
                                                VerticalAlignment="Center"/>
-                                    <TextBox Width="200" HorizontalAlignment="Right" Margin="0,0,10,0"
-                                             VerticalAlignment="Center" Height="30">
-                                        <materialDesign:HintAssist.Hint>Search Patient</materialDesign:HintAssist.Hint>
-                                    </TextBox>
+                                    <Border Background="#FF5722"
+                                            Width="18"
+                                            Height="18"
+                                            CornerRadius="9"
+                                            HorizontalAlignment="Right"
+                                            VerticalAlignment="Top"
+                                            Margin="0,-2,-2,0">
+                                        <TextBlock Text="7"
+                                                   Foreground="White"
+                                                   FontSize="10"
+                                                   FontWeight="Bold"
+                                                   HorizontalAlignment="Center"
+                                                   VerticalAlignment="Center"/>
+                                    </Border>
                                 </Grid>
-
-                                <DataGrid AutoGenerateColumns="False" HeadersVisibility="Column"
-                                          CanUserAddRows="False" IsReadOnly="True" Margin="0,10,0,0">
-                                    <DataGrid.Columns>
-                                        <DataGridTextColumn Header="Date &amp; Time" Binding="{Binding Date}" Width="150"/>
-                                        <DataGridTextColumn Header="Patient Name" Binding="{Binding Name}" Width="200"/>
-                                        <DataGridTextColumn Header="Contact" Binding="{Binding Contact}" Width="200"/>
-                                        <DataGridTextColumn Header="Status" Binding="{Binding Status}" Width="150"/>
-                                        <DataGridTemplateColumn Header="Action" Width="100">
-                                            <DataGridTemplateColumn.CellTemplate>
-                                                <DataTemplate>
-                                                    <Button Content="EDIT" Background="#2E7D32" Foreground="White" Padding="6,2"/>
-                                                </DataTemplate>
-                                            </DataGridTemplateColumn.CellTemplate>
-                                        </DataGridTemplateColumn>
-                                    </DataGrid.Columns>
-                                </DataGrid>
-                            </StackPanel>
-                        </Border>
-
-                        <!-- Quick Actions -->
-                        <Border Grid.Column="1" Background="White" CornerRadius="8" Padding="16" Margin="6">
-                            <StackPanel>
-                                <TextBlock Text="Quick Actions" FontSize="16" FontWeight="Bold" Margin="0,0,0,10"/>
-                                <Button Content="Register New Patient" Background="#2E7D32" Foreground="White" Padding="10" Margin="0,4,0,4"/>
-                                <Button Content="Schedule Appointment" Background="#E0E0E0" Foreground="Black" Padding="10" Margin="0,4,0,4"/>
-                                <Button Content="Print Appointment Slips" Background="#FFE0B2" Foreground="Black" Padding="10" Margin="0,4,0,4"/>
-                            </StackPanel>
-                        </Border>
+                            </Border>
+                        </StackPanel>
                     </Grid>
-                </StackPanel>
-            </ScrollViewer>
-        </DockPanel>
+                </Border>
+
+                <!-- MAIN CONTENT WRAPPER -->
+                <Grid Background="#F5F5F5">
+                    <!-- Default Dashboard Content -->
+                    <ScrollViewer x:Name="DashboardPanel" 
+                                  VerticalScrollBarVisibility="Auto"
+                                  HorizontalScrollBarVisibility="Disabled">
+                        <StackPanel Margin="20">
+                            <!-- Summary Cards -->
+                            <Grid Margin="0,0,0,20">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="*"/>
+                                </Grid.ColumnDefinitions>
+
+                                <Border Grid.Column="0" Background="White" CornerRadius="10" Padding="20" Margin="0,0,10,0">
+                                    <Border.Effect>
+                                        <DropShadowEffect Color="#000000" BlurRadius="10" ShadowDepth="2" Opacity="0.1"/>
+                                    </Border.Effect>
+                                    <Grid>
+                                        <StackPanel VerticalAlignment="Center">
+                                            <TextBlock Text="Registered Patients" Foreground="#757575" FontSize="13"/>
+                                            <TextBlock Text="1,245" FontSize="32" FontWeight="Bold" Foreground="#2E7D32" Margin="0,8,0,0"/>
+                                            <StackPanel Orientation="Horizontal" Margin="0,4,0,0">
+                                                <TextBlock Text="✓" Foreground="#4CAF50" FontWeight="Bold" Margin="0,0,4,0"/>
+                                                <TextBlock Text="+12% from last month" Foreground="#4CAF50" FontSize="12"/>
+                                            </StackPanel>
+                                        </StackPanel>
+                                        <Border Background="#E8F5E9" 
+                                                Width="60" Height="60" 
+                                                CornerRadius="30"
+                                                HorizontalAlignment="Right"
+                                                VerticalAlignment="Top">
+                                            <TextBlock Text="👥" FontSize="28" 
+                                                       HorizontalAlignment="Center" 
+                                                       VerticalAlignment="Center"/>
+                                        </Border>
+                                    </Grid>
+                                </Border>
+
+                                <Border Grid.Column="1" Background="White" CornerRadius="10" Padding="20" Margin="5,0,5,0">
+                                    <Border.Effect>
+                                        <DropShadowEffect Color="#000000" BlurRadius="10" ShadowDepth="2" Opacity="0.1"/>
+                                    </Border.Effect>
+                                    <Grid>
+                                        <StackPanel VerticalAlignment="Center">
+                                            <TextBlock Text="Today's Appointments" Foreground="#757575" FontSize="13"/>
+                                            <TextBlock Text="87" FontSize="32" FontWeight="Bold" Foreground="#2196F3" Margin="0,8,0,0"/>
+                                            <StackPanel Orientation="Horizontal" Margin="0,4,0,0">
+                                                <TextBlock Text="✓" Foreground="#2196F3" FontWeight="Bold" Margin="0,0,4,0"/>
+                                                <TextBlock Text="+5% from yesterday" Foreground="#2196F3" FontSize="12"/>
+                                            </StackPanel>
+                                        </StackPanel>
+                                        <Border Background="#E3F2FD" 
+                                                Width="60" Height="60" 
+                                                CornerRadius="30"
+                                                HorizontalAlignment="Right"
+                                                VerticalAlignment="Top">
+                                            <TextBlock Text="📅" FontSize="28" 
+                                                       HorizontalAlignment="Center" 
+                                                       VerticalAlignment="Center"/>
+                                        </Border>
+                                    </Grid>
+                                </Border>
+
+                                <Border Grid.Column="2" Background="White" CornerRadius="10" Padding="20" Margin="5,0,5,0">
+                                    <Border.Effect>
+                                        <DropShadowEffect Color="#000000" BlurRadius="10" ShadowDepth="2" Opacity="0.1"/>
+                                    </Border.Effect>
+                                    <Grid>
+                                        <StackPanel VerticalAlignment="Center">
+                                            <TextBlock Text="Pending Appointments" Foreground="#757575" FontSize="13"/>
+                                            <TextBlock Text="23" FontSize="32" FontWeight="Bold" Foreground="#FF9800" Margin="0,8,0,0"/>
+                                            <StackPanel Orientation="Horizontal" Margin="0,4,0,0">
+                                                <TextBlock Text="⚠" Foreground="#FF9800" FontWeight="Bold" Margin="0,0,4,0"/>
+                                                <TextBlock Text="Requires confirmation" Foreground="#FF9800" FontSize="12"/>
+                                            </StackPanel>
+                                        </StackPanel>
+                                        <Border Background="#FFF3E0" 
+                                                Width="60" Height="60" 
+                                                CornerRadius="30"
+                                                HorizontalAlignment="Right"
+                                                VerticalAlignment="Top">
+                                            <TextBlock Text="⏳" FontSize="28" 
+                                                       HorizontalAlignment="Center" 
+                                                       VerticalAlignment="Center"/>
+                                        </Border>
+                                    </Grid>
+                                </Border>
+
+                                <Border Grid.Column="3" Background="White" CornerRadius="10" Padding="20" Margin="10,0,0,0">
+                                    <Border.Effect>
+                                        <DropShadowEffect Color="#000000" BlurRadius="10" ShadowDepth="2" Opacity="0.1"/>
+                                    </Border.Effect>
+                                    <Grid>
+                                        <StackPanel VerticalAlignment="Center">
+                                            <TextBlock Text="Completed Today" Foreground="#757575" FontSize="13"/>
+                                            <TextBlock Text="45" FontSize="32" FontWeight="Bold" Foreground="#4CAF50" Margin="0,8,0,0"/>
+                                            <StackPanel Orientation="Horizontal" Margin="0,4,0,0">
+                                                <TextBlock Text="✓" Foreground="#4CAF50" FontWeight="Bold" Margin="0,0,4,0"/>
+                                                <TextBlock Text="+8% efficiency" Foreground="#4CAF50" FontSize="12"/>
+                                            </StackPanel>
+                                        </StackPanel>
+                                        <Border Background="#E8F5E9" 
+                                                Width="60" Height="60" 
+                                                CornerRadius="30"
+                                                HorizontalAlignment="Right"
+                                                VerticalAlignment="Top">
+                                            <TextBlock Text="✅" FontSize="28" 
+                                                       HorizontalAlignment="Center" 
+                                                       VerticalAlignment="Center"/>
+                                        </Border>
+                                    </Grid>
+                                </Border>
+                            </Grid>
+
+                            <!-- Today's Appointments & Quick Actions -->
+                            <Grid Margin="0,0,0,20">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="3*" MinWidth="600"/>
+                                    <ColumnDefinition Width="*" MinWidth="250"/>
+                                </Grid.ColumnDefinitions>
+
+                                <!-- Today's Appointment -->
+                                <Border Grid.Column="0" Background="White" CornerRadius="10" Padding="20" Margin="0,0,10,0">
+                                    <Border.Effect>
+                                        <DropShadowEffect Color="#000000" BlurRadius="10" ShadowDepth="2" Opacity="0.1"/>
+                                    </Border.Effect>
+                                    <DockPanel>
+                                        <Grid DockPanel.Dock="Top" Margin="0,0,0,15">
+                                            <StackPanel>
+                                                <TextBlock Text="Today's Appointments" 
+                                                           FontSize="18" 
+                                                           FontWeight="Bold" 
+                                                           Foreground="#333"/>
+                                                <TextBlock Text="Manage and track today's patient appointments"
+                                                           Foreground="#757575" 
+                                                           FontSize="13" 
+                                                           Margin="0,4,0,0"/>
+                                            </StackPanel>
+                                            <TextBox Width="200" 
+                                                     Height="40"
+                                                     HorizontalAlignment="Right"
+                                                     VerticalAlignment="Bottom"
+                                                     Padding="10,8"
+                                                     BorderBrush="#E0E0E0"
+                                                     BorderThickness="1">
+                                                <materialDesign:HintAssist.Hint>🔍 Search Patient</materialDesign:HintAssist.Hint>
+                                            </TextBox>
+                                        </Grid>
+
+                                        <DataGrid x:Name="AppointmentsDataGrid"
+                                                  AutoGenerateColumns="False" 
+                                                  HeadersVisibility="Column"
+                                                  CanUserAddRows="False" 
+                                                  IsReadOnly="True"
+                                                  GridLinesVisibility="Horizontal"
+                                                  BorderThickness="0"
+                                                  Background="White"
+                                                  RowBackground="White"
+                                                  AlternatingRowBackground="#F9F9F9">
+                                            <DataGrid.ColumnHeaderStyle>
+                                                <Style TargetType="DataGridColumnHeader">
+                                                    <Setter Property="Background" Value="#F5F5F5"/>
+                                                    <Setter Property="Foreground" Value="#333"/>
+                                                    <Setter Property="FontWeight" Value="SemiBold"/>
+                                                    <Setter Property="Padding" Value="10"/>
+                                                    <Setter Property="BorderThickness" Value="0,0,0,1"/>
+                                                    <Setter Property="BorderBrush" Value="#E0E0E0"/>
+                                                </Style>
+                                            </DataGrid.ColumnHeaderStyle>
+                                            <DataGrid.CellStyle>
+                                                <Style TargetType="DataGridCell">
+                                                    <Setter Property="Padding" Value="10"/>
+                                                    <Setter Property="BorderThickness" Value="0"/>
+                                                </Style>
+                                            </DataGrid.CellStyle>
+                                            <DataGrid.Columns>
+                                                <DataGridTextColumn Header="Date &amp; Time" Binding="{Binding Date}" Width="140"/>
+                                                <DataGridTextColumn Header="Patient Name" Binding="{Binding Name}" Width="*" MinWidth="150"/>
+                                                <DataGridTextColumn Header="Contact" Binding="{Binding Contact}" Width="130"/>
+                                                <DataGridTextColumn Header="Status" Binding="{Binding Status}" Width="120"/>
+                                                <DataGridTemplateColumn Header="Action" Width="100">
+                                                    <DataGridTemplateColumn.CellTemplate>
+                                                        <DataTemplate>
+                                                            <Button Content="EDIT" 
+                                                                    Background="#4CAF50" 
+                                                                    Foreground="White" 
+                                                                    Padding="8,4"
+                                                                    BorderThickness="0"
+                                                                    Cursor="Hand"
+                                                                    FontSize="11"
+                                                                    FontWeight="Bold">
+                                                                <Button.Style>
+                                                                    <Style TargetType="Button">
+                                                                        <Setter Property="Template">
+                                                                            <Setter.Value>
+                                                                                <ControlTemplate TargetType="Button">
+                                                                                    <Border Background="{TemplateBinding Background}"
+                                                                                            Padding="{TemplateBinding Padding}"
+                                                                                            CornerRadius="4">
+                                                                                        <ContentPresenter HorizontalAlignment="Center" 
+                                                                                                          VerticalAlignment="Center"/>
+                                                                                    </Border>
+                                                                                </ControlTemplate>
+                                                                            </Setter.Value>
+                                                                        </Setter>
+                                                                        <Style.Triggers>
+                                                                            <Trigger Property="IsMouseOver" Value="True">
+                                                                                <Setter Property="Background" Value="#45A049"/>
+                                                                            </Trigger>
+                                                                        </Style.Triggers>
+                                                                    </Style>
+                                                                </Button.Style>
+                                                            </Button>
+                                                        </DataTemplate>
+                                                    </DataGridTemplateColumn.CellTemplate>
+                                                </DataGridTemplateColumn>
+                                            </DataGrid.Columns>
+                                        </DataGrid>
+                                    </DockPanel>
+                                </Border>
+
+                                <!-- Quick Actions -->
+                                <Border Grid.Column="1" Background="White" CornerRadius="10" Padding="20" Margin="10,0,0,0">
+                                    <Border.Effect>
+                                        <DropShadowEffect Color="#000000" BlurRadius="10" ShadowDepth="2" Opacity="0.1"/>
+                                    </Border.Effect>
+                                    <StackPanel>
+                                        <TextBlock Text="Quick Actions" 
+                                                   FontSize="18" 
+                                                   FontWeight="Bold" 
+                                                   Foreground="#333"
+                                                   Margin="0,0,0,20"/>
+                                        <Button Style="{StaticResource QuickActionBtn}">
+                                            <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
+                                                <TextBlock Text="➕" FontSize="16" Margin="0,0,8,0"/>
+                                                <TextBlock Text="Register New Patient"/>
+                                            </StackPanel>
+                                        </Button>
+                                        <Button Style="{StaticResource SecondaryActionBtn}">
+                                            <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
+                                                <TextBlock Text="📅" FontSize="16" Margin="0,0,8,0"/>
+                                                <TextBlock Text="Schedule Appointment"/>
+                                            </StackPanel>
+                                        </Button>
+                                        <Button Style="{StaticResource SecondaryActionBtn}">
+                                            <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
+                                                <TextBlock Text="🖨️" FontSize="16" Margin="0,0,8,0"/>
+                                                <TextBlock Text="Print Appointment Slips"/>
+                                            </StackPanel>
+                                        </Button>
+                                    </StackPanel>
+                                </Border>
+                            </Grid>
+                        </StackPanel>
+                    </ScrollViewer>
+
+                    <!-- Swappable Subpages -->
+                    <ContentControl x:Name="MainContent" Visibility="Collapsed"/>
+                </Grid>
+            </DockPanel>
+        </Grid>
     </Grid>
 </controls:MetroWindow>

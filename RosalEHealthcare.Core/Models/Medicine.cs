@@ -10,6 +10,7 @@ namespace RosalEHealthcare.Core.Models
     public class Medicine
     {
         [Key]
+        public int Id { get; set; }
         public int MedicineId { get; set; }
 
         [Required, MaxLength(100)]
@@ -19,12 +20,17 @@ namespace RosalEHealthcare.Core.Models
         public string Category { get; set; }
 
         public int Stock { get; set; }
-
         public decimal Price { get; set; }
-
         public DateTime ExpiryDate { get; set; }
 
         [MaxLength(50)]
         public string Status { get; set; }
+
+        // ADDED: Properties that might be useful (optional)
+        public string GenericName { get; set; }
+        public string Brand { get; set; }
+        public string Type { get; set; }
+        public string Strength { get; set; }
+        public string Unit { get; set; }
     }
 }

@@ -4,6 +4,7 @@ using System;
 using System.IO;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
 
@@ -55,6 +56,70 @@ namespace RosalEHealthcare.UI.WPF.Views
             else
             {
                 ProfileEllipse.Fill = Brushes.LightGray;
+            }
+        }
+
+        // Window Control Events
+        private void Window_StateChanged(object sender, EventArgs e)
+        {
+            if (this.WindowState == WindowState.Maximized)
+            {
+                btnMaximize.Content = "❐";
+                // Remove border radius when maximized
+                this.BorderThickness = new Thickness(0);
+            }
+            else if (this.WindowState == WindowState.Normal)
+            {
+                btnMaximize.Content = "□";
+                this.BorderThickness = new Thickness(0);
+            }
+        }
+
+        private void TitleBar_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
+        {
+            if (e.ClickCount == 2)
+            {
+                ToggleMaximize();
+            }
+            else if (e.ButtonState == MouseButtonState.Pressed)
+            {
+                try
+                {
+                    this.DragMove();
+                }
+                catch
+                {
+                    // Ignore exception when window is maximized
+                }
+            }
+        }
+
+        private void btnMinimize_Click(object sender, RoutedEventArgs e)
+        {
+            this.WindowState = WindowState.Minimized;
+        }
+
+        private void btnMaximize_Click(object sender, RoutedEventArgs e)
+        {
+            ToggleMaximize();
+        }
+
+        private void btnClose_Click(object sender, RoutedEventArgs e)
+        {
+            Application.Current.Shutdown();
+        }
+
+        private void ToggleMaximize()
+        {
+            if (this.WindowState == WindowState.Maximized)
+            {
+                this.WindowState = WindowState.Normal;
+                btnMaximize.Content = "□";
+            }
+            else
+            {
+                this.WindowState = WindowState.Maximized;
+                btnMaximize.Content = "❐";
             }
         }
 
@@ -142,9 +207,17 @@ namespace RosalEHealthcare.UI.WPF.Views
 
         private void Logout_Click(object sender, RoutedEventArgs e)
         {
-            var login = new LoginWindow();
-            login.Show();
-            Close();
+            var result = MessageBox.Show("Are you sure you want to logout?",
+                                         "Confirm Logout",
+                                         MessageBoxButton.YesNo,
+                                         MessageBoxImage.Question);
+
+            if (result == MessageBoxResult.Yes)
+            {
+                var login = new LoginWindow();
+                login.Show();
+                Close();
+            }
         }
     }
 }

@@ -2,71 +2,87 @@
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
-             MinWidth="1100" MinHeight="700"
-             Background="{DynamicResource MaterialDesignPaper}">
+             Background="#F5F5F5">
 
     <ScrollViewer VerticalScrollBarVisibility="Auto">
-        <StackPanel Margin="24">
-            <!-- HEADER -->
-            <TextBlock Text="Appointment Lists"
-                       FontSize="28" FontWeight="Bold"
-                       Foreground="{DynamicResource PrimaryHueMidBrush}"
-                       Margin="0,0,0,20"/>
+        <StackPanel Margin="30">
 
             <!-- SUMMARY CARDS -->
-            <UniformGrid Columns="4" Margin="0,0,0,24">
-                <materialDesign:Card Padding="16" Margin="6" Background="{DynamicResource MaterialDesignPaper}">
-                    <StackPanel HorizontalAlignment="Center">
-                        <TextBlock Text="Completed" FontWeight="Bold" Foreground="Gray" FontSize="14"/>
-                        <TextBlock x:Name="txtCompletedCount" Text="0" FontSize="32" FontWeight="Bold" Foreground="#2E7D32" Margin="0,4"/>
-                        <materialDesign:PackIcon Kind="CheckCircle" Width="28" Height="28" Foreground="#2E7D32"/>
+            <UniformGrid Columns="4" Margin="0 0 0 24">
+                <!-- COMPLETED -->
+                <Border Background="White" CornerRadius="12" Padding="20"
+                        Margin="6" BorderBrush="#E0E0E0" BorderThickness="1">
+                    <StackPanel>
+                        <TextBlock Text="Completed" Foreground="#666" FontWeight="SemiBold"/>
+                        <TextBlock x:Name="txtCompletedCount" Text="0"
+                                   FontSize="30" FontWeight="Bold" Margin="0 4 0 4"/>
+                        <materialDesign:PackIcon Kind="CheckCircle"
+                                                 Width="30" Height="30"
+                                                 Foreground="#2E7D32"/>
                     </StackPanel>
-                </materialDesign:Card>
+                </Border>
 
-                <materialDesign:Card Padding="16" Margin="6" Background="{DynamicResource MaterialDesignPaper}">
-                    <StackPanel HorizontalAlignment="Center">
-                        <TextBlock Text="Confirmed" FontWeight="Bold" Foreground="Gray" FontSize="14"/>
-                        <TextBlock x:Name="txtConfirmedCount" Text="0" FontSize="32" FontWeight="Bold" Foreground="#1565C0" Margin="0,4"/>
-                        <materialDesign:PackIcon Kind="CheckCircleOutline" Width="28" Height="28" Foreground="#1565C0"/>
+                <!-- CONFIRMED -->
+                <Border Background="White" CornerRadius="12" Padding="20"
+                        Margin="6" BorderBrush="#E0E0E0" BorderThickness="1">
+                    <StackPanel>
+                        <TextBlock Text="Confirmed" Foreground="#666" FontWeight="SemiBold"/>
+                        <TextBlock x:Name="txtConfirmedCount" Text="0"
+                                   FontSize="30" FontWeight="Bold" Margin="0 4 0 4"/>
+                        <materialDesign:PackIcon Kind="Check"
+                                                 Width="30" Height="30"
+                                                 Foreground="#1565C0"/>
                     </StackPanel>
-                </materialDesign:Card>
+                </Border>
 
-                <materialDesign:Card Padding="16" Margin="6" Background="{DynamicResource MaterialDesignPaper}">
-                    <StackPanel HorizontalAlignment="Center">
-                        <TextBlock Text="Pending" FontWeight="Bold" Foreground="Gray" FontSize="14"/>
-                        <TextBlock x:Name="txtPendingCount" Text="0" FontSize="32" FontWeight="Bold" Foreground="#FFB300" Margin="0,4"/>
-                        <materialDesign:PackIcon Kind="TimerSand" Width="28" Height="28" Foreground="#FFB300"/>
+                <!-- PENDING -->
+                <Border Background="White" CornerRadius="12" Padding="20"
+                        Margin="6" BorderBrush="#E0E0E0" BorderThickness="1">
+                    <StackPanel>
+                        <TextBlock Text="Pending" Foreground="#666" FontWeight="SemiBold"/>
+                        <TextBlock x:Name="txtPendingCount" Text="0"
+                                   FontSize="30" FontWeight="Bold" Margin="0 4 0 4"/>
+                        <materialDesign:PackIcon Kind="TimerSand"
+                                                 Width="30" Height="30"
+                                                 Foreground="#FFA000"/>
                     </StackPanel>
-                </materialDesign:Card>
+                </Border>
 
-                <materialDesign:Card Padding="16" Margin="6" Background="{DynamicResource MaterialDesignPaper}">
-                    <StackPanel HorizontalAlignment="Center">
-                        <TextBlock Text="Cancelled" FontWeight="Bold" Foreground="Gray" FontSize="14"/>
-                        <TextBlock x:Name="txtCancelledCount" Text="0" FontSize="32" FontWeight="Bold" Foreground="#D32F2F" Margin="0,4"/>
-                        <materialDesign:PackIcon Kind="CloseCircle" Width="28" Height="28" Foreground="#D32F2F"/>
+                <!-- CANCELLED -->
+                <Border Background="White" CornerRadius="12" Padding="20"
+                        Margin="6" BorderBrush="#E0E0E0" BorderThickness="1">
+                    <StackPanel>
+                        <TextBlock Text="Cancelled" Foreground="#666" FontWeight="SemiBold"/>
+                        <TextBlock x:Name="txtCancelledCount" Text="0"
+                                   FontSize="30" FontWeight="Bold" Margin="0 4 0 4"/>
+                        <materialDesign:PackIcon Kind="CloseCircle"
+                                                 Width="30" Height="30"
+                                                 Foreground="#D32F2F"/>
                     </StackPanel>
-                </materialDesign:Card>
+                </Border>
             </UniformGrid>
 
             <!-- FILTER BAR -->
-            <materialDesign:Card Padding="12" Margin="0,0,0,24" Background="White">
-                <DockPanel LastChildFill="False">
-                    <TextBox x:Name="txtSearch"
-                             Width="260"
-                             Height="38"
-                             VerticalAlignment="Center"
-                             Margin="0,0,12,0"
-                             Padding="8"
-                             materialDesign:HintAssist.Hint="Search by Patient name..."
-                             TextChanged="TxtSearch_TextChanged"
-                             Style="{StaticResource MaterialDesignOutlinedTextBox}" />
+            <Border Background="White" CornerRadius="12"
+                    Padding="14" BorderBrush="#E0E0E0" BorderThickness="1" Margin="0 0 0 20">
 
+                <DockPanel LastChildFill="False">
+
+                    <!-- Search -->
+                    <TextBox x:Name="txtSearch"
+                             Width="320" Height="40"
+                             Margin="0 0 12 0"
+                             Padding="10"
+                             materialDesign:HintAssist.Hint="Search by Patient name..."
+                             Style="{StaticResource MaterialDesignOutlinedTextBox}"
+                             TextChanged="TxtSearch_TextChanged"/>
+
+                    <!-- Status -->
                     <ComboBox x:Name="cbStatus"
-                              Width="130" Margin="0,0,12,0"
-                              VerticalAlignment="Center"
-                              SelectionChanged="CbStatus_SelectionChanged"
-                              materialDesign:HintAssist.Hint="Status"
-                              Style="{StaticResource MaterialDesignOutlinedComboBox}">
+                              Width="150" Height="40"
+                              Margin="0 0 12 0"
+                              Style="{StaticResource MaterialDesignOutlinedComboBox}"
+                              SelectionChanged="CbStatus_SelectionChanged">
                         <ComboBoxItem Content="All Status" IsSelected="True"/>
                         <ComboBoxItem Content="Completed"/>
                         <ComboBoxItem Content="Confirmed"/>
@@ -74,29 +90,32 @@
                         <ComboBoxItem Content="Cancelled"/>
                     </ComboBox>
 
+                    <!-- Date -->
                     <DatePicker x:Name="dpDate"
-                                Width="140"
-                                Margin="0,0,12,0"
-                                VerticalAlignment="Center"
-                                materialDesign:HintAssist.Hint="Date"
-                                Style="{StaticResource MaterialDesignOutlinedDatePicker}" />
+                                Width="150" Height="40"
+                                Margin="0 0 12 0"
+                                Style="{StaticResource MaterialDesignOutlinedDatePicker}"/>
 
+                    <!-- Type -->
                     <ComboBox x:Name="cbType"
-                              Width="130"
-                              VerticalAlignment="Center"
-                              SelectionChanged="CbType_SelectionChanged"
-                              materialDesign:HintAssist.Hint="Type"
-                              Style="{StaticResource MaterialDesignOutlinedComboBox}">
+                              Width="150" Height="40"
+                              Style="{StaticResource MaterialDesignOutlinedComboBox}"
+                              SelectionChanged="CbType_SelectionChanged">
                         <ComboBoxItem Content="All Types" IsSelected="True"/>
                         <ComboBoxItem Content="Check-up"/>
                         <ComboBoxItem Content="Follow-up"/>
                         <ComboBoxItem Content="Consultation"/>
                     </ComboBox>
                 </DockPanel>
-            </materialDesign:Card>
+
+            </Border>
 
             <!-- APPOINTMENT CARDS -->
-            <WrapPanel x:Name="wpAppointments" ItemWidth="500" Orientation="Horizontal"/>
+            <WrapPanel x:Name="wpAppointments"
+                       ItemWidth="520"
+                       Orientation="Horizontal"
+                       Margin="0 0 0 60"/>
+
         </StackPanel>
     </ScrollViewer>
 </UserControl>

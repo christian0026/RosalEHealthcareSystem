@@ -298,8 +298,14 @@
     <Compile Include="Views\DoctorDashboard.xaml.cs">
       <DependentUpon>DoctorDashboard.xaml</DependentUpon>
     </Compile>
+    <Compile Include="Views\DoctorMedicalReports.xaml.cs">
+      <DependentUpon>DoctorMedicalReports.xaml</DependentUpon>
+    </Compile>
     <Compile Include="Views\DoctorPatientRecords.xaml.cs">
       <DependentUpon>DoctorPatientRecords.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="Views\DoctorPrescriptionManagement.xaml.cs">
+      <DependentUpon>DoctorPrescriptionManagement.xaml</DependentUpon>
     </Compile>
     <Compile Include="Views\LoginWindow.xaml.cs">
       <DependentUpon>LoginWindow.xaml</DependentUpon>
@@ -347,7 +353,15 @@
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
+    <Page Include="Views\DoctorMedicalReports.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
     <Page Include="Views\DoctorPatientRecords.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="Views\DoctorPrescriptionManagement.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>

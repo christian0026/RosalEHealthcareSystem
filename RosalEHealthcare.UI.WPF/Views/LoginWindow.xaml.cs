@@ -31,6 +31,20 @@ namespace RosalEHealthcare.UI.WPF.Views
             }
         }
 
+        private void Window_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
+        {
+            // Allow dragging the window by clicking anywhere
+            if (e.ButtonState == MouseButtonState.Pressed)
+            {
+                this.DragMove();
+            }
+        }
+
+        private void btnClose_Click(object sender, RoutedEventArgs e)
+        {
+            Application.Current.Shutdown();
+        }
+
         private void LoginUser()
         {
             string email = txtUsername.Text?.Trim() ?? "";

@@ -1,0 +1,241 @@
+﻿<UserControl x:Class="RosalEHealthcare.UI.WPF.Views.DoctorPrescriptionManagement"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
+             Background="#F5F5F5"
+             MinWidth="900">
+
+    <UserControl.Resources>
+        <!-- Fallback styles if MaterialDesign doesn't load -->
+        <Style x:Key="MaterialDesignOutlinedTextBox" TargetType="TextBox" BasedOn="{StaticResource {x:Type TextBox}}">
+            <Setter Property="Padding" Value="8"/>
+            <Setter Property="BorderBrush" Value="#CCCCCC"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="VerticalContentAlignment" Value="Center"/>
+        </Style>
+
+        <Style x:Key="MaterialDesignOutlinedComboBox" TargetType="ComboBox" BasedOn="{StaticResource {x:Type ComboBox}}">
+            <Setter Property="Padding" Value="8"/>
+            <Setter Property="BorderBrush" Value="#CCCCCC"/>
+            <Setter Property="BorderThickness" Value="1"/>
+        </Style>
+
+        <Style x:Key="MaterialDesignOutlinedDatePicker" TargetType="DatePicker" BasedOn="{StaticResource {x:Type DatePicker}}">
+            <Setter Property="Padding" Value="8"/>
+            <Setter Property="BorderBrush" Value="#CCCCCC"/>
+            <Setter Property="BorderThickness" Value="1"/>
+        </Style>
+    </UserControl.Resources>
+
+    <ScrollViewer VerticalScrollBarVisibility="Auto">
+        <StackPanel Margin="24">
+            <!-- Header with search + New Prescription button -->
+            <DockPanel LastChildFill="False" Margin="0,0,0,16">
+                <TextBox x:Name="txtSearchPatient" Width="420" Height="42" Margin="0,0,12,0"
+                         VerticalAlignment="Center"
+                         Style="{StaticResource MaterialDesignOutlinedTextBox}"
+                         TextChanged="TxtSearchPatient_TextChanged"/>
+                <TextBlock Text="Search by Patient name..." 
+                           IsHitTestVisible="False"
+                           Foreground="#999"
+                           Margin="16,0,0,0"
+                           VerticalAlignment="Center"
+                           FontSize="14">
+                    <TextBlock.Visibility>
+                        <Binding ElementName="txtSearchPatient" Path="Text.IsEmpty">
+                            <Binding.Converter>
+                                <BooleanToVisibilityConverter/>
+                            </Binding.Converter>
+                        </Binding>
+                    </TextBlock.Visibility>
+                </TextBlock>
+
+                <Button x:Name="btnNewPrescription" Content="+ New Prescription"
+                        Background="#25A44A" Foreground="White"
+                        Padding="12,10" Margin="0,0,8,0" 
+                        BorderThickness="0"
+                        Click="BtnNewPrescription_Click"/>
+            </DockPanel>
+
+            <!-- Patient summary card -->
+            <Border Background="White" CornerRadius="8" Padding="14" BorderBrush="#E0E0E0" BorderThickness="1">
+                <DockPanel>
+                    <StackPanel Orientation="Horizontal" DockPanel.Dock="Left">
+                        <Border Width="56" Height="56" Background="#2E7D32" CornerRadius="28" VerticalAlignment="Center">
+                            <TextBlock x:Name="txtInitials" Text="?" Foreground="White" FontWeight="Bold" 
+                                       HorizontalAlignment="Center" VerticalAlignment="Center" FontSize="18"/>
+                        </Border>
+                        <StackPanel Margin="12,0,0,0" VerticalAlignment="Center">
+                            <TextBlock x:Name="txtPatientName" Text="Patient Name" FontSize="16" FontWeight="Bold"/>
+                            <TextBlock x:Name="txtPatientMeta" Text="ID: -" Foreground="#777" FontSize="12"/>
+                        </StackPanel>
+                    </StackPanel>
+
+                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" DockPanel.Dock="Right">
+                        <Border Background="#F6F6F6" CornerRadius="6" Padding="10" Margin="8">
+                            <StackPanel>
+                                <TextBlock Text="Blood Type" FontSize="11" Foreground="#777"/>
+                                <TextBlock x:Name="txtBloodType" Text="-" FontWeight="Bold"/>
+                            </StackPanel>
+                        </Border>
+                        <Border Background="#F6F6F6" CornerRadius="6" Padding="10" Margin="8">
+                            <StackPanel>
+                                <TextBlock Text="Height" FontSize="11" Foreground="#777"/>
+                                <TextBlock x:Name="txtHeight" Text="-" FontWeight="Bold"/>
+                            </StackPanel>
+                        </Border>
+                        <Border Background="#F6F6F6" CornerRadius="6" Padding="10" Margin="8">
+                            <StackPanel>
+                                <TextBlock Text="Weight" FontSize="11" Foreground="#777"/>
+                                <TextBlock x:Name="txtWeight" Text="-" FontWeight="Bold"/>
+                            </StackPanel>
+                        </Border>
+                    </StackPanel>
+                </DockPanel>
+            </Border>
+
+            <!-- New Prescription form -->
+            <Border Background="White" CornerRadius="8" Padding="18" BorderBrush="#E0E0E0" BorderThickness="1" Margin="0,16,0,0">
+                <StackPanel>
+                    <DockPanel Margin="0,0,0,12">
+                        <TextBlock Text="NEW PRESCRIPTION" FontSize="18" FontWeight="Bold"/>
+                        <TextBlock x:Name="txtCreatedDate" Text="" HorizontalAlignment="Right" DockPanel.Dock="Right" Foreground="#666"/>
+                    </DockPanel>
+
+                    <!-- Diagnosis row -->
+                    <StackPanel Margin="0,12,0,0">
+                        <TextBlock Text="Diagnosis" FontWeight="Bold" Margin="0,0,0,8"/>
+                        <TextBox x:Name="txtPrimaryDiagnosis" Height="40" 
+                                 Style="{StaticResource MaterialDesignOutlinedTextBox}"/>
+
+                        <DockPanel Margin="0,8,0,0">
+                            <TextBox x:Name="txtSecondaryDiagnosis" Height="40" 
+                                     Style="{StaticResource MaterialDesignOutlinedTextBox}" 
+                                     DockPanel.Dock="Left" Margin="0,0,12,0"/>
+                            <ComboBox x:Name="cbConditionSeverity" Width="180" Height="40"
+                                      Style="{StaticResource MaterialDesignOutlinedComboBox}"
+                                      DockPanel.Dock="Right">
+                                <ComboBoxItem Content="Mild" />
+                                <ComboBoxItem Content="Moderate" IsSelected="True"/>
+                                <ComboBoxItem Content="Severe" />
+                            </ComboBox>
+                        </DockPanel>
+                    </StackPanel>
+
+                    <!-- Medication -->
+                    <StackPanel Margin="0,18,0,0">
+                        <TextBlock Text="Medication" FontWeight="Bold" Margin="0,0,0,8"/>
+                        <Border Background="#FAFAFA" BorderBrush="#DDD" BorderThickness="1" CornerRadius="6" Padding="12">
+                            <StackPanel>
+                                <ScrollViewer HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Auto" MaxHeight="300">
+                                    <ItemsControl x:Name="icMedicines">
+                                        <ItemsControl.ItemTemplate>
+                                            <DataTemplate>
+                                                <StackPanel Orientation="Horizontal" Margin="0,6,0,6">
+                                                    <ComboBox Width="260" Height="34"
+                                                              ItemsSource="{Binding DataContext.MedicineLookup, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                                              SelectedValuePath="Name"
+                                                              SelectedValue="{Binding MedicineName, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                                              DisplayMemberPath="Name"
+                                                              Style="{StaticResource MaterialDesignOutlinedComboBox}"/>
+
+                                                    <TextBox Width="120" Height="34" Margin="6,0" 
+                                                             Text="{Binding Dosage, Mode=TwoWay}" 
+                                                             Style="{StaticResource MaterialDesignOutlinedTextBox}"/>
+
+                                                    <ComboBox Width="140" Height="34" Margin="6,0" 
+                                                              SelectedValue="{Binding Frequency, Mode=TwoWay}"
+                                                              Style="{StaticResource MaterialDesignOutlinedComboBox}">
+                                                        <ComboBoxItem Content="Once daily" IsSelected="True"/>
+                                                        <ComboBoxItem Content="Twice daily"/>
+                                                        <ComboBoxItem Content="Thrice daily"/>
+                                                        <ComboBoxItem Content="As needed"/>
+                                                    </ComboBox>
+
+                                                    <TextBox Width="120" Height="34" Margin="6,0" 
+                                                             Text="{Binding Duration, Mode=TwoWay}" 
+                                                             Style="{StaticResource MaterialDesignOutlinedTextBox}"/>
+
+                                                    <TextBox Width="80" Height="34" Margin="6,0" 
+                                                             Text="{Binding Quantity, Mode=TwoWay}" 
+                                                             Style="{StaticResource MaterialDesignOutlinedTextBox}"/>
+
+                                                    <ComboBox Width="120" Height="34" Margin="6,0" 
+                                                              SelectedValue="{Binding Route, Mode=TwoWay}"
+                                                              Style="{StaticResource MaterialDesignOutlinedComboBox}">
+                                                        <ComboBoxItem Content="Oral" IsSelected="True"/>
+                                                        <ComboBoxItem Content="Topical"/>
+                                                        <ComboBoxItem Content="IV"/>
+                                                        <ComboBoxItem Content="IM"/>
+                                                    </ComboBox>
+
+                                                    <Button Content="✖" Width="36" Height="34" Margin="8,0,0,0" 
+                                                            Click="BtnRemoveMedicine_Click"
+                                                            Background="#E05A4F" Foreground="White"
+                                                            BorderThickness="0"/>
+                                                </StackPanel>
+                                            </DataTemplate>
+                                        </ItemsControl.ItemTemplate>
+                                    </ItemsControl>
+                                </ScrollViewer>
+
+                                <Button Content="Add Medicine" Width="120" HorizontalAlignment="Right" Margin="0,8,0,0" 
+                                        Click="BtnAddMedicine_Click"
+                                        Background="#4CAF50" Foreground="White" BorderThickness="0"/>
+                            </StackPanel>
+                        </Border>
+                    </StackPanel>
+
+                    <!-- Special Instructions -->
+                    <StackPanel Margin="0,16,0,0">
+                        <TextBlock Text="SPECIAL INSTRUCTIONS" FontWeight="Bold" Margin="0,0,0,8"/>
+                        <TextBox x:Name="txtSpecialInstructions" Height="100" TextWrapping="Wrap" AcceptsReturn="True"
+                                 Style="{StaticResource MaterialDesignOutlinedTextBox}"
+                                 VerticalScrollBarVisibility="Auto"/>
+                    </StackPanel>
+
+                    <!-- follow-up row -->
+                    <DockPanel Margin="0,12,0,0">
+                        <StackPanel Orientation="Horizontal" HorizontalAlignment="Left" DockPanel.Dock="Left" Margin="0,0,12,0">
+                            <TextBlock Text="Follow-up required" VerticalAlignment="Center" Margin="0,0,12,0"/>
+                            <ComboBox x:Name="cbFollowUp" Width="100" Height="34" 
+                                      Style="{StaticResource MaterialDesignOutlinedComboBox}">
+                                <ComboBoxItem Content="Yes" />
+                                <ComboBoxItem Content="No" IsSelected="True"/>
+                            </ComboBox>
+                        </StackPanel>
+
+                        <StackPanel Orientation="Horizontal" HorizontalAlignment="Left" DockPanel.Dock="Left" Margin="12,0,12,0">
+                            <TextBlock Text="Next Appointment" VerticalAlignment="Center" Margin="0,0,12,0"/>
+                            <DatePicker x:Name="dpNextAppointment" Width="160" Height="34"
+                                        Style="{StaticResource MaterialDesignOutlinedDatePicker}"/>
+                        </StackPanel>
+
+                        <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" DockPanel.Dock="Right">
+                            <TextBlock Text="Priority Level" VerticalAlignment="Center" Margin="0,0,12,0"/>
+                            <ComboBox x:Name="cbPriority" Width="160" Height="34" 
+                                      Style="{StaticResource MaterialDesignOutlinedComboBox}">
+                                <ComboBoxItem Content="Routine" IsSelected="True"/>
+                                <ComboBoxItem Content="Urgent"/>
+                                <ComboBoxItem Content="High"/>
+                            </ComboBox>
+                        </StackPanel>
+                    </DockPanel>
+
+                    <!-- Buttons -->
+                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,20,0,0">
+                        <Button Content="Cancel" Width="96" Height="36" Margin="0,0,12,0" 
+                                Click="BtnCancel_Click" 
+                                Background="#9E9E9E" Foreground="White" BorderThickness="0"/>
+                        <Button Content="Print" Width="96" Height="36" Margin="0,0,12,0" 
+                                Click="BtnPrint_Click" 
+                                Background="#FFB300" Foreground="White" BorderThickness="0"/>
+                        <Button Content="Save Prescription" Width="140" Height="36" 
+                                Click="BtnSavePrescription_Click" 
+                                Background="#25A44A" Foreground="White" BorderThickness="0"/>
+                    </StackPanel>
+                </StackPanel>
+            </Border>
+        </StackPanel>
+    </ScrollViewer>
+</UserControl>

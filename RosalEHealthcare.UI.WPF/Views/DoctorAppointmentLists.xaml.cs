@@ -67,62 +67,45 @@ namespace RosalEHealthcare.UI.WPF.Views
 
         private Card CreateAppointmentCard(Appointment appt)
         {
-            // Dynamic colors - using if-else instead of switch expression
-            string bg, statusColor;
-            if (appt.Status == "Completed")
+            // background colors according to your design
+            string barColor = appt.Status switch
             {
-                bg = "#E8F5E9";
-                statusColor = "#2E7D32";
-            }
-            else if (appt.Status == "Confirmed")
-            {
-                bg = "#E3F2FD";
-                statusColor = "#1565C0";
-            }
-            else if (appt.Status == "Pending")
-            {
-                bg = "#FFF8E1";
-                statusColor = "#FFB300";
-            }
-            else if (appt.Status == "Cancelled")
-            {
-                bg = "#FFEBEE";
-                statusColor = "#D32F2F";
-            }
-            else
-            {
-                bg = "#EEEEEE";
-                statusColor = "Gray";
-            }
+                "Completed" => "#2E7D32",
+                "Confirmed" => "#1565C0",
+                "Pending" => "#FFA000",
+                "Cancelled" => "#D32F2F",
+                _ => "Gray"
+            };
 
             var card = new Card
             {
+                Width = 520,
                 Margin = new Thickness(10),
-                Padding = new Thickness(16),
+                Padding = new Thickness(20),
                 Background = Brushes.White,
-                Width = 460
+                BorderBrush = (Brush)new BrushConverter().ConvertFromString("#E0E0E0"),
+                BorderThickness = new Thickness(1),
+               
             };
 
-            var stack = new StackPanel();
+            var container = new StackPanel();
 
-            // Header
-            var header = new DockPanel { LastChildFill = true };
-
-            var patientName = new TextBlock
+            // HEADER (name + status chip)
+            var header = new DockPanel();
+            header.Children.Add(new TextBlock
             {
                 Text = appt.PatientName,
+                FontSize = 18,
                 FontWeight = FontWeights.Bold,
-                FontSize = 16,
                 VerticalAlignment = VerticalAlignment.Center
-            };
-            header.Children.Add(patientName);
+            });
 
-            var statusChip = new Border
+            var chip = new Border
             {
-                Background = (Brush)new BrushConverter().ConvertFromString(statusColor),
-                CornerRadius = new CornerRadius(8),
-                Padding = new Thickness(8, 4, 8, 4),
-                Margin = new Thickness(6, 0, 0, 0),
+                Background = (Brush)new BrushConverter().ConvertFromString(barColor),
+                CornerRadius = new CornerRadius(10),
+                Padding = new Thickness(8, 3, 8, 3),
+                Margin = new Thickness(10, 0, 0, 0),
                 HorizontalAlignment = HorizontalAlignment.Right,
                 Child = new TextBlock
                 {
@@ -132,81 +115,74 @@ namespace RosalEHealthcare.UI.WPF.Views
                     FontSize = 11
                 }
             };
-            DockPanel.SetDock(statusChip, Dock.Right);
-            header.Children.Add(statusChip);
+            DockPanel.SetDock(chip, Dock.Right);
+            header.Children.Add(chip);
 
-            stack.Children.Add(header);
+            container.Children.Add(header);
 
-            // Content
-            stack.Children.Add(new TextBlock
-            {
-                Text = string.Format("ID: {0}", appt.AppointmentId),
-                Foreground = Brushes.Gray,
-                FontSize = 12,
-                Margin = new Thickness(0, 4, 0, 0)
-            });
-
-            stack.Children.Add(new TextBlock
-            {
-                Text = appt.Time.ToString("MMM dd, yyyy - hh:mm tt"),
-                FontWeight = FontWeights.Medium,
-                Margin = new Thickness(0, 6, 0, 0)
-            });
-
-            stack.Children.Add(new TextBlock
-            {
-                Text = string.Format("Type: {0}", appt.Type),
-                Foreground = Brushes.Gray,
-                FontSize = 12,
-                Margin = new Thickness(0, 2, 0, 0)
-            });
-
-            stack.Children.Add(new TextBlock
-            {
-                Text = string.Format("Condition: {0}", appt.Condition),
-                Foreground = Brushes.Gray,
-                FontSize = 12,
-                Margin = new Thickness(0, 2, 0, 0)
-            });
+            // DETAILS
+            container.Children.Add(MakeText($"ID: {appt.AppointmentId}", 12, "#777"));
+            container.Children.Add(MakeText($"Today, {appt.Time:hh:mm tt}", 14, "Black", true));
+            container.Children.Add(MakeText($"Type: {appt.Type}", 12, "#777"));
+            container.Children.Add(MakeText($"Condition: {appt.Condition}", 12, "#777"));
 
             if (appt.LastVisit.HasValue)
-            {
-                stack.Children.Add(new TextBlock
-                {
-                    Text = string.Format("Last Visit: {0}", appt.LastVisit.Value.ToString("MMM dd, yyyy")),
-                    Foreground = Brushes.Gray,
-                    FontSize = 12,
-                    Margin = new Thickness(0, 2, 0, 0)
-                });
-            }
+                container.Children.Add(MakeText($"Last Visit: {appt.LastVisit:MMM dd, yyyy}", 12, "#777"));
 
-            stack.Children.Add(new TextBlock
-            {
-                Text = string.Format("Contact: {0}", appt.Contact),
-                Foreground = Brushes.Gray,
-                FontSize = 12,
-                Margin = new Thickness(0, 2, 0, 10)
-            });
+            container.Children.Add(MakeText($"Contact: {appt.Contact}", 12, "#777"));
 
-            // Buttons
+            // BUTTON ROW
             var btnRow = new StackPanel { Orientation = Orientation.Horizontal };
 
             if (appt.Status == "Pending")
-                btnRow.Children.Add(MakeButton("Confirm", "#4CAF50", Brushes.White, (s, e) => ConfirmAppointment(appt)));
+                btnRow.Children.Add(MakeButton("Confirm Appointment", "#4CAF50", ConfirmAppointment, appt));
 
             if (appt.Status == "Confirmed")
-                btnRow.Children.Add(MakeButton("Complete", "#2E7D32", Brushes.White, (s, e) => CompleteAppointment(appt)));
+                btnRow.Children.Add(MakeButton("Complete", "#2E7D32", CompleteAppointment, appt));
 
-            btnRow.Children.Add(MakeButton("View Details", "#2196F3", Brushes.White, (s, e) => ViewAppointment(appt)));
-            btnRow.Children.Add(MakeButton("Print Report", "#757575", Brushes.White, (s, e) => PrintReport(appt)));
+            btnRow.Children.Add(MakeButton("View Details", "#2196F3", ViewAppointment, appt));
+            btnRow.Children.Add(MakeButton("Print Report", "#757575", PrintReport, appt));
 
             if (appt.Status != "Completed" && appt.Status != "Cancelled")
-                btnRow.Children.Add(MakeButton("Cancel", "#E05A4F", Brushes.White, (s, e) => CancelAppointment(appt)));
+                btnRow.Children.Add(MakeButton("Cancel", "#E53935", CancelAppointment, appt));
 
-            stack.Children.Add(btnRow);
-            card.Content = stack;
+            container.Children.Add(btnRow);
+
+            card.Content = container;
             return card;
         }
+
+        private TextBlock MakeText(string text, int size, string color, bool bold = false)
+        {
+            return new TextBlock
+            {
+                Text = text,
+                FontSize = size,
+                Foreground = (Brush)new BrushConverter().ConvertFromString(color),
+                FontWeight = bold ? FontWeights.SemiBold : FontWeights.Normal,
+                Margin = new Thickness(0, 4, 0, 0)
+            };
+        }
+
+        private Button MakeButton(string text, string colorHex, Action<Appointment> clickAction, Appointment appt)
+        {
+            var btn = new Button
+            {
+                Content = text,
+                Background = (Brush)new BrushConverter().ConvertFromString(colorHex),
+                Foreground = Brushes.White,
+                Margin = new Thickness(0, 10, 10, 0),
+                Padding = new Thickness(14, 6, 14, 6),
+                FontSize = 12,
+                FontWeight = FontWeights.Medium,
+                BorderThickness = new Thickness(0),
+                Cursor = System.Windows.Input.Cursors.Hand
+            };
+
+            btn.Click += (s, e) => clickAction(appt);
+            return btn;
+        }
+
 
         private Button MakeButton(string text, string bg, Brush fg, RoutedEventHandler click)
         {
