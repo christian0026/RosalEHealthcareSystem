@@ -1,6 +1,7 @@
 ﻿using MahApps.Metro.Controls;
 using RosalEHealthcare.Data.Contexts;
 using RosalEHealthcare.Data.Services;
+using RosalEHealthcare.UI.WPF.Helpers;
 using System;
 using System.Linq;
 using System.Windows;
@@ -67,6 +68,9 @@ namespace RosalEHealthcare.UI.WPF.Views
 
                     if (user != null && user.Role == role && userService.ValidateUser(email, password))
                     {
+                        // SET SESSION MANAGER
+                        SessionManager.CurrentUser = user;
+
                         // Update last login
                         user.LastLogin = DateTime.Now;
                         userService.UpdateUser(user);

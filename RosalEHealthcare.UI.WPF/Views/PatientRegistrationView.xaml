@@ -1,0 +1,551 @@
+﻿<UserControl x:Class="RosalEHealthcare.UI.WPF.Views.PatientRegistrationView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             mc:Ignorable="d" 
+             d:DesignHeight="800" d:DesignWidth="1000"
+             Background="#F5F5F5">
+
+    <UserControl.Resources>
+        <!-- Tab Button Style -->
+        <Style x:Key="TabButton" TargetType="Button">
+            <Setter Property="Background" Value="White"/>
+            <Setter Property="Foreground" Value="#666666"/>
+            <Setter Property="Padding" Value="20,12"/>
+            <Setter Property="Margin" Value="0,0,10,0"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="BorderBrush" Value="#E0E0E0"/>
+            <Setter Property="FontSize" Value="14"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border Background="{TemplateBinding Background}"
+                                BorderBrush="{TemplateBinding BorderBrush}"
+                                BorderThickness="{TemplateBinding BorderThickness}"
+                                Padding="{TemplateBinding Padding}"
+                                CornerRadius="8,8,0,0">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+            <Style.Triggers>
+                <Trigger Property="IsMouseOver" Value="True">
+                    <Setter Property="Background" Value="#F5F5F5"/>
+                </Trigger>
+            </Style.Triggers>
+        </Style>
+
+        <Style x:Key="TabButtonActive" TargetType="Button" BasedOn="{StaticResource TabButton}">
+            <Setter Property="Background" Value="#4CAF50"/>
+            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="BorderBrush" Value="#4CAF50"/>
+        </Style>
+
+        <!-- Input Label Style -->
+        <Style x:Key="InputLabel" TargetType="TextBlock">
+            <Setter Property="FontSize" Value="13"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="Foreground" Value="#333333"/>
+            <Setter Property="Margin" Value="0,0,0,8"/>
+        </Style>
+
+        <!-- Input TextBox Style -->
+        <Style x:Key="InputTextBox" TargetType="TextBox">
+            <Setter Property="Height" Value="45"/>
+            <Setter Property="Padding" Value="12,10"/>
+            <Setter Property="FontSize" Value="14"/>
+            <Setter Property="BorderBrush" Value="#E0E0E0"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="Background" Value="White"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="TextBox">
+                        <Border Background="{TemplateBinding Background}"
+                                BorderBrush="{TemplateBinding BorderBrush}"
+                                BorderThickness="{TemplateBinding BorderThickness}"
+                                CornerRadius="6">
+                            <ScrollViewer x:Name="PART_ContentHost" Margin="5,0"/>
+                        </Border>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <!-- ComboBox Style -->
+        <Style x:Key="InputComboBox" TargetType="ComboBox">
+            <Setter Property="Height" Value="45"/>
+            <Setter Property="Padding" Value="12,10"/>
+            <Setter Property="FontSize" Value="14"/>
+            <Setter Property="BorderBrush" Value="#E0E0E0"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="Background" Value="White"/>
+        </Style>
+
+        <!-- DatePicker Style -->
+        <Style x:Key="InputDatePicker" TargetType="DatePicker">
+            <Setter Property="Height" Value="45"/>
+            <Setter Property="Padding" Value="12,10"/>
+            <Setter Property="FontSize" Value="14"/>
+            <Setter Property="BorderBrush" Value="#E0E0E0"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="Background" Value="White"/>
+        </Style>
+
+        <!-- Button Styles -->
+        <Style x:Key="PrimaryButton" TargetType="Button">
+            <Setter Property="Background" Value="#4CAF50"/>
+            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="Padding" Value="24,12"/>
+            <Setter Property="FontSize" Value="15"/>
+            <Setter Property="FontWeight" Value="Bold"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Margin" Value="8,0"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border Background="{TemplateBinding Background}"
+                                Padding="{TemplateBinding Padding}"
+                                CornerRadius="8">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+            <Style.Triggers>
+                <Trigger Property="IsMouseOver" Value="True">
+                    <Setter Property="Background" Value="#45A049"/>
+                </Trigger>
+                <Trigger Property="IsEnabled" Value="False">
+                    <Setter Property="Background" Value="#CCCCCC"/>
+                    <Setter Property="Cursor" Value="Arrow"/>
+                </Trigger>
+            </Style.Triggers>
+        </Style>
+
+        <Style x:Key="SecondaryButton" TargetType="Button" BasedOn="{StaticResource PrimaryButton}">
+            <Setter Property="Background" Value="#607D8B"/>
+            <Style.Triggers>
+                <Trigger Property="IsMouseOver" Value="True">
+                    <Setter Property="Background" Value="#546E7A"/>
+                </Trigger>
+            </Style.Triggers>
+        </Style>
+
+        <Style x:Key="OutlineButton" TargetType="Button" BasedOn="{StaticResource PrimaryButton}">
+            <Setter Property="Background" Value="White"/>
+            <Setter Property="Foreground" Value="#666666"/>
+            <Setter Property="BorderThickness" Value="2"/>
+            <Setter Property="BorderBrush" Value="#E0E0E0"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border Background="{TemplateBinding Background}"
+                                BorderBrush="{TemplateBinding BorderBrush}"
+                                BorderThickness="{TemplateBinding BorderThickness}"
+                                Padding="{TemplateBinding Padding}"
+                                CornerRadius="8">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+            <Style.Triggers>
+                <Trigger Property="IsMouseOver" Value="True">
+                    <Setter Property="Background" Value="#F5F5F5"/>
+                    <Setter Property="BorderBrush" Value="#4CAF50"/>
+                </Trigger>
+            </Style.Triggers>
+        </Style>
+    </UserControl.Resources>
+
+    <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+        <StackPanel Margin="20">
+            <!-- Search Section -->
+            <Border Background="White" CornerRadius="10" Padding="25" Margin="0,0,0,20">
+                <Border.Effect>
+                    <DropShadowEffect Color="#000000" BlurRadius="10" ShadowDepth="2" Opacity="0.1"/>
+                </Border.Effect>
+                <StackPanel>
+                    <TextBlock Text="Search Existing Patient" 
+                               FontSize="18" 
+                               FontWeight="Bold" 
+                               Foreground="#333"
+                               Margin="0,0,0,15"/>
+
+                    <Grid Margin="0,0,0,20">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+
+                        <TextBox x:Name="txtSearch"
+                                 Grid.Column="0"
+                                 Style="{StaticResource InputTextBox}"
+                                 Height="50"
+                                 Padding="15,12"
+                                 FontSize="15"
+                                 KeyDown="txtSearch_KeyDown"/>
+                        <TextBlock Text="🔍 Search by name or Patient ID..."
+                                   IsHitTestVisible="False"
+                                   Foreground="#BDBDBD"
+                                   FontSize="15"
+                                   Margin="18,0,0,0"
+                                   VerticalAlignment="Center"
+                                   Visibility="{Binding Text, ElementName=txtSearch, Converter={StaticResource StringNullOrEmptyToVis}}"/>
+
+                        <Button Grid.Column="1"
+                                Content="🔍 Search"
+                                Style="{StaticResource PrimaryButton}"
+                                Height="50"
+                                Padding="30,12"
+                                FontSize="15"
+                                Margin="15,0,0,0"
+                                Click="SearchPatient_Click"/>
+                    </Grid>
+
+                    <!-- Tab Buttons -->
+                    <StackPanel Orientation="Horizontal">
+                        <Button x:Name="btnRecentPatients"
+                                Content="Recent Patients"
+                                Style="{StaticResource TabButtonActive}"
+                                Click="TabRecentPatients_Click"/>
+                        <Button x:Name="btnTodayRegistration"
+                                Content="Today's Registration"
+                                Style="{StaticResource TabButton}"
+                                Click="TabTodayRegistration_Click"/>
+                        <Button x:Name="btnPendingAppointments"
+                                Content="Pending Appointments"
+                                Style="{StaticResource TabButton}"
+                                Click="TabPendingAppointments_Click"/>
+                    </StackPanel>
+
+                    <!-- Search Results DataGrid -->
+                    <DataGrid x:Name="dgSearchResults"
+                              AutoGenerateColumns="False"
+                              HeadersVisibility="Column"
+                              CanUserAddRows="False"
+                              IsReadOnly="True"
+                              GridLinesVisibility="Horizontal"
+                              BorderThickness="1"
+                              BorderBrush="#E0E0E0"
+                              Background="White"
+                              RowBackground="White"
+                              AlternatingRowBackground="#F9F9F9"
+                              Margin="0,0,0,0"
+                              MaxHeight="300"
+                              SelectionMode="Single"
+                              MouseDoubleClick="dgSearchResults_MouseDoubleClick">
+                        <DataGrid.ColumnHeaderStyle>
+                            <Style TargetType="DataGridColumnHeader">
+                                <Setter Property="Background" Value="#F5F5F5"/>
+                                <Setter Property="Foreground" Value="#333"/>
+                                <Setter Property="FontWeight" Value="SemiBold"/>
+                                <Setter Property="Padding" Value="12"/>
+                                <Setter Property="BorderThickness" Value="0,0,0,1"/>
+                                <Setter Property="BorderBrush" Value="#E0E0E0"/>
+                            </Style>
+                        </DataGrid.ColumnHeaderStyle>
+                        <DataGrid.CellStyle>
+                            <Style TargetType="DataGridCell">
+                                <Setter Property="Padding" Value="12"/>
+                                <Setter Property="BorderThickness" Value="0"/>
+                            </Style>
+                        </DataGrid.CellStyle>
+                        <DataGrid.Columns>
+                            <DataGridTextColumn Header="Patient ID" Binding="{Binding PatientId}" Width="120"/>
+                            <DataGridTextColumn Header="Full Name" Binding="{Binding FullName}" Width="*" MinWidth="180"/>
+                            <DataGridTextColumn Header="Age" Binding="{Binding Age}" Width="60"/>
+                            <DataGridTextColumn Header="Gender" Binding="{Binding Gender}" Width="80"/>
+                            <DataGridTextColumn Header="Contact" Binding="{Binding Contact}" Width="130"/>
+                            <DataGridTextColumn Header="Last Visit" Binding="{Binding LastVisit, StringFormat='{}{0:MM/dd/yyyy}'}" Width="110"/>
+                        </DataGrid.Columns>
+                    </DataGrid>
+                </StackPanel>
+            </Border>
+
+            <!-- New Patient Registration Form -->
+            <Border Background="White" CornerRadius="10" Padding="25">
+                <Border.Effect>
+                    <DropShadowEffect Color="#000000" BlurRadius="10" ShadowDepth="2" Opacity="0.1"/>
+                </Border.Effect>
+                <StackPanel>
+                    <StackPanel Margin="0,0,0,25">
+                        <TextBlock Text="New Patient Registration" 
+                                   FontSize="20" 
+                                   FontWeight="Bold" 
+                                   Foreground="#333"/>
+                        <TextBlock Text="Please fill in all required information to register a new patient" 
+                                   FontSize="13" 
+                                   Foreground="#757575"
+                                   Margin="0,4,0,0"/>
+                    </StackPanel>
+
+                    <!-- Personal Information -->
+                    <Border BorderBrush="#4CAF50" BorderThickness="0,0,0,3" Margin="0,0,0,20">
+                        <TextBlock Text="Personal Information" 
+                                   FontSize="16" 
+                                   FontWeight="Bold" 
+                                   Foreground="#4CAF50"
+                                   Margin="0,0,0,15"/>
+                    </Border>
+
+                    <Grid Margin="0,0,0,20">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="15"/>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="15"/>
+                            <ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
+
+                        <StackPanel Grid.Column="0">
+                            <TextBlock Style="{StaticResource InputLabel}">
+                                <Run Text="First Name"/>
+                                <Run Text="*" Foreground="Red"/>
+                            </TextBlock>
+                            <TextBox x:Name="txtFirstName" Style="{StaticResource InputTextBox}"/>
+                        </StackPanel>
+
+                        <StackPanel Grid.Column="2">
+                            <TextBlock Text="Middle Name" Style="{StaticResource InputLabel}"/>
+                            <TextBox x:Name="txtMiddleName" Style="{StaticResource InputTextBox}"/>
+                        </StackPanel>
+
+                        <StackPanel Grid.Column="4">
+                            <TextBlock Style="{StaticResource InputLabel}">
+                                <Run Text="Last Name"/>
+                                <Run Text="*" Foreground="Red"/>
+                            </TextBlock>
+                            <TextBox x:Name="txtLastName" Style="{StaticResource InputTextBox}"/>
+                        </StackPanel>
+                    </Grid>
+
+                    <Grid Margin="0,0,0,20">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="15"/>
+                            <ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
+
+                        <StackPanel Grid.Column="0">
+                            <TextBlock Style="{StaticResource InputLabel}">
+                                <Run Text="Date of Birth"/>
+                                <Run Text="*" Foreground="Red"/>
+                            </TextBlock>
+                            <DatePicker x:Name="dpBirthDate" 
+                                        Style="{StaticResource InputDatePicker}"
+                                        SelectedDateChanged="dpBirthDate_SelectedDateChanged"/>
+                        </StackPanel>
+
+                        <StackPanel Grid.Column="2">
+                            <TextBlock Style="{StaticResource InputLabel}">
+                                <Run Text="Gender"/>
+                                <Run Text="*" Foreground="Red"/>
+                            </TextBlock>
+                            <ComboBox x:Name="cmbGender" Style="{StaticResource InputComboBox}">
+                                <ComboBoxItem Content="Select Gender" IsSelected="True"/>
+                                <ComboBoxItem Content="Male"/>
+                                <ComboBoxItem Content="Female"/>
+                                <ComboBoxItem Content="Other"/>
+                            </ComboBox>
+                        </StackPanel>
+                    </Grid>
+
+                    <!-- Contact Information -->
+                    <Border BorderBrush="#4CAF50" BorderThickness="0,0,0,3" Margin="0,10,0,20">
+                        <TextBlock Text="Contact Information" 
+                                   FontSize="16" 
+                                   FontWeight="Bold" 
+                                   Foreground="#4CAF50"
+                                   Margin="0,0,0,15"/>
+                    </Border>
+
+                    <Grid Margin="0,0,0,20">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="15"/>
+                            <ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
+
+                        <StackPanel Grid.Column="0">
+                            <TextBlock Style="{StaticResource InputLabel}">
+                                <Run Text="Phone Number"/>
+                                <Run Text="*" Foreground="Red"/>
+                            </TextBlock>
+                            <TextBox x:Name="txtPhone" 
+                                     Style="{StaticResource InputTextBox}"
+                                     MaxLength="13"/>
+                            <TextBlock Text="+63 9XX XXX XXXX" 
+                                       FontSize="11" 
+                                       Foreground="#999"
+                                       Margin="2,4,0,0"/>
+                        </StackPanel>
+
+                        <StackPanel Grid.Column="2">
+                            <TextBlock Text="Email Address" Style="{StaticResource InputLabel}"/>
+                            <TextBox x:Name="txtEmail" Style="{StaticResource InputTextBox}"/>
+                            <TextBlock Text="patient@example.com" 
+                                       FontSize="11" 
+                                       Foreground="#999"
+                                       Margin="2,4,0,0"/>
+                        </StackPanel>
+                    </Grid>
+
+                    <StackPanel Margin="0,0,0,20">
+                        <TextBlock Style="{StaticResource InputLabel}">
+                            <Run Text="Complete Address"/>
+                            <Run Text="*" Foreground="Red"/>
+                        </TextBlock>
+                        <TextBox x:Name="txtAddress" 
+                                 Style="{StaticResource InputTextBox}"
+                                 Height="80"
+                                 TextWrapping="Wrap"
+                                 AcceptsReturn="True"
+                                 VerticalScrollBarVisibility="Auto"/>
+                        <TextBlock Text="House No., Street, Barangay, City, Province" 
+                                   FontSize="11" 
+                                   Foreground="#999"
+                                   Margin="2,4,0,0"/>
+                    </StackPanel>
+
+                    <!-- Clinical Information -->
+                    <Border BorderBrush="#4CAF50" BorderThickness="0,0,0,3" Margin="0,10,0,20">
+                        <TextBlock Text="Clinical Information" 
+                                   FontSize="16" 
+                                   FontWeight="Bold" 
+                                   Foreground="#4CAF50"
+                                   Margin="0,0,0,15"/>
+                    </Border>
+
+                    <StackPanel Margin="0,0,0,20">
+                        <TextBlock Style="{StaticResource InputLabel}">
+                            <Run Text="Chief Complaint / Reason for Visit"/>
+                            <Run Text="*" Foreground="Red"/>
+                        </TextBlock>
+                        <TextBox x:Name="txtChiefComplaint" 
+                                 Style="{StaticResource InputTextBox}"
+                                 Height="80"
+                                 TextWrapping="Wrap"
+                                 AcceptsReturn="True"
+                                 VerticalScrollBarVisibility="Auto"/>
+                        <TextBlock Text="Brief description of patient's main concern or reason for today's visit" 
+                                   FontSize="11" 
+                                   Foreground="#999"
+                                   Margin="2,4,0,0"/>
+                    </StackPanel>
+
+                    <StackPanel Margin="0,0,0,20">
+                        <TextBlock Text="Initial Condition/Symptoms" Style="{StaticResource InputLabel}"/>
+                        <TextBox x:Name="txtInitialCondition" 
+                                 Style="{StaticResource InputTextBox}"
+                                 Height="80"
+                                 TextWrapping="Wrap"
+                                 AcceptsReturn="True"
+                                 VerticalScrollBarVisibility="Auto"/>
+                        <TextBlock Text="Observable symptoms or patient's description of their condition" 
+                                   FontSize="11" 
+                                   Foreground="#999"
+                                   Margin="2,4,0,0"/>
+                    </StackPanel>
+
+                    <StackPanel Margin="0,0,0,20">
+                        <TextBlock Text="Clinical Notes" Style="{StaticResource InputLabel}"/>
+                        <TextBox x:Name="txtClinicalNotes" 
+                                 Style="{StaticResource InputTextBox}"
+                                 Height="80"
+                                 TextWrapping="Wrap"
+                                 AcceptsReturn="True"
+                                 VerticalScrollBarVisibility="Auto"/>
+                        <TextBlock Text="Additional notes, observations, or patient concerns to be reviewed by the doctor" 
+                                   FontSize="11" 
+                                   Foreground="#999"
+                                   Margin="2,4,0,0"/>
+                    </StackPanel>
+
+                    <!-- Basic Information -->
+                    <Border BorderBrush="#4CAF50" BorderThickness="0,0,0,3" Margin="0,10,0,20">
+                        <TextBlock Text="Basic Information" 
+                                   FontSize="16" 
+                                   FontWeight="Bold" 
+                                   Foreground="#4CAF50"
+                                   Margin="0,0,0,15"/>
+                    </Border>
+
+                    <StackPanel Margin="0,0,0,20">
+                        <TextBlock Text="Known Allergies" Style="{StaticResource InputLabel}"/>
+                        <TextBox x:Name="txtAllergies" 
+                                 Style="{StaticResource InputTextBox}"
+                                 Height="80"
+                                 TextWrapping="Wrap"
+                                 AcceptsReturn="True"
+                                 VerticalScrollBarVisibility="Auto"/>
+                        <TextBlock Text="List any known allergies (food, medicine, etc.)" 
+                                   FontSize="11" 
+                                   Foreground="#999"
+                                   Margin="2,4,0,0"/>
+                    </StackPanel>
+
+                    <StackPanel Margin="0,0,0,30">
+                        <TextBlock Text="Current Medications" Style="{StaticResource InputLabel}"/>
+                        <TextBox x:Name="txtCurrentMedications" 
+                                 Style="{StaticResource InputTextBox}"
+                                 Height="80"
+                                 TextWrapping="Wrap"
+                                 AcceptsReturn="True"
+                                 VerticalScrollBarVisibility="Auto"/>
+                        <TextBlock Text="List current medications being taken" 
+                                   FontSize="11" 
+                                   Foreground="#999"
+                                   Margin="2,4,0,0"/>
+                    </StackPanel>
+
+                    <!-- Data Privacy Consent -->
+                    <Border BorderBrush="#4CAF50" BorderThickness="0,0,0,3" Margin="0,10,0,20">
+                        <TextBlock Text="Data Privacy Consent" 
+                                   FontSize="16" 
+                                   FontWeight="Bold" 
+                                   Foreground="#4CAF50"
+                                   Margin="0,0,0,15"/>
+                    </Border>
+
+                    <Border Background="#F0F8FF" 
+                            BorderBrush="#4CAF50" 
+                            BorderThickness="1"
+                            CornerRadius="8"
+                            Padding="20"
+                            Margin="0,0,0,30">
+                        <CheckBox x:Name="chkConsent" 
+                                  FontSize="13"
+                                  Foreground="#333"
+                                  VerticalContentAlignment="Top">
+                            <TextBlock TextWrapping="Wrap" LineHeight="20">
+                                <Run Text="I consent to the collection, storage, and use of my personal health information by Rosal Medical Clinic for the purpose of providing healthcare services. I understand my rights under the Data Privacy Act of 2012."/>
+                                <Run Text="*" Foreground="Red" FontWeight="Bold"/>
+                            </TextBlock>
+                        </CheckBox>
+                    </Border>
+
+                    <!-- Action Buttons -->
+                    <Separator Margin="0,0,0,25" Background="#E0E0E0" Height="1"/>
+
+                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                        <Button Content="🖨️ Print Form"
+                                Style="{StaticResource OutlineButton}"
+                                Click="PrintForm_Click"/>
+                        <Button Content="💾 Save as Draft"
+                                Style="{StaticResource SecondaryButton}"
+                                Click="SaveAsDraft_Click"/>
+                        <Button Content="✓ Register Patient"
+                                Style="{StaticResource PrimaryButton}"
+                                Click="RegisterPatient_Click"/>
+                    </StackPanel>
+                </StackPanel>
+            </Border>
+        </StackPanel>
+    </ScrollViewer>
+</UserControl>

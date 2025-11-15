@@ -42,5 +42,8 @@ namespace RosalEHealthcare.Core.Models
                 return age;
             }
         }
+
+        // Add this property if not exists
+        public bool IsArchived { get; set; } = false;
     }
 }

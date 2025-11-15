@@ -20,7 +20,7 @@ namespace RosalEHealthcare.UI.WPF.Converters
             bool visible = isNullOrEmpty;
             if (invert) visible = !visible;
 
-            return visible ? Visibility.Visible : Visibility.Collapsed;
+            return string.IsNullOrEmpty(value as string) ? Visibility.Visible : Visibility.Collapsed;
         }
 
         public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)

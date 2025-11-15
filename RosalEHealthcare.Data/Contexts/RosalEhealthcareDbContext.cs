@@ -19,5 +19,30 @@ namespace RosalEHealthcare.Data.Contexts
         public DbSet<Medicine> Medicines { get; set; }
         public DbSet<Report> Reports { get; set; }
         public DbSet<ReportTemplate> ReportTemplates { get; set; }
+        public DbSet<ActivityLog> ActivityLogs { get; set; }
+
+        // NEW DbSets
+        public DbSet<MedicalHistory> MedicalHistories { get; set; }
+        public DbSet<MedicalDocument> MedicalDocuments { get; set; }
+        public DbSet<Notification> Notifications { get; set; }
+
+        protected override void OnModelCreating(DbModelBuilder modelBuilder)
+        {
+            base.OnModelCreating(modelBuilder);
+
+            // Configure MedicalHistory relationship - remove navigation property
+            modelBuilder.Entity<MedicalHistory>()
+                .HasRequired<Patient>(m => m.Patient)
+                .WithMany()
+                .HasForeignKey(m => m.PatientId)
+                .WillCascadeOnDelete(false);
+
+            // Configure MedicalDocument relationship - remove navigation property
+            modelBuilder.Entity<MedicalDocument>()
+                .HasRequired<Patient>(m => m.Patient)
+                .WithMany()
+                .HasForeignKey(m => m.PatientId)
+                .WillCascadeOnDelete(false);
+        }
     }
 }

@@ -151,7 +151,7 @@ namespace RosalEHealthcare.UI.WPF.Views
         {
             txtPageTitle.Text = "Patient Registration";
             HideAllContent();
-            // MainContent.Content = new PatientRegistrationView();
+            MainContent.Content = new PatientRegistrationView(_currentUser);
             MainContent.Visibility = Visibility.Visible;
             SetActiveButton(BtnPatientRegistration);
         }
@@ -160,7 +160,7 @@ namespace RosalEHealthcare.UI.WPF.Views
         {
             txtPageTitle.Text = "Appointment Management";
             HideAllContent();
-            // MainContent.Content = new AppointmentManagementView();
+            MainContent.Content = new AppointmentManagementView(_currentUser);
             MainContent.Visibility = Visibility.Visible;
             SetActiveButton(BtnAppointmentManagement);
         }
