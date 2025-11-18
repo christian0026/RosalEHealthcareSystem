@@ -4,7 +4,7 @@ using System.Windows;
 using RosalEHealthcare.Data.Contexts;
 using RosalEHealthcare.Data.Services;
 using RosalEHealthcare.UI.WPF.Views;
-using RosalEHealthcare.Core.Services;
+
 
 
 namespace RosalEHealthcare.UI.WPF

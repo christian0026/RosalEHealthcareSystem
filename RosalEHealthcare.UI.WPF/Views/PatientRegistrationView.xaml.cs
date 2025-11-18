@@ -324,13 +324,13 @@ namespace RosalEHealthcare.UI.WPF.Views
                 return false;
             }
 
-            if (chkConsent.IsChecked != true)
-            {
-                MessageBox.Show("Data Privacy Consent is required to proceed with registration.",
-                                "Validation Error", MessageBoxButton.OK, MessageBoxImage.Warning);
-                chkConsent.Focus();
-                return false;
-            }
+            //if (chkConsent.IsChecked != true)
+            //{
+            //    MessageBox.Show("Data Privacy Consent is required to proceed with registration.",
+            //                    "Validation Error", MessageBoxButton.OK, MessageBoxImage.Warning);
+            //    chkConsent.Focus();
+            //    return false;
+            //}
 
             return true;
         }
@@ -671,7 +671,7 @@ namespace RosalEHealthcare.UI.WPF.Views
             txtClinicalNotes.Clear();
             txtAllergies.Clear();
             txtCurrentMedications.Clear();
-            chkConsent.IsChecked = false;
+            //chkConsent.IsChecked = false;
             txtSearch.Clear();
             _editingPatientId = null;
         }

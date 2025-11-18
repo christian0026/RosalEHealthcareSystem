@@ -349,6 +349,9 @@
     <Compile Include="Views\ReceptionistDashboard.xaml.cs">
       <DependentUpon>ReceptionistDashboard.xaml</DependentUpon>
     </Compile>
+    <Compile Include="Views\RegisterPatientModal.xaml.cs">
+      <DependentUpon>RegisterPatientModal.xaml</DependentUpon>
+    </Compile>
     <Compile Include="Views\UserManagementView.xaml.cs">
       <DependentUpon>UserManagementView.xaml</DependentUpon>
     </Compile>
@@ -438,6 +441,10 @@
       <Generator>MSBuild:Compile</Generator>
     </Page>
     <Page Include="Views\ReceptionistDashboard.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="Views\RegisterPatientModal.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>

@@ -86,6 +86,56 @@ namespace RosalEHealthcare.Data.Services
 
         #region Search & Filter
 
+        // Add these new methods
+        public IEnumerable<Patient> SearchPaged(string query, string status, string gender, int pageNumber, int pageSize)
+        {
+            var q = _db.Patients.Where(p => p.Status != "Archived");
+
+            if (!string.IsNullOrWhiteSpace(query))
+            {
+                query = query.ToLower();
+                q = q.Where(x => x.FullName.ToLower().Contains(query) || x.PatientId.ToLower().Contains(query));
+            }
+
+            if (!string.IsNullOrWhiteSpace(status) && status != "All Status")
+                q = q.Where(x => x.Status == status);
+
+            if (!string.IsNullOrWhiteSpace(gender) && gender != "All Gender")
+                q = q.Where(x => x.Gender == gender);
+
+            return q.OrderByDescending(p => p.DateCreated)
+                .Skip((pageNumber - 1) * pageSize)
+                .Take(pageSize)
+                .ToList();
+        }
+
+        public int GetFilteredCount(string query, string status, string gender)
+        {
+            var q = _db.Patients.Where(p => p.Status != "Archived");
+
+            if (!string.IsNullOrWhiteSpace(query))
+            {
+                query = query.ToLower();
+                q = q.Where(x => x.FullName.ToLower().Contains(query) || x.PatientId.ToLower().Contains(query));
+            }
+
+            if (!string.IsNullOrWhiteSpace(status) && status != "All Status")
+                q = q.Where(x => x.Status == status);
+
+            if (!string.IsNullOrWhiteSpace(gender) && gender != "All Gender")
+                q = q.Where(x => x.Gender == gender);
+
+            return q.Count();
+        }
+
+        public int GetPatientsWaitingToday()
+        {
+            var today = DateTime.Today;
+            return _db.Appointments.Count(a =>
+                DbFunctions.TruncateTime(a.Time) == today &&
+                (a.Status == "PENDING" || a.Status == "CONFIRMED"));
+        }
+
         public IEnumerable<Patient> Search(string query, string status = null)
         {
             var q = _db.Patients.AsQueryable();
@@ -286,9 +336,13 @@ namespace RosalEHealthcare.Data.Services
 
         private string GeneratePatientId()
         {
+            // Get ALL patients from DB first, then filter in memory
             var year = DateTime.Now.Year;
+            var yearStr = year.ToString();
+
             var lastPatient = _db.Patients
-                .Where(p => p.PatientId.StartsWith($"PT-{year}"))
+                .ToList() // Get all patients first
+                .Where(p => p.PatientId != null && p.PatientId.StartsWith("PT-" + yearStr))
                 .OrderByDescending(p => p.PatientId)
                 .FirstOrDefault();
 
@@ -302,7 +356,7 @@ namespace RosalEHealthcare.Data.Services
                 }
             }
 
-            return $"PT-{year}-{nextNumber:D3}";
+            return string.Format("PT-{0}-{1:D3}", year, nextNumber);
         }
 
         #endregion
