@@ -43,6 +43,7 @@ namespace RosalEHealthcare.Data.Contexts
                 .WithMany()
                 .HasForeignKey(m => m.PatientId)
                 .WillCascadeOnDelete(false);
+
         }
     }
 }

@@ -283,6 +283,9 @@
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
     </ApplicationDefinition>
+    <Compile Include="Controls\AppointmentCard.xaml.cs">
+      <DependentUpon>AppointmentCard.xaml</DependentUpon>
+    </Compile>
     <Compile Include="Controls\NotificationToast.xaml.cs">
       <DependentUpon>NotificationToast.xaml</DependentUpon>
     </Compile>
@@ -356,6 +359,10 @@
       <DependentUpon>UserManagementView.xaml</DependentUpon>
     </Compile>
     <Compile Include="Views\ViewVisitDialog.cs" />
+    <Page Include="Controls\AppointmentCard.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
     <Page Include="Controls\NotificationToast.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>

@@ -10,14 +10,26 @@ namespace RosalEHealthcare.Core.Models
     {
         public int Id { get; set; }
         public string AppointmentId { get; set; }
-        public int PatientId { get; set; }
+
+        // Make PatientId nullable (appointments can be scheduled before patient is registered)
+        public int? PatientId { get; set; }
+
+        // Patient Information (stored directly in appointment)
         public string PatientName { get; set; }
+        public string Contact { get; set; }
+        public string Email { get; set; }
+        public string Address { get; set; }
+        public DateTime? BirthDate { get; set; }
+        public string Gender { get; set; }
+
+        // Appointment Details
         public string Type { get; set; }
-        public string Condition { get; set; }
-        public string Status { get; set; }
+        public string Condition { get; set; } // Chief Complaint
+        public string Status { get; set; } // PENDING, CONFIRMED, COMPLETED, CANCELLED
         public DateTime Time { get; set; }
         public DateTime? LastVisit { get; set; }
-        public string Contact { get; set; }
+
+        // Metadata
         public string CreatedBy { get; set; }
         public DateTime CreatedAt { get; set; }
     }

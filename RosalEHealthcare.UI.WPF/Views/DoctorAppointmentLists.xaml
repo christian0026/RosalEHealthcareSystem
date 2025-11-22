@@ -1,6 +1,7 @@
 ﻿<UserControl x:Class="RosalEHealthcare.UI.WPF.Views.DoctorAppointmentLists"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:local="clr-namespace:RosalEHealthcare.UI.WPF.Controls"
              xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
              Background="#F5F5F5">
 
@@ -8,113 +9,88 @@
         <StackPanel Margin="30">
 
             <!-- SUMMARY CARDS -->
-            <UniformGrid Columns="4" Margin="0 0 0 24">
-                <!-- COMPLETED -->
-                <Border Background="White" CornerRadius="12" Padding="20"
-                        Margin="6" BorderBrush="#E0E0E0" BorderThickness="1">
-                    <StackPanel>
-                        <TextBlock Text="Completed" Foreground="#666" FontWeight="SemiBold"/>
-                        <TextBlock x:Name="txtCompletedCount" Text="0"
-                                   FontSize="30" FontWeight="Bold" Margin="0 4 0 4"/>
-                        <materialDesign:PackIcon Kind="CheckCircle"
-                                                 Width="30" Height="30"
-                                                 Foreground="#2E7D32"/>
-                    </StackPanel>
-                </Border>
+            <Grid Margin="0,0,0,24">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="*"/>
+                </Grid.ColumnDefinitions>
 
-                <!-- CONFIRMED -->
-                <Border Background="White" CornerRadius="12" Padding="20"
-                        Margin="6" BorderBrush="#E0E0E0" BorderThickness="1">
-                    <StackPanel>
-                        <TextBlock Text="Confirmed" Foreground="#666" FontWeight="SemiBold"/>
-                        <TextBlock x:Name="txtConfirmedCount" Text="0"
-                                   FontSize="30" FontWeight="Bold" Margin="0 4 0 4"/>
-                        <materialDesign:PackIcon Kind="Check"
-                                                 Width="30" Height="30"
-                                                 Foreground="#1565C0"/>
-                    </StackPanel>
-                </Border>
+                <local:SummaryCard Grid.Column="0" x:Name="CardCompleted" 
+                                   Title="Completed" Value="0" Icon="✅" 
+                                   TopColor="#2E7D32" IconBackground="#E8F5E9"
+                                   TrendText="Finished consultations" TrendColor="#2E7D32" TrendIcon="✓"
+                                   Margin="0,0,10,0"/>
 
-                <!-- PENDING -->
-                <Border Background="White" CornerRadius="12" Padding="20"
-                        Margin="6" BorderBrush="#E0E0E0" BorderThickness="1">
-                    <StackPanel>
-                        <TextBlock Text="Pending" Foreground="#666" FontWeight="SemiBold"/>
-                        <TextBlock x:Name="txtPendingCount" Text="0"
-                                   FontSize="30" FontWeight="Bold" Margin="0 4 0 4"/>
-                        <materialDesign:PackIcon Kind="TimerSand"
-                                                 Width="30" Height="30"
-                                                 Foreground="#FFA000"/>
-                    </StackPanel>
-                </Border>
+                <local:SummaryCard Grid.Column="1" x:Name="CardConfirmed" 
+                                   Title="Confirmed" Value="0" Icon="✓" 
+                                   TopColor="#1565C0" IconBackground="#E3F2FD"
+                                   TrendText="Ready for consultation" TrendColor="#1565C0" TrendIcon="✓"
+                                   Margin="5,0,5,0"/>
 
-                <!-- CANCELLED -->
-                <Border Background="White" CornerRadius="12" Padding="20"
-                        Margin="6" BorderBrush="#E0E0E0" BorderThickness="1">
-                    <StackPanel>
-                        <TextBlock Text="Cancelled" Foreground="#666" FontWeight="SemiBold"/>
-                        <TextBlock x:Name="txtCancelledCount" Text="0"
-                                   FontSize="30" FontWeight="Bold" Margin="0 4 0 4"/>
-                        <materialDesign:PackIcon Kind="CloseCircle"
-                                                 Width="30" Height="30"
-                                                 Foreground="#D32F2F"/>
-                    </StackPanel>
-                </Border>
-            </UniformGrid>
+                <local:SummaryCard Grid.Column="2" x:Name="CardPending" 
+                                   Title="Pending" Value="0" Icon="⏳" 
+                                   TopColor="#FFA000" IconBackground="#FFF3E0"
+                                   TrendText="Awaiting confirmation" TrendColor="#FFA000" TrendIcon="⚠"
+                                   Margin="5,0,5,0"/>
+
+                <local:SummaryCard Grid.Column="3" x:Name="CardCancelled" 
+                                   Title="Cancelled" Value="0" Icon="✕" 
+                                   TopColor="#D32F2F" IconBackground="#FFEBEE"
+                                   TrendText="Cancelled appointments" TrendColor="#D32F2F" TrendIcon="▼"
+                                   Margin="10,0,0,0"/>
+            </Grid>
 
             <!-- FILTER BAR -->
-            <Border Background="White" CornerRadius="12"
-                    Padding="14" BorderBrush="#E0E0E0" BorderThickness="1" Margin="0 0 0 20">
+            <Border Background="White" CornerRadius="12" Padding="20" BorderBrush="#E0E0E0" BorderThickness="1" Margin="0,0,0,20">
+                <Border.Effect>
+                    <DropShadowEffect Color="#000000" BlurRadius="10" ShadowDepth="2" Opacity="0.1"/>
+                </Border.Effect>
+                <StackPanel>
+                    <TextBlock Text="Filter Appointments" FontSize="16" FontWeight="Bold" Foreground="#333" Margin="0,0,0,15"/>
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="15"/>
+                            <ColumnDefinition Width="200"/>
+                            <ColumnDefinition Width="15"/>
+                            <ColumnDefinition Width="200"/>
+                            <ColumnDefinition Width="15"/>
+                            <ColumnDefinition Width="200"/>
+                        </Grid.ColumnDefinitions>
 
-                <DockPanel LastChildFill="False">
+                        <TextBox x:Name="txtSearch" Grid.Column="0" Height="45" Padding="12,10" FontSize="14"
+                                 TextChanged="TxtSearch_TextChanged" materialDesign:HintAssist.Hint="Search by patient name..."/>
 
-                    <!-- Search -->
-                    <TextBox x:Name="txtSearch"
-                             Width="320" Height="40"
-                             Margin="0 0 12 0"
-                             Padding="10"
-                             materialDesign:HintAssist.Hint="Search by Patient name..."
-                             Style="{StaticResource MaterialDesignOutlinedTextBox}"
-                             TextChanged="TxtSearch_TextChanged"/>
+                        <ComboBox x:Name="cbStatus" Grid.Column="2" Height="45" Padding="12,10" FontSize="14"
+                                  SelectionChanged="CbStatus_SelectionChanged">
+                            <ComboBoxItem Content="All Status" IsSelected="True"/>
+                            <ComboBoxItem Content="COMPLETED"/>
+                            <ComboBoxItem Content="CONFIRMED"/>
+                            <ComboBoxItem Content="PENDING"/>
+                            <ComboBoxItem Content="CANCELLED"/>
+                        </ComboBox>
 
-                    <!-- Status -->
-                    <ComboBox x:Name="cbStatus"
-                              Width="150" Height="40"
-                              Margin="0 0 12 0"
-                              Style="{StaticResource MaterialDesignOutlinedComboBox}"
-                              SelectionChanged="CbStatus_SelectionChanged">
-                        <ComboBoxItem Content="All Status" IsSelected="True"/>
-                        <ComboBoxItem Content="Completed"/>
-                        <ComboBoxItem Content="Confirmed"/>
-                        <ComboBoxItem Content="Pending"/>
-                        <ComboBoxItem Content="Cancelled"/>
-                    </ComboBox>
+                        <DatePicker x:Name="dpDate" Grid.Column="4" Height="45" Padding="12,10" FontSize="14"
+                                    SelectedDateChanged="DpDate_SelectedDateChanged"/>
 
-                    <!-- Date -->
-                    <DatePicker x:Name="dpDate"
-                                Width="150" Height="40"
-                                Margin="0 0 12 0"
-                                Style="{StaticResource MaterialDesignOutlinedDatePicker}"/>
-
-                    <!-- Type -->
-                    <ComboBox x:Name="cbType"
-                              Width="150" Height="40"
-                              Style="{StaticResource MaterialDesignOutlinedComboBox}"
-                              SelectionChanged="CbType_SelectionChanged">
-                        <ComboBoxItem Content="All Types" IsSelected="True"/>
-                        <ComboBoxItem Content="Check-up"/>
-                        <ComboBoxItem Content="Follow-up"/>
-                        <ComboBoxItem Content="Consultation"/>
-                    </ComboBox>
-                </DockPanel>
-
+                        <ComboBox x:Name="cbType" Grid.Column="6" Height="45" Padding="12,10" FontSize="14"
+                                  SelectionChanged="CbType_SelectionChanged">
+                            <ComboBoxItem Content="All Types" IsSelected="True"/>
+                            <ComboBoxItem Content="General Consultation"/>
+                            <ComboBoxItem Content="Follow-up Visit"/>
+                            <ComboBoxItem Content="Laboratory Test"/>
+                            <ComboBoxItem Content="Medical Certificate"/>
+                            <ComboBoxItem Content="Vaccination"/>
+                            <ComboBoxItem Content="Physical Examination"/>
+                        </ComboBox>
+                    </Grid>
+                </StackPanel>
             </Border>
 
             <!-- APPOINTMENT CARDS -->
-            <WrapPanel x:Name="wpAppointments"
-                       ItemWidth="520"
-                       Orientation="Horizontal"
-                       Margin="0 0 0 60"/>
+            <WrapPanel x:Name="wpAppointments" Orientation="Horizontal"/>
 
         </StackPanel>
     </ScrollViewer>
