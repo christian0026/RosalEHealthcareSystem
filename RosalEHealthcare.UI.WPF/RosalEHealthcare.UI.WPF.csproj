@@ -219,6 +219,9 @@
     <Reference Include="Microsoft.Xaml.Behaviors, Version=1.1.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
       <HintPath>..\packages\Microsoft.Xaml.Behaviors.Wpf.1.1.39\lib\net45\Microsoft.Xaml.Behaviors.dll</HintPath>
     </Reference>
+    <Reference Include="Newtonsoft.Json, Version=13.0.0.0, Culture=neutral, PublicKeyToken=30ad4fe6b2a6aeed, processorArchitecture=MSIL">
+      <HintPath>..\packages\Newtonsoft.Json.13.0.4\lib\net45\Newtonsoft.Json.dll</HintPath>
+    </Reference>
     <Reference Include="OpenTK, Version=3.3.1.0, Culture=neutral, PublicKeyToken=bad199fe84eb3df4, processorArchitecture=MSIL">
       <HintPath>..\packages\OpenTK.3.3.1\lib\net20\OpenTK.dll</HintPath>
     </Reference>
@@ -293,14 +296,20 @@
       <DependentUpon>SummaryCard.xaml</DependentUpon>
     </Compile>
     <Compile Include="Converters\BooleanToVisibilityConverter.cs" />
+    <Compile Include="Converters\BoolToIndexConverter.cs" />
     <Compile Include="Converters\NameInitialsConverter.cs" />
     <Compile Include="Converters\NullToVisibilityConverter.cs" />
     <Compile Include="Converters\StatusToBackgroundConverter.cs" />
     <Compile Include="Converters\StatusToColorConverter.cs" />
     <Compile Include="Converters\StringNullOrEmptyToVisibilityConverter.cs" />
+    <Compile Include="Helpers\LogoutHelper.cs" />
     <Compile Include="Helpers\PdfExportService.cs" />
     <Compile Include="Helpers\SessionManager.cs" />
     <Compile Include="ViewModels\AdminReportsViewModel.cs" />
+    <Compile Include="ViewModels\DoctorPrescriptionViewModel.cs" />
+    <Compile Include="Views\AddEditMedicineDialog.xaml.cs">
+      <DependentUpon>AddEditMedicineDialog.xaml</DependentUpon>
+    </Compile>
     <Compile Include="Views\AddEditUserWindow.xaml.cs">
       <DependentUpon>AddEditUserWindow.xaml</DependentUpon>
     </Compile>
@@ -334,8 +343,14 @@
     <Compile Include="Views\EditPatientDialog.xaml.cs">
       <DependentUpon>EditPatientDialog.xaml</DependentUpon>
     </Compile>
+    <Compile Include="Views\LoadingSplashScreen.xaml.cs">
+      <DependentUpon>LoadingSplashScreen.xaml</DependentUpon>
+    </Compile>
     <Compile Include="Views\LoginWindow.xaml.cs">
       <DependentUpon>LoginWindow.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="Views\LogoutAnimationWindow.xaml.cs">
+      <DependentUpon>LogoutAnimationWindow.xaml</DependentUpon>
     </Compile>
     <Compile Include="Views\MedicineInventory.xaml.cs">
       <DependentUpon>MedicineInventory.xaml</DependentUpon>
@@ -349,14 +364,26 @@
     <Compile Include="Views\PatientRegistrationView.xaml.cs">
       <DependentUpon>PatientRegistrationView.xaml</DependentUpon>
     </Compile>
+    <Compile Include="Views\PrescriptionPrintPreviewDialog.xaml.cs">
+      <DependentUpon>PrescriptionPrintPreviewDialog.xaml</DependentUpon>
+    </Compile>
     <Compile Include="Views\ReceptionistDashboard.xaml.cs">
       <DependentUpon>ReceptionistDashboard.xaml</DependentUpon>
     </Compile>
     <Compile Include="Views\RegisterPatientModal.xaml.cs">
       <DependentUpon>RegisterPatientModal.xaml</DependentUpon>
     </Compile>
+    <Compile Include="Views\SaveTemplateDialog.xaml.cs">
+      <DependentUpon>SaveTemplateDialog.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="Views\TemplateSelectionDialog.xaml.cs">
+      <DependentUpon>TemplateSelectionDialog.xaml</DependentUpon>
+    </Compile>
     <Compile Include="Views\UserManagementView.xaml.cs">
       <DependentUpon>UserManagementView.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="Views\ViewMedicineDialog.xaml.cs">
+      <DependentUpon>ViewMedicineDialog.xaml</DependentUpon>
     </Compile>
     <Compile Include="Views\ViewVisitDialog.cs" />
     <Page Include="Controls\AppointmentCard.xaml">
@@ -383,6 +410,10 @@
       <DependentUpon>MainWindow.xaml</DependentUpon>
       <SubType>Code</SubType>
     </Compile>
+    <Page Include="Views\AddEditMedicineDialog.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
     <Page Include="Views\AddEditUserWindow.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
@@ -427,7 +458,15 @@
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
+    <Page Include="Views\LoadingSplashScreen.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
     <Page Include="Views\LoginWindow.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="Views\LogoutAnimationWindow.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
@@ -447,6 +486,10 @@
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
+    <Page Include="Views\PrescriptionPrintPreviewDialog.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
     <Page Include="Views\ReceptionistDashboard.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
@@ -455,7 +498,19 @@
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
+    <Page Include="Views\SaveTemplateDialog.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="Views\TemplateSelectionDialog.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
     <Page Include="Views\UserManagementView.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="Views\ViewMedicineDialog.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>

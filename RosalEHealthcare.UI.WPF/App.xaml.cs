@@ -33,8 +33,8 @@ namespace RosalEHealthcare.UI.WPF
                 MessageBox.Show("Error seeding admin: " + ex.Message);
             }
 
-            var login = new LoginWindow();
-            login.Show();
+            var splashScreen = new LoadingSplashScreen();
+            splashScreen.Show();
         }
     }
 }

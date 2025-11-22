@@ -34,10 +34,12 @@ namespace RosalEHealthcare.Data.Services
             if (!string.IsNullOrWhiteSpace(keyword))
             {
                 keyword = keyword.ToLower();
+
+                // ✅ FIXED: Don't use .ToString() in LINQ query
+                // Instead, search only on string fields in the database
                 query = query.Where(a =>
                     a.PatientName.ToLower().Contains(keyword) ||
-                    a.AppointmentId.ToLower().Contains(keyword) ||
-                    (a.PatientId.ToString()).Contains(keyword)
+                    a.AppointmentId.ToLower().Contains(keyword)
                 );
             }
 
@@ -105,6 +107,10 @@ namespace RosalEHealthcare.Data.Services
             existing.Status = appt.Status;
             existing.Time = appt.Time;
             existing.Contact = appt.Contact;
+            existing.BirthDate = appt.BirthDate;
+            existing.Gender = appt.Gender;
+            existing.Email = appt.Email;
+            existing.Address = appt.Address;
 
             _db.SaveChanges();
         }
@@ -136,8 +142,10 @@ namespace RosalEHealthcare.Data.Services
         private string GenerateAppointmentId()
         {
             var year = DateTime.Now.Year;
+            var prefix = $"APT-{year}";
+
             var lastAppt = _db.Appointments
-                .Where(a => a.AppointmentId.StartsWith($"APT-{year}"))
+                .Where(a => a.AppointmentId.StartsWith(prefix))
                 .OrderByDescending(a => a.AppointmentId)
                 .FirstOrDefault();
 
@@ -167,10 +175,11 @@ namespace RosalEHealthcare.Data.Services
             if (!string.IsNullOrWhiteSpace(keyword))
             {
                 keyword = keyword.ToLower();
+
+                // ✅ FIXED: Removed .ToString() that was causing the error
                 query = query.Where(a =>
                     a.PatientName.ToLower().Contains(keyword) ||
-                    a.AppointmentId.ToLower().Contains(keyword) ||
-                    (a.PatientId.ToString()).Contains(keyword)
+                    a.AppointmentId.ToLower().Contains(keyword)
                 );
             }
 
@@ -215,10 +224,11 @@ namespace RosalEHealthcare.Data.Services
             if (!string.IsNullOrWhiteSpace(keyword))
             {
                 keyword = keyword.ToLower();
+
+                // ✅ FIXED: Removed .ToString() that was causing the error
                 query = query.Where(a =>
                     a.PatientName.ToLower().Contains(keyword) ||
-                    a.AppointmentId.ToLower().Contains(keyword) ||
-                    (a.PatientId.ToString()).Contains(keyword)
+                    a.AppointmentId.ToLower().Contains(keyword)
                 );
             }
 
@@ -250,6 +260,43 @@ namespace RosalEHealthcare.Data.Services
             }
 
             return query.Count();
+        }
+
+        // Additional helper methods
+        public IEnumerable<Appointment> GetTodayAppointments()
+        {
+            var today = DateTime.Today;
+            return _db.Appointments
+                .Where(a => DbFunctions.TruncateTime(a.Time) == today)
+                .OrderBy(a => a.Time)
+                .ToList();
+        }
+
+        public IEnumerable<Appointment> GetUpcomingAppointments(int patientId)
+        {
+            var now = DateTime.Now;
+            return _db.Appointments
+                .Where(a => a.PatientId == patientId &&
+                           a.Time >= now &&
+                           a.Status != "CANCELLED")
+                .OrderBy(a => a.Time)
+                .ToList();
+        }
+
+        public bool IsTimeSlotAvailable(DateTime appointmentTime, int? excludeAppointmentId = null)
+        {
+            var query = _db.Appointments
+                .Where(a => DbFunctions.TruncateTime(a.Time) == appointmentTime.Date &&
+                           a.Time.Hour == appointmentTime.Hour &&
+                           a.Time.Minute == appointmentTime.Minute &&
+                           a.Status != "CANCELLED");
+
+            if (excludeAppointmentId.HasValue)
+            {
+                query = query.Where(a => a.Id != excludeAppointmentId.Value);
+            }
+
+            return !query.Any();
         }
     }
 }

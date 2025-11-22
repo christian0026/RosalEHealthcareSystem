@@ -45,5 +45,18 @@ namespace RosalEHealthcare.Core.Models
 
         // Add this property if not exists
         public bool IsArchived { get; set; } = false;
+
+        // Add this computed property to Patient.cs
+        public string Initials
+        {
+            get
+            {
+                if (string.IsNullOrEmpty(FullName)) return "?";
+                var words = FullName.Split(' ');
+                if (words.Length >= 2)
+                    return $"{words[0][0]}{words[words.Length - 1][0]}".ToUpper();
+                return FullName.Length >= 2 ? FullName.Substring(0, 2).ToUpper() : FullName.ToUpper();
+            }
+        }
     }
 }

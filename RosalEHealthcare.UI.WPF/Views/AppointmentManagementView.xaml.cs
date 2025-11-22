@@ -264,7 +264,15 @@ namespace RosalEHealthcare.UI.WPF.Views
                     txtDialogTitle.Text = "Edit Appointment";
                     _editingAppointmentId = appointment.Id;
 
-                    txtFullName.Text = appointment.PatientName;
+                    // Split full name into parts
+                    var nameParts = appointment.PatientName?.Split(' ') ?? new string[0];
+                    if (nameParts.Length >= 1)
+                        txtFirstName.Text = nameParts[0];
+                    if (nameParts.Length >= 2)
+                        txtLastName.Text = nameParts[nameParts.Length - 1];
+                    if (nameParts.Length >= 3)
+                        txtMiddleName.Text = string.Join(" ", nameParts.Skip(1).Take(nameParts.Length - 2));
+
                     txtContact.Text = appointment.Contact;
                     dpBirthDate.SelectedDate = appointment.BirthDate;
                     txtEmail.Text = appointment.Email;
@@ -334,7 +342,14 @@ namespace RosalEHealthcare.UI.WPF.Views
 
             try
             {
-                var fullName = txtFullName.Text.Trim();
+                // Combine name parts
+                var firstName = txtFirstName.Text.Trim();
+                var middleName = txtMiddleName.Text.Trim();
+                var lastName = txtLastName.Text.Trim();
+                var fullName = string.IsNullOrWhiteSpace(middleName)
+                    ? firstName + " " + lastName
+                    : firstName + " " + middleName + " " + lastName;
+
                 var contact = txtContact.Text.Trim();
                 var birthDate = dpBirthDate.SelectedDate.Value;
                 var gender = (cmbGender.SelectedItem as ComboBoxItem)?.Content.ToString();
@@ -379,10 +394,11 @@ namespace RosalEHealthcare.UI.WPF.Views
                         Type = appointmentType,
                         Time = appointmentDateTime,
                         Condition = reason,
-                        Status = "PENDING", // Default status
+                        Status = "PENDING",
                         CreatedBy = _currentUser?.FullName ?? "Receptionist",
                         CreatedAt = DateTime.Now
                     };
+
                     _appointmentService.AddAppointment(appointment);
 
                     MessageBox.Show("Appointment scheduled successfully!\n\nAppointment ID: " + appointment.AppointmentId + "\nPatient: " + fullName + "\nDate & Time: " + appointmentDateTime.ToString("MMMM dd, yyyy hh:mm tt") + "\nStatus: PENDING",
@@ -401,10 +417,17 @@ namespace RosalEHealthcare.UI.WPF.Views
 
         private bool ValidateAppointmentForm()
         {
-            if (string.IsNullOrWhiteSpace(txtFullName.Text))
+            if (string.IsNullOrWhiteSpace(txtFirstName.Text))
             {
-                MessageBox.Show("Please enter patient's full name.", "Validation Error", MessageBoxButton.OK, MessageBoxImage.Warning);
-                txtFullName.Focus();
+                MessageBox.Show("Please enter patient's first name.", "Validation Error", MessageBoxButton.OK, MessageBoxImage.Warning);
+                txtFirstName.Focus();
+                return false;
+            }
+
+            if (string.IsNullOrWhiteSpace(txtLastName.Text))
+            {
+                MessageBox.Show("Please enter patient's last name.", "Validation Error", MessageBoxButton.OK, MessageBoxImage.Warning);
+                txtLastName.Focus();
                 return false;
             }
 
@@ -476,7 +499,9 @@ namespace RosalEHealthcare.UI.WPF.Views
 
         private void ClearAppointmentForm()
         {
-            txtFullName.Clear();
+            txtFirstName.Clear();
+            txtMiddleName.Clear();
+            txtLastName.Clear();
             txtContact.Clear();
             dpBirthDate.SelectedDate = null;
             cmbGender.SelectedItem = null;

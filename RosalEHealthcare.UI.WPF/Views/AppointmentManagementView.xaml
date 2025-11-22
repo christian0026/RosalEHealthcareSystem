@@ -339,7 +339,7 @@
 
         <!-- Schedule/Edit Appointment Dialog -->
         <Grid x:Name="overlayPanel" Background="#80000000" Visibility="Collapsed">
-            <Border Background="White" Width="800" MaxHeight="700" CornerRadius="12" VerticalAlignment="Center" HorizontalAlignment="Center">
+            <Border Background="White" Width="850" MaxHeight="750" CornerRadius="12" VerticalAlignment="Center" HorizontalAlignment="Center">
                 <Border.Effect>
                     <DropShadowEffect Color="#000000" BlurRadius="20" ShadowDepth="5" Opacity="0.3"/>
                 </Border.Effect>
@@ -349,14 +349,36 @@
                         <Grid Margin="0,0,0,20">
                             <TextBlock x:Name="txtDialogTitle" Text="Schedule New Appointment" FontSize="22" FontWeight="Bold" Foreground="#2E7D32" VerticalAlignment="Center"/>
                             <Button Width="35" Height="35" FontSize="18" FontWeight="Bold" Background="Transparent" Foreground="#666"
-                                    BorderThickness="0" Cursor="Hand" HorizontalAlignment="Right" Click="CloseDialog_Click" Content="✕"/>
+                            BorderThickness="0" Cursor="Hand" HorizontalAlignment="Right" Click="CloseDialog_Click" Content="✕">
+                                <Button.Style>
+                                    <Style TargetType="Button">
+                                        <Setter Property="Template">
+                                            <Setter.Value>
+                                                <ControlTemplate TargetType="Button">
+                                                    <Border Background="{TemplateBinding Background}" CornerRadius="17.5">
+                                                        <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                                    </Border>
+                                                </ControlTemplate>
+                                            </Setter.Value>
+                                        </Setter>
+                                        <Style.Triggers>
+                                            <Trigger Property="IsMouseOver" Value="True">
+                                                <Setter Property="Background" Value="#F5F5F5"/>
+                                            </Trigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </Button.Style>
+                            </Button>
                         </Grid>
 
                         <!-- Personal Information Section -->
                         <TextBlock Text="Patient Information" FontSize="16" FontWeight="Bold" Foreground="#2E7D32" Margin="0,0,0,15"/>
 
+                        <!-- Name Fields -->
                         <Grid Margin="0,0,0,15">
                             <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="15"/>
                                 <ColumnDefinition Width="*"/>
                                 <ColumnDefinition Width="15"/>
                                 <ColumnDefinition Width="*"/>
@@ -364,18 +386,83 @@
 
                             <StackPanel Grid.Column="0">
                                 <TextBlock FontSize="14" FontWeight="SemiBold" Foreground="#333" Margin="0,0,0,8">
-                                    <Run Text="Full Name"/>
-                                    <Run Text="*" Foreground="Red"/>
+                            <Run Text="First Name"/>
+                            <Run Text="*" Foreground="Red"/>
                                 </TextBlock>
-                                <TextBox x:Name="txtFullName" Height="50" Padding="15,12" FontSize="14"/>
+                                <TextBox x:Name="txtFirstName" Height="50" Padding="15,12" FontSize="14" 
+                                 BorderBrush="#E0E0E0" BorderThickness="1" Background="White" Foreground="#333">
+                                    <TextBox.Style>
+                                        <Style TargetType="TextBox">
+                                            <Setter Property="Template">
+                                                <Setter.Value>
+                                                    <ControlTemplate TargetType="TextBox">
+                                                        <Border Background="{TemplateBinding Background}"
+                                                        BorderBrush="{TemplateBinding BorderBrush}"
+                                                        BorderThickness="{TemplateBinding BorderThickness}"
+                                                        CornerRadius="6">
+                                                            <ScrollViewer x:Name="PART_ContentHost" 
+                                                                  Margin="5"
+                                                                  VerticalAlignment="Center"/>
+                                                        </Border>
+                                                    </ControlTemplate>
+                                                </Setter.Value>
+                                            </Setter>
+                                        </Style>
+                                    </TextBox.Style>
+                                </TextBox>
                             </StackPanel>
 
                             <StackPanel Grid.Column="2">
+                                <TextBlock Text="Middle Name" FontSize="14" FontWeight="SemiBold" Foreground="#333" Margin="0,0,0,8"/>
+                                <TextBox x:Name="txtMiddleName" Height="50" Padding="15,12" FontSize="14"
+                                 BorderBrush="#E0E0E0" BorderThickness="1" Background="White" Foreground="#333">
+                                    <TextBox.Style>
+                                        <Style TargetType="TextBox">
+                                            <Setter Property="Template">
+                                                <Setter.Value>
+                                                    <ControlTemplate TargetType="TextBox">
+                                                        <Border Background="{TemplateBinding Background}"
+                                                        BorderBrush="{TemplateBinding BorderBrush}"
+                                                        BorderThickness="{TemplateBinding BorderThickness}"
+                                                        CornerRadius="6">
+                                                            <ScrollViewer x:Name="PART_ContentHost" 
+                                                                  Margin="5"
+                                                                  VerticalAlignment="Center"/>
+                                                        </Border>
+                                                    </ControlTemplate>
+                                                </Setter.Value>
+                                            </Setter>
+                                        </Style>
+                                    </TextBox.Style>
+                                </TextBox>
+                            </StackPanel>
+
+                            <StackPanel Grid.Column="4">
                                 <TextBlock FontSize="14" FontWeight="SemiBold" Foreground="#333" Margin="0,0,0,8">
-                                    <Run Text="Contact Number"/>
-                                    <Run Text="*" Foreground="Red"/>
+                            <Run Text="Last Name"/>
+                            <Run Text="*" Foreground="Red"/>
                                 </TextBlock>
-                                <TextBox x:Name="txtContact" Height="50" Padding="15,12" FontSize="14"/>
+                                <TextBox x:Name="txtLastName" Height="50" Padding="15,12" FontSize="14"
+                                 BorderBrush="#E0E0E0" BorderThickness="1" Background="White" Foreground="#333">
+                                    <TextBox.Style>
+                                        <Style TargetType="TextBox">
+                                            <Setter Property="Template">
+                                                <Setter.Value>
+                                                    <ControlTemplate TargetType="TextBox">
+                                                        <Border Background="{TemplateBinding Background}"
+                                                        BorderBrush="{TemplateBinding BorderBrush}"
+                                                        BorderThickness="{TemplateBinding BorderThickness}"
+                                                        CornerRadius="6">
+                                                            <ScrollViewer x:Name="PART_ContentHost" 
+                                                                  Margin="5"
+                                                                  VerticalAlignment="Center"/>
+                                                        </Border>
+                                                    </ControlTemplate>
+                                                </Setter.Value>
+                                            </Setter>
+                                        </Style>
+                                    </TextBox.Style>
+                                </TextBox>
                             </StackPanel>
                         </Grid>
 
@@ -388,35 +475,232 @@
 
                             <StackPanel Grid.Column="0">
                                 <TextBlock FontSize="14" FontWeight="SemiBold" Foreground="#333" Margin="0,0,0,8">
-                                    <Run Text="Birth Date"/>
-                                    <Run Text="*" Foreground="Red"/>
+                            <Run Text="Birth Date"/>
+                            <Run Text="*" Foreground="Red"/>
                                 </TextBlock>
-                                <DatePicker x:Name="dpBirthDate" Height="50" Padding="15,12" FontSize="14"/>
+                                <DatePicker x:Name="dpBirthDate" Height="50" Padding="15,12" FontSize="14"
+                                    BorderBrush="#E0E0E0" BorderThickness="1" Background="White"
+                                    IsDropDownOpen="False">
+                                    <DatePicker.Style>
+                                        <Style TargetType="DatePicker">
+                                            <Setter Property="Template">
+                                                <Setter.Value>
+                                                    <ControlTemplate TargetType="DatePicker">
+                                                        <Border Background="{TemplateBinding Background}"
+                                                        BorderBrush="{TemplateBinding BorderBrush}"
+                                                        BorderThickness="{TemplateBinding BorderThickness}"
+                                                        CornerRadius="6">
+                                                            <Grid>
+                                                                <Grid.ColumnDefinitions>
+                                                                    <ColumnDefinition Width="*"/>
+                                                                    <ColumnDefinition Width="Auto"/>
+                                                                </Grid.ColumnDefinitions>
+                                                                <TextBlock Grid.Column="0" 
+                                                                   Text="{Binding SelectedDate, RelativeSource={RelativeSource TemplatedParent}, StringFormat='MM/dd/yyyy'}"
+                                                                   VerticalAlignment="Center"
+                                                                   Margin="15,0,0,0"
+                                                                   FontSize="14"
+                                                                   Foreground="#333"/>
+                                                                <Button x:Name="PART_Button" Grid.Column="1" 
+                                                                Width="40" Height="40"
+                                                                Background="Transparent"
+                                                                BorderThickness="0"
+                                                                Content="📅"
+                                                                FontSize="16"
+                                                                Cursor="Hand"/>
+                                                                <Popup x:Name="PART_Popup" 
+                                                               AllowsTransparency="True"
+                                                               Placement="Bottom"
+                                                               PlacementTarget="{Binding ElementName=PART_Button}"
+                                                               StaysOpen="False"/>
+                                                            </Grid>
+                                                        </Border>
+                                                    </ControlTemplate>
+                                                </Setter.Value>
+                                            </Setter>
+                                        </Style>
+                                    </DatePicker.Style>
+                                </DatePicker>
                             </StackPanel>
 
                             <StackPanel Grid.Column="2">
                                 <TextBlock FontSize="14" FontWeight="SemiBold" Foreground="#333" Margin="0,0,0,8">
-                                    <Run Text="Gender"/>
-                                    <Run Text="*" Foreground="Red"/>
+                            <Run Text="Gender"/>
+                            <Run Text="*" Foreground="Red"/>
                                 </TextBlock>
-                                <ComboBox x:Name="cmbGender" Height="50" Padding="15,12" FontSize="14">
+                                <ComboBox x:Name="cmbGender" Height="50" Padding="15,12" FontSize="14"
+                                  BorderBrush="#E0E0E0" BorderThickness="1" Background="White" Foreground="#333">
+                                    <ComboBox.Style>
+                                        <Style TargetType="ComboBox">
+                                            <Setter Property="Template">
+                                                <Setter.Value>
+                                                    <ControlTemplate TargetType="ComboBox">
+                                                        <Grid>
+                                                            <ToggleButton x:Name="ToggleButton"
+                                                                  Background="{TemplateBinding Background}"
+                                                                  BorderBrush="{TemplateBinding BorderBrush}"
+                                                                  BorderThickness="{TemplateBinding BorderThickness}"
+                                                                  Focusable="False"
+                                                                  IsChecked="{Binding IsDropDownOpen, Mode=TwoWay, RelativeSource={RelativeSource TemplatedParent}}"
+                                                                  ClickMode="Press">
+                                                                <ToggleButton.Style>
+                                                                    <Style TargetType="ToggleButton">
+                                                                        <Setter Property="Template">
+                                                                            <Setter.Value>
+                                                                                <ControlTemplate TargetType="ToggleButton">
+                                                                                    <Border Background="{TemplateBinding Background}"
+                                                                                    BorderBrush="{TemplateBinding BorderBrush}"
+                                                                                    BorderThickness="{TemplateBinding BorderThickness}"
+                                                                                    CornerRadius="6">
+                                                                                        <Grid>
+                                                                                            <Grid.ColumnDefinitions>
+                                                                                                <ColumnDefinition Width="*"/>
+                                                                                                <ColumnDefinition Width="Auto"/>
+                                                                                            </Grid.ColumnDefinitions>
+                                                                                            <ContentPresenter Grid.Column="0" 
+                                                                                                      Content="{TemplateBinding Content}"
+                                                                                                      Margin="15,0,0,0"
+                                                                                                      VerticalAlignment="Center"/>
+                                                                                            <TextBlock Grid.Column="1" 
+                                                                                               Text="▼" 
+                                                                                               FontSize="10"
+                                                                                               Margin="0,0,15,0"
+                                                                                               VerticalAlignment="Center"
+                                                                                               Foreground="#666"/>
+                                                                                        </Grid>
+                                                                                    </Border>
+                                                                                </ControlTemplate>
+                                                                            </Setter.Value>
+                                                                        </Setter>
+                                                                    </Style>
+                                                                </ToggleButton.Style>
+                                                            </ToggleButton>
+                                                            <ContentPresenter x:Name="ContentSite"
+                                                                      Content="{TemplateBinding SelectionBoxItem}"
+                                                                      Margin="15,0,40,0"
+                                                                      VerticalAlignment="Center"
+                                                                      IsHitTestVisible="False"/>
+                                                            <Popup x:Name="Popup"
+                                                           Placement="Bottom"
+                                                           IsOpen="{TemplateBinding IsDropDownOpen}"
+                                                           AllowsTransparency="True"
+                                                           Focusable="False"
+                                                           PopupAnimation="Slide">
+                                                                <Border Background="White"
+                                                                BorderBrush="#E0E0E0"
+                                                                BorderThickness="1"
+                                                                CornerRadius="6"
+                                                                MinWidth="{TemplateBinding ActualWidth}"
+                                                                MaxHeight="200">
+                                                                    <Border.Effect>
+                                                                        <DropShadowEffect BlurRadius="10" ShadowDepth="2" Opacity="0.2"/>
+                                                                    </Border.Effect>
+                                                                    <ScrollViewer>
+                                                                        <ItemsPresenter/>
+                                                                    </ScrollViewer>
+                                                                </Border>
+                                                            </Popup>
+                                                        </Grid>
+                                                    </ControlTemplate>
+                                                </Setter.Value>
+                                            </Setter>
+                                        </Style>
+                                    </ComboBox.Style>
                                     <ComboBoxItem Content="Male"/>
                                     <ComboBoxItem Content="Female"/>
                                 </ComboBox>
                             </StackPanel>
                         </Grid>
 
-                        <StackPanel Margin="0,0,0,15">
-                            <TextBlock Text="Email Address" FontSize="14" FontWeight="SemiBold" Foreground="#333" Margin="0,0,0,8"/>
-                            <TextBox x:Name="txtEmail" Height="50" Padding="15,12" FontSize="14"/>
-                        </StackPanel>
+                        <!-- Contact Information Section -->
+                        <TextBlock Text="Contact Information" FontSize="16" FontWeight="Bold" Foreground="#2E7D32" Margin="0,10,0,15"/>
+
+                        <Grid Margin="0,0,0,15">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="15"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+
+                            <StackPanel Grid.Column="0">
+                                <TextBlock FontSize="14" FontWeight="SemiBold" Foreground="#333" Margin="0,0,0,8">
+                            <Run Text="Contact Number"/>
+                            <Run Text="*" Foreground="Red"/>
+                                </TextBlock>
+                                <TextBox x:Name="txtContact" Height="50" Padding="15,12" FontSize="14"
+                                 BorderBrush="#E0E0E0" BorderThickness="1" Background="White" Foreground="#333">
+                                    <TextBox.Style>
+                                        <Style TargetType="TextBox">
+                                            <Setter Property="Template">
+                                                <Setter.Value>
+                                                    <ControlTemplate TargetType="TextBox">
+                                                        <Border Background="{TemplateBinding Background}"
+                                                        BorderBrush="{TemplateBinding BorderBrush}"
+                                                        BorderThickness="{TemplateBinding BorderThickness}"
+                                                        CornerRadius="6">
+                                                            <ScrollViewer x:Name="PART_ContentHost" 
+                                                                  Margin="5"
+                                                                  VerticalAlignment="Center"/>
+                                                        </Border>
+                                                    </ControlTemplate>
+                                                </Setter.Value>
+                                            </Setter>
+                                        </Style>
+                                    </TextBox.Style>
+                                </TextBox>
+                            </StackPanel>
+
+                            <StackPanel Grid.Column="2">
+                                <TextBlock Text="Email Address" FontSize="14" FontWeight="SemiBold" Foreground="#333" Margin="0,0,0,8"/>
+                                <TextBox x:Name="txtEmail" Height="50" Padding="15,12" FontSize="14"
+                                 BorderBrush="#E0E0E0" BorderThickness="1" Background="White" Foreground="#333">
+                                    <TextBox.Style>
+                                        <Style TargetType="TextBox">
+                                            <Setter Property="Template">
+                                                <Setter.Value>
+                                                    <ControlTemplate TargetType="TextBox">
+                                                        <Border Background="{TemplateBinding Background}"
+                                                        BorderBrush="{TemplateBinding BorderBrush}"
+                                                        BorderThickness="{TemplateBinding BorderThickness}"
+                                                        CornerRadius="6">
+                                                            <ScrollViewer x:Name="PART_ContentHost" 
+                                                                  Margin="5"
+                                                                  VerticalAlignment="Center"/>
+                                                        </Border>
+                                                    </ControlTemplate>
+                                                </Setter.Value>
+                                            </Setter>
+                                        </Style>
+                                    </TextBox.Style>
+                                </TextBox>
+                            </StackPanel>
+                        </Grid>
 
                         <StackPanel Margin="0,0,0,20">
                             <TextBlock FontSize="14" FontWeight="SemiBold" Foreground="#333" Margin="0,0,0,8">
-                                <Run Text="Complete Address"/>
-                                <Run Text="*" Foreground="Red"/>
+                        <Run Text="Complete Address"/>
+                        <Run Text="*" Foreground="Red"/>
                             </TextBlock>
-                            <TextBox x:Name="txtAddress" Height="70" Padding="15,12" FontSize="14" TextWrapping="Wrap" AcceptsReturn="True" VerticalScrollBarVisibility="Auto"/>
+                            <TextBox x:Name="txtAddress" Height="70" Padding="15,12" FontSize="14" TextWrapping="Wrap" AcceptsReturn="True" VerticalScrollBarVisibility="Auto"
+                             BorderBrush="#E0E0E0" BorderThickness="1" Background="White" Foreground="#333">
+                                <TextBox.Style>
+                                    <Style TargetType="TextBox">
+                                        <Setter Property="Template">
+                                            <Setter.Value>
+                                                <ControlTemplate TargetType="TextBox">
+                                                    <Border Background="{TemplateBinding Background}"
+                                                    BorderBrush="{TemplateBinding BorderBrush}"
+                                                    BorderThickness="{TemplateBinding BorderThickness}"
+                                                    CornerRadius="6">
+                                                        <ScrollViewer x:Name="PART_ContentHost" 
+                                                              Margin="5"/>
+                                                    </Border>
+                                                </ControlTemplate>
+                                            </Setter.Value>
+                                        </Setter>
+                                    </Style>
+                                </TextBox.Style>
+                            </TextBox>
                         </StackPanel>
 
                         <!-- Appointment Details Section -->
@@ -424,10 +708,87 @@
 
                         <StackPanel Margin="0,0,0,15">
                             <TextBlock FontSize="14" FontWeight="SemiBold" Foreground="#333" Margin="0,0,0,8">
-                                <Run Text="Appointment Type"/>
-                                <Run Text="*" Foreground="Red"/>
+                        <Run Text="Appointment Type"/>
+                        <Run Text="*" Foreground="Red"/>
                             </TextBlock>
-                            <ComboBox x:Name="cmbAppointmentType" Height="50" Padding="15,12" FontSize="14">
+                            <ComboBox x:Name="cmbAppointmentType" Height="50" Padding="15,12" FontSize="14"
+                              BorderBrush="#E0E0E0" BorderThickness="1" Background="White" Foreground="#333">
+                                <ComboBox.Style>
+                                    <Style TargetType="ComboBox">
+                                        <Setter Property="Template">
+                                            <Setter.Value>
+                                                <ControlTemplate TargetType="ComboBox">
+                                                    <Grid>
+                                                        <ToggleButton x:Name="ToggleButton"
+                                                              Background="{TemplateBinding Background}"
+                                                              BorderBrush="{TemplateBinding BorderBrush}"
+                                                              BorderThickness="{TemplateBinding BorderThickness}"
+                                                              Focusable="False"
+                                                              IsChecked="{Binding IsDropDownOpen, Mode=TwoWay, RelativeSource={RelativeSource TemplatedParent}}"
+                                                              ClickMode="Press">
+                                                            <ToggleButton.Style>
+                                                                <Style TargetType="ToggleButton">
+                                                                    <Setter Property="Template">
+                                                                        <Setter.Value>
+                                                                            <ControlTemplate TargetType="ToggleButton">
+                                                                                <Border Background="{TemplateBinding Background}"
+                                                                                BorderBrush="{TemplateBinding BorderBrush}"
+                                                                                BorderThickness="{TemplateBinding BorderThickness}"
+                                                                                CornerRadius="6">
+                                                                                    <Grid>
+                                                                                        <Grid.ColumnDefinitions>
+                                                                                            <ColumnDefinition Width="*"/>
+                                                                                            <ColumnDefinition Width="Auto"/>
+                                                                                        </Grid.ColumnDefinitions>
+                                                                                        <ContentPresenter Grid.Column="0" 
+                                                                                                  Content="{TemplateBinding Content}"
+                                                                                                  Margin="15,0,0,0"
+                                                                                                  VerticalAlignment="Center"/>
+                                                                                        <TextBlock Grid.Column="1" 
+                                                                                           Text="▼" 
+                                                                                           FontSize="10"
+                                                                                           Margin="0,0,15,0"
+                                                                                           VerticalAlignment="Center"
+                                                                                           Foreground="#666"/>
+                                                                                    </Grid>
+                                                                                </Border>
+                                                                            </ControlTemplate>
+                                                                        </Setter.Value>
+                                                                    </Setter>
+                                                                </Style>
+                                                            </ToggleButton.Style>
+                                                        </ToggleButton>
+                                                        <ContentPresenter x:Name="ContentSite"
+                                                                  Content="{TemplateBinding SelectionBoxItem}"
+                                                                  Margin="15,0,40,0"
+                                                                  VerticalAlignment="Center"
+                                                                  IsHitTestVisible="False"/>
+                                                        <Popup x:Name="Popup"
+                                                       Placement="Bottom"
+                                                       IsOpen="{TemplateBinding IsDropDownOpen}"
+                                                       AllowsTransparency="True"
+                                                       Focusable="False"
+                                                       PopupAnimation="Slide">
+                                                            <Border Background="White"
+                                                            BorderBrush="#E0E0E0"
+                                                            BorderThickness="1"
+                                                            CornerRadius="6"
+                                                            MinWidth="{TemplateBinding ActualWidth}"
+                                                            MaxHeight="200">
+                                                                <Border.Effect>
+                                                                    <DropShadowEffect BlurRadius="10" ShadowDepth="2" Opacity="0.2"/>
+                                                                </Border.Effect>
+                                                                <ScrollViewer>
+                                                                    <ItemsPresenter/>
+                                                                </ScrollViewer>
+                                                            </Border>
+                                                        </Popup>
+                                                    </Grid>
+                                                </ControlTemplate>
+                                            </Setter.Value>
+                                        </Setter>
+                                    </Style>
+                                </ComboBox.Style>
                                 <ComboBoxItem Content="General Consultation" IsSelected="True"/>
                                 <ComboBoxItem Content="Follow-up Visit"/>
                                 <ComboBoxItem Content="Laboratory Test"/>
@@ -446,18 +807,136 @@
 
                             <StackPanel Grid.Column="0">
                                 <TextBlock FontSize="14" FontWeight="SemiBold" Foreground="#333" Margin="0,0,0,8">
-                                    <Run Text="Appointment Date"/>
-                                    <Run Text="*" Foreground="Red"/>
+                            <Run Text="Appointment Date"/>
+                            <Run Text="*" Foreground="Red"/>
                                 </TextBlock>
-                                <DatePicker x:Name="dpAppointmentDate" Height="50" Padding="15,12" FontSize="14"/>
+                                <DatePicker x:Name="dpAppointmentDate" Height="50" Padding="15,12" FontSize="14"
+                                    BorderBrush="#E0E0E0" BorderThickness="1" Background="White">
+                                    <DatePicker.Style>
+                                        <Style TargetType="DatePicker">
+                                            <Setter Property="Template">
+                                                <Setter.Value>
+                                                    <ControlTemplate TargetType="DatePicker">
+                                                        <Border Background="{TemplateBinding Background}"
+                                                        BorderBrush="{TemplateBinding BorderBrush}"
+                                                        BorderThickness="{TemplateBinding BorderThickness}"
+                                                        CornerRadius="6">
+                                                            <Grid>
+                                                                <Grid.ColumnDefinitions>
+                                                                    <ColumnDefinition Width="*"/>
+                                                                    <ColumnDefinition Width="Auto"/>
+                                                                </Grid.ColumnDefinitions>
+                                                                <TextBlock Grid.Column="0" 
+                                                                   Text="{Binding SelectedDate, RelativeSource={RelativeSource TemplatedParent}, StringFormat='MM/dd/yyyy'}"
+                                                                   VerticalAlignment="Center"
+                                                                   Margin="15,0,0,0"
+                                                                   FontSize="14"
+                                                                   Foreground="#333"/>
+                                                                <Button x:Name="PART_Button" Grid.Column="1" 
+                                                                Width="40" Height="40"
+                                                                Background="Transparent"
+                                                                BorderThickness="0"
+                                                                Content="📅"
+                                                                FontSize="16"
+                                                                Cursor="Hand"/>
+                                                                <Popup x:Name="PART_Popup" 
+                                                               AllowsTransparency="True"
+                                                               Placement="Bottom"
+                                                               PlacementTarget="{Binding ElementName=PART_Button}"
+                                                               StaysOpen="False"/>
+                                                            </Grid>
+                                                        </Border>
+                                                    </ControlTemplate>
+                                                </Setter.Value>
+                                            </Setter>
+                                        </Style>
+                                    </DatePicker.Style>
+                                </DatePicker>
                             </StackPanel>
 
                             <StackPanel Grid.Column="2">
                                 <TextBlock FontSize="14" FontWeight="SemiBold" Foreground="#333" Margin="0,0,0,8">
-                                    <Run Text="Appointment Time"/>
-                                    <Run Text="*" Foreground="Red"/>
+                            <Run Text="Appointment Time"/>
+                            <Run Text="*" Foreground="Red"/>
                                 </TextBlock>
-                                <ComboBox x:Name="cmbAppointmentTime" Height="50" Padding="15,12" FontSize="14">
+                                <ComboBox x:Name="cmbAppointmentTime" Height="50" Padding="15,12" FontSize="14"
+                                  BorderBrush="#E0E0E0" BorderThickness="1" Background="White" Foreground="#333">
+                                    <ComboBox.Style>
+                                        <Style TargetType="ComboBox">
+                                            <Setter Property="Template">
+                                                <Setter.Value>
+                                                    <ControlTemplate TargetType="ComboBox">
+                                                        <Grid>
+                                                            <ToggleButton x:Name="ToggleButton"
+                                                                  Background="{TemplateBinding Background}"
+                                                                  BorderBrush="{TemplateBinding BorderBrush}"
+                                                                  BorderThickness="{TemplateBinding BorderThickness}"
+                                                                  Focusable="False"
+                                                                  IsChecked="{Binding IsDropDownOpen, Mode=TwoWay, RelativeSource={RelativeSource TemplatedParent}}"
+                                                                  ClickMode="Press">
+                                                                <ToggleButton.Style>
+                                                                    <Style TargetType="ToggleButton">
+                                                                        <Setter Property="Template">
+                                                                            <Setter.Value>
+                                                                                <ControlTemplate TargetType="ToggleButton">
+                                                                                    <Border Background="{TemplateBinding Background}"
+                                                                                    BorderBrush="{TemplateBinding BorderBrush}"
+                                                                                    BorderThickness="{TemplateBinding BorderThickness}"
+                                                                                    CornerRadius="6">
+                                                                                        <Grid>
+                                                                                            <Grid.ColumnDefinitions>
+                                                                                                <ColumnDefinition Width="*"/>
+                                                                                                <ColumnDefinition Width="Auto"/>
+                                                                                            </Grid.ColumnDefinitions>
+                                                                                            <ContentPresenter Grid.Column="0" 
+                                                                                                      Content="{TemplateBinding Content}"
+                                                                                                      Margin="15,0,0,0"
+                                                                                                      VerticalAlignment="Center"/>
+                                                                                            <TextBlock Grid.Column="1" 
+                                                                                               Text="▼" 
+                                                                                               FontSize="10"
+                                                                                               Margin="0,0,15,0"
+                                                                                               VerticalAlignment="Center"
+                                                                                               Foreground="#666"/>
+                                                                                        </Grid>
+                                                                                    </Border>
+                                                                                </ControlTemplate>
+                                                                            </Setter.Value>
+                                                                        </Setter>
+                                                                    </Style>
+                                                                </ToggleButton.Style>
+                                                            </ToggleButton>
+                                                            <ContentPresenter x:Name="ContentSite"
+                                                                      Content="{TemplateBinding SelectionBoxItem}"
+                                                                      Margin="15,0,40,0"
+                                                                      VerticalAlignment="Center"
+                                                                      IsHitTestVisible="False"/>
+                                                            <Popup x:Name="Popup"
+                                                           Placement="Bottom"
+                                                           IsOpen="{TemplateBinding IsDropDownOpen}"
+                                                           AllowsTransparency="True"
+                                                           Focusable="False"
+                                                           PopupAnimation="Slide">
+                                                                <Border Background="White"
+                                                                BorderBrush="#E0E0E0"
+                                                                BorderThickness="1"
+                                                                CornerRadius="6"
+                                                                MinWidth="{TemplateBinding ActualWidth}"
+                                                                MaxHeight="200">
+                                                                    <Border.Effect>
+                                                                        <DropShadowEffect BlurRadius="10" ShadowDepth="2" Opacity="0.2"/>
+                                                                    </Border.Effect>
+                                                                    <ScrollViewer>
+                                                                        <ItemsPresenter/>
+                                                                    </ScrollViewer>
+                                                                </Border>
+                                                            </Popup>
+                                                        </Grid>
+                                                    </ControlTemplate>
+                                                </Setter.Value>
+                                            </Setter>
+                                        </Style>
+                                    </ComboBox.Style>
                                     <ComboBoxItem Content="08:00 AM"/>
                                     <ComboBoxItem Content="08:30 AM"/>
                                     <ComboBoxItem Content="09:00 AM" IsSelected="True"/>
@@ -481,10 +960,29 @@
 
                         <StackPanel Margin="0,0,0,30">
                             <TextBlock FontSize="14" FontWeight="SemiBold" Foreground="#333" Margin="0,0,0,8">
-                                <Run Text="Reason for Visit / Chief Complaint"/>
-                                <Run Text="*" Foreground="Red"/>
+                        <Run Text="Reason for Visit / Chief Complaint"/>
+                        <Run Text="*" Foreground="Red"/>
                             </TextBlock>
-                            <TextBox x:Name="txtReason" Height="100" Padding="15,12" FontSize="14" TextWrapping="Wrap" AcceptsReturn="True" VerticalScrollBarVisibility="Auto"/>
+                            <TextBox x:Name="txtReason" Height="100" Padding="15,12" FontSize="14" TextWrapping="Wrap" AcceptsReturn="True" VerticalScrollBarVisibility="Auto"
+                             BorderBrush="#E0E0E0" BorderThickness="1" Background="White" Foreground="#333">
+                                <TextBox.Style>
+                                    <Style TargetType="TextBox">
+                                        <Setter Property="Template">
+                                            <Setter.Value>
+                                                <ControlTemplate TargetType="TextBox">
+                                                    <Border Background="{TemplateBinding Background}"
+                                                    BorderBrush="{TemplateBinding BorderBrush}"
+                                                    BorderThickness="{TemplateBinding BorderThickness}"
+                                                    CornerRadius="6">
+                                                        <ScrollViewer x:Name="PART_ContentHost" 
+                                                              Margin="5"/>
+                                                    </Border>
+                                                </ControlTemplate>
+                                            </Setter.Value>
+                                        </Setter>
+                                    </Style>
+                                </TextBox.Style>
+                            </TextBox>
                         </StackPanel>
 
                         <!-- Action Buttons -->
@@ -496,7 +994,7 @@
                             </Grid.ColumnDefinitions>
 
                             <Button Grid.Column="0" Height="50" FontSize="15" FontWeight="Bold" Background="#E0E0E0" Foreground="#333"
-                                    BorderThickness="0" Cursor="Hand" Click="CloseDialog_Click" Content="Cancel">
+                            BorderThickness="0" Cursor="Hand" Click="CloseDialog_Click" Content="Cancel">
                                 <Button.Style>
                                     <Style TargetType="Button">
                                         <Setter Property="Template">
@@ -518,8 +1016,8 @@
                             </Button>
 
                             <Button x:Name="btnSaveAppointment" Grid.Column="2" Height="50" FontSize="15" FontWeight="Bold"
-                                    Background="#4CAF50" Foreground="White" BorderThickness="0" Cursor="Hand"
-                                    Click="SaveAppointment_Click" Content="✓ Schedule Appointment">
+                            Background="#4CAF50" Foreground="White" BorderThickness="0" Cursor="Hand"
+                            Click="SaveAppointment_Click" Content="✓ Schedule Appointment">
                                 <Button.Style>
                                     <Style TargetType="Button">
                                         <Setter Property="Template">

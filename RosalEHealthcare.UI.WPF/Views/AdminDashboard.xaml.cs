@@ -471,18 +471,16 @@ namespace RosalEHealthcare.UI.WPF.Views
 
         private void Logout_Click(object sender, RoutedEventArgs e)
         {
-            var result = MessageBox.Show("Are you sure you want to logout?",
-                                         "Confirm Logout",
-                                         MessageBoxButton.YesNo,
-                                         MessageBoxImage.Question);
+            LogoutHelper.Logout(this);
+        }
 
-            if (result == MessageBoxResult.Yes)
-            {
-                SessionManager.ClearSession();
-                var login = new LoginWindow();
-                login.Show();
-                Close();
-            }
+        protected override void OnClosing(System.ComponentModel.CancelEventArgs e)
+        {
+            // Cancel the default close
+            e.Cancel = true;
+
+            // Show exit animation instead
+            LogoutHelper.ExitApplication(this);
         }
 
         #endregion

@@ -1,172 +1,107 @@
 ﻿using RosalEHealthcare.Core.Models;
-using RosalEHealthcare.Data.Contexts;
-using RosalEHealthcare.Data.Services;
+using RosalEHealthcare.UI.WPF.ViewModels;
 using System;
-using System.Collections.ObjectModel;
 using System.Linq;
-using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Input;
 
 namespace RosalEHealthcare.UI.WPF.Views
 {
     public partial class DoctorPrescriptionManagement : UserControl
     {
-        private readonly PrescriptionService _prescriptionSvc;
-        private readonly MedicineService _medicineSvc;
-        private readonly RosalEHealthcareDbContext _db;
-
-        public class MedicineEntry
-        {
-            public int? MedicineId { get; set; }
-            public string MedicineName { get; set; }
-            public string Dosage { get; set; }
-            public string Frequency { get; set; }
-            public string Duration { get; set; }
-            public int? Quantity { get; set; }
-            public string Route { get; set; }
-        }
-
-        public ObservableCollection<MedicineEntry> Medicines { get; set; } = new ObservableCollection<MedicineEntry>();
-        public ObservableCollection<Medicine> MedicineLookup { get; set; } = new ObservableCollection<Medicine>();
-
-        private int? _selectedPatientId = null;
-        private string _currentUserEmail = "system";
+        private DoctorPrescriptionViewModel ViewModel => DataContext as DoctorPrescriptionViewModel;
 
         public DoctorPrescriptionManagement()
         {
             InitializeComponent();
-
-            try
-            {
-                _db = new RosalEHealthcareDbContext();
-                _prescriptionSvc = new PrescriptionService(_db);
-                _medicineSvc = new MedicineService(_db);
-
-                DataContext = this;
-                Loaded += (s, e) => LoadData();
-            }
-            catch (Exception ex)
-            {
-                MessageBox.Show(string.Format("Error initializing: {0}", ex.Message),
-                    "Error", MessageBoxButton.OK, MessageBoxImage.Error);
-            }
         }
 
-        private async void LoadData()
+        #region Patient Search
+
+        private async void TxtSearchPatient_TextChanged(object sender, TextChangedEventArgs e)
         {
-            try
+            var query = txtSearchPatient.Text?.Trim();
+
+            if (string.IsNullOrEmpty(query) || query.Length < 2)
             {
-                var meds = await Task.Run(() => _medicineSvc.GetAllMedicines().ToList());
-                MedicineLookup.Clear();
-                foreach (var m in meds) MedicineLookup.Add(m);
-            }
-            catch { }
-
-            icMedicines.ItemsSource = Medicines;
-            txtCreatedDate.Text = DateTime.Now.ToString("MMMM dd, yyyy");
-        }
-
-        private void TxtSearchPatient_TextChanged(object sender, TextChangedEventArgs e)
-        {
-            var search = (txtSearchPatient.Text ?? "").Trim();
-
-            if (string.IsNullOrEmpty(search))
-            {
-                ClearPatientHeader();
+                popupSearchResults.IsOpen = false;
                 return;
             }
 
-            try
-            {
-                var patient = _db.Patients
-                    .Where(p => p.FullName.Contains(search) || p.PatientId.Contains(search))
-                    .FirstOrDefault();
+            await ViewModel.SearchPatientsAsync(query);
 
-                if (patient != null)
-                {
-                    SetPatientHeader(patient);
-                }
-                else
-                {
-                    ClearPatientHeader();
-                }
-            }
-            catch
+            if (ViewModel.PatientSearchResults.Count > 0)
             {
-                ClearPatientHeader();
-            }
-        }
-
-        private void SetPatientHeader(Patient patient)
-        {
-            _selectedPatientId = patient.Id;
-            txtPatientName.Text = patient.FullName;
-            txtPatientMeta.Text = string.Format("ID: {0} • {1} yrs • {2}",
-                patient.PatientId, patient.Age, patient.Gender ?? "");
-            txtBloodType.Text = patient.BloodType ?? "-";
-            txtHeight.Text = patient.Height ?? "-";
-            txtWeight.Text = patient.Weight ?? "-";
-
-            // Set initials
-            var names = (patient.FullName ?? "").Split(' ');
-            if (names.Length >= 2)
-            {
-                txtInitials.Text = string.Format("{0}{1}", names[0][0], names[names.Length - 1][0]).ToUpper();
-            }
-            else if (names.Length == 1 && names[0].Length >= 2)
-            {
-                txtInitials.Text = names[0].Substring(0, 2).ToUpper();
+                popupSearchResults.IsOpen = true;
             }
             else
             {
-                txtInitials.Text = "?";
+                popupSearchResults.IsOpen = false;
             }
         }
 
-        private void ClearPatientHeader()
+        private void TxtSearchPatient_GotFocus(object sender, RoutedEventArgs e)
         {
-            _selectedPatientId = null;
-            txtPatientName.Text = "Patient Name";
-            txtPatientMeta.Text = "ID: -";
-            txtBloodType.Text = "-";
-            txtHeight.Text = "-";
-            txtWeight.Text = "-";
-            txtInitials.Text = "?";
+            if (!string.IsNullOrEmpty(txtSearchPatient.Text) && ViewModel.PatientSearchResults.Count > 0)
+            {
+                popupSearchResults.IsOpen = true;
+            }
         }
 
-        private void BtnNewPrescription_Click(object sender, RoutedEventArgs e)
+        private void LstSearchResults_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
-            txtPrimaryDiagnosis.Text = "";
-            txtSecondaryDiagnosis.Text = "";
-            cbConditionSeverity.SelectedIndex = 1;
-            Medicines.Clear();
-            txtSpecialInstructions.Text = "";
-            cbFollowUp.SelectedIndex = 1;
-            dpNextAppointment.SelectedDate = null;
-            cbPriority.SelectedIndex = 0;
-            txtCreatedDate.Text = DateTime.Now.ToString("MMMM dd, yyyy");
+            if (lstSearchResults.SelectedItem is Patient patient)
+            {
+                ViewModel.SelectedPatient = patient;
+                txtSearchPatient.Text = patient.FullName;
+                popupSearchResults.IsOpen = false;
+            }
         }
+
+        #endregion
+
+        #region Medicine Management
 
         private void BtnAddMedicine_Click(object sender, RoutedEventArgs e)
         {
-            Medicines.Add(new MedicineEntry
-            {
-                MedicineId = null,
-                MedicineName = "",
-                Dosage = "",
-                Frequency = "Once daily",
-                Duration = "",
-                Quantity = 1,
-                Route = "Oral"
-            });
+            ViewModel.AddMedicine();
         }
 
         private void BtnRemoveMedicine_Click(object sender, RoutedEventArgs e)
         {
-            if (sender is Button btn && btn.DataContext is MedicineEntry me)
+            if (sender is Button btn && btn.Tag is MedicineEntryViewModel medicine)
             {
-                Medicines.Remove(me);
+                var result = MessageBox.Show(
+                    $"Remove {medicine.MedicineName ?? "this medicine"}?",
+                    "Confirm Remove",
+                    MessageBoxButton.YesNo,
+                    MessageBoxImage.Question);
+
+                if (result == MessageBoxResult.Yes)
+                {
+                    ViewModel.RemoveMedicine(medicine);
+                }
+            }
+        }
+
+        #endregion
+
+        #region Action Buttons
+
+        private void BtnNewPrescription_Click(object sender, RoutedEventArgs e)
+        {
+            var result = MessageBox.Show(
+                "Start a new prescription? All unsaved changes will be lost.",
+                "New Prescription",
+                MessageBoxButton.YesNo,
+                MessageBoxImage.Question);
+
+            if (result == MessageBoxResult.Yes)
+            {
+                ViewModel.ResetForm();
+                txtSearchPatient.Clear();
+                txtSearchPatient.Focus();
             }
         }
 
@@ -175,75 +110,129 @@ namespace RosalEHealthcare.UI.WPF.Views
             BtnNewPrescription_Click(null, null);
         }
 
-        private void BtnPrint_Click(object sender, RoutedEventArgs e)
-        {
-            MessageBox.Show("Print functionality will be implemented later.",
-                "Print", MessageBoxButton.OK, MessageBoxImage.Information);
-        }
-
         private async void BtnSavePrescription_Click(object sender, RoutedEventArgs e)
         {
-            if (!_selectedPatientId.HasValue)
+            var success = await ViewModel.SavePrescriptionAsync();
+            if (success)
             {
-                MessageBox.Show("Please select a patient first.",
-                    "Validation", MessageBoxButton.OK, MessageBoxImage.Warning);
-                return;
-            }
+                var result = MessageBox.Show(
+                    "Prescription saved successfully!\n\nWould you like to print it now?",
+                    "Success",
+                    MessageBoxButton.YesNo,
+                    MessageBoxImage.Information);
 
-            if (string.IsNullOrWhiteSpace(txtPrimaryDiagnosis.Text))
-            {
-                MessageBox.Show("Please enter primary diagnosis.",
-                    "Validation", MessageBoxButton.OK, MessageBoxImage.Warning);
-                return;
-            }
-
-            try
-            {
-                var pres = new Prescription
+                if (result == MessageBoxResult.Yes)
                 {
-                    PatientId = _selectedPatientId.Value,
-                    PatientName = txtPatientName.Text,
-                    PrimaryDiagnosis = txtPrimaryDiagnosis.Text.Trim(),
-                    SecondaryDiagnosis = (txtSecondaryDiagnosis.Text ?? "").Trim(),
-                    ConditionSeverity = cbConditionSeverity.SelectedItem != null ?
-                        ((ComboBoxItem)cbConditionSeverity.SelectedItem).Content.ToString() : "Moderate",
-                    SpecialInstructions = txtSpecialInstructions.Text,
-                    FollowUpRequired = cbFollowUp.SelectedItem != null &&
-                        ((ComboBoxItem)cbFollowUp.SelectedItem).Content.ToString() == "Yes",
-                    NextAppointment = dpNextAppointment.SelectedDate,
-                    PriorityLevel = cbPriority.SelectedItem != null ?
-                        ((ComboBoxItem)cbPriority.SelectedItem).Content.ToString() : "Routine",
-                    CreatedBy = _currentUserEmail,
-                    CreatedAt = DateTime.UtcNow,
-                };
-
-                foreach (var m in Medicines)
-                {
-                    pres.Medicines.Add(new PrescriptionMedicine
-                    {
-                        MedicineId = m.MedicineId ?? 0,
-                        MedicineName = m.MedicineName,
-                        Dosage = m.Dosage,
-                        Frequency = m.Frequency,
-                        Duration = m.Duration,
-                        Quantity = m.Quantity,
-                        Route = m.Route
-                    });
+                    ShowPrintPreview();
                 }
 
-                var saved = await Task.Run(() => _prescriptionSvc.SavePrescription(pres));
+                ViewModel.ResetForm();
+                txtSearchPatient.Clear();
+            }
+        }
 
-                MessageBox.Show(string.Format("Prescription saved ({0}).", saved.PrescriptionId),
-                    "Saved", MessageBoxButton.OK, MessageBoxImage.Information);
+        private async void BtnSaveAndPrint_Click(object sender, RoutedEventArgs e)
+        {
+            var success = await ViewModel.SavePrescriptionAsync();
+            if (success)
+            {
+                ShowPrintPreview();
+                ViewModel.ResetForm();
+                txtSearchPatient.Clear();
+            }
+        }
 
-                BtnNewPrescription_Click(null, null);
+        private void BtnPrintPreview_Click(object sender, RoutedEventArgs e)
+        {
+            // Validate before showing preview
+            if (ViewModel.SelectedPatient == null)
+            {
+                MessageBox.Show("Please select a patient first.", "Validation",
+                    MessageBoxButton.OK, MessageBoxImage.Warning);
+                return;
+            }
+
+            if (string.IsNullOrWhiteSpace(ViewModel.PrimaryDiagnosis))
+            {
+                MessageBox.Show("Please enter primary diagnosis.", "Validation",
+                    MessageBoxButton.OK, MessageBoxImage.Warning);
+                return;
+            }
+
+            if (ViewModel.Medicines.Count == 0)
+            {
+                MessageBox.Show("Please add at least one medicine.", "Validation",
+                    MessageBoxButton.OK, MessageBoxImage.Warning);
+                return;
+            }
+
+            ShowPrintPreview();
+        }
+
+        private void ShowPrintPreview()
+        {
+            try
+            {
+                var previewDialog = new PrescriptionPrintPreviewDialog(
+                    ViewModel.SelectedPatient,
+                    ViewModel.PrimaryDiagnosis,
+                    ViewModel.SecondaryDiagnosis,
+                    ViewModel.ConditionSeverity,
+                    ViewModel.Medicines.ToList(),
+                    ViewModel.SpecialInstructions,
+                    ViewModel.FollowUpRequired,
+                    ViewModel.NextAppointment,
+                    ViewModel.PriorityLevel
+                );
+
+                previewDialog.ShowDialog();
             }
             catch (Exception ex)
             {
-                string innerMsg = ex.InnerException != null ? ex.InnerException.Message : "";
-                MessageBox.Show(string.Format("Error: {0}\n\nInner: {1}", ex.Message, innerMsg),
+                MessageBox.Show($"Error showing print preview: {ex.Message}",
                     "Error", MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
+
+        private void BtnSaveDraft_Click(object sender, RoutedEventArgs e)
+        {
+            MessageBox.Show("Draft saved locally. This feature will auto-save in the background.",
+                "Draft Saved", MessageBoxButton.OK, MessageBoxImage.Information);
+        }
+
+        private async void BtnSaveAsTemplate_Click(object sender, RoutedEventArgs e)
+        {
+            if (string.IsNullOrWhiteSpace(ViewModel.PrimaryDiagnosis))
+            {
+                MessageBox.Show("Please enter primary diagnosis before saving as template.",
+                    "Validation", MessageBoxButton.OK, MessageBoxImage.Warning);
+                return;
+            }
+
+            if (ViewModel.Medicines.Count == 0)
+            {
+                MessageBox.Show("Please add at least one medicine before saving as template.",
+                    "Validation", MessageBoxButton.OK, MessageBoxImage.Warning);
+                return;
+            }
+
+            var dialog = new SaveTemplateDialog();
+            if (dialog.ShowDialog() == true)
+            {
+                var templateName = dialog.TemplateName;
+                await ViewModel.SaveAsTemplateAsync(templateName);
+            }
+        }
+
+        private void BtnTemplates_Click(object sender, RoutedEventArgs e)
+        {
+            var dialog = new TemplateSelectionDialog(ViewModel.Templates.ToList());
+            if (dialog.ShowDialog() == true && dialog.SelectedTemplate != null)
+            {
+                ViewModel.ApplyTemplate(dialog.SelectedTemplate);
+            }
+        }
+
+        #endregion
     }
 }

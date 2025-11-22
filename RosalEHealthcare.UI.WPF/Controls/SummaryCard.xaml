@@ -39,7 +39,7 @@
                                FontWeight="Normal"/>
                     <!-- Value -->
                     <TextBlock x:Name="ValueTextBlock"
-                               Text="1,245" 
+                               Text="0" 
                                FontSize="32" 
                                FontWeight="Bold" 
                                Foreground="#333" 

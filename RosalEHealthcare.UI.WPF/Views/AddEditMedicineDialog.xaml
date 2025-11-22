@@ -1,0 +1,287 @@
+﻿<Window x:Class="RosalEHealthcare.UI.WPF.Views.AddEditMedicineDialog"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:converters="clr-namespace:RosalEHealthcare.UI.WPF.Converters"
+        Title="Add Medicine" 
+        Height="700" 
+        Width="600"
+        WindowStartupLocation="CenterScreen"
+        ResizeMode="NoResize"
+        Background="#F5F5F5"
+        Loaded="Window_Loaded">
+
+    <Grid Margin="24">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+
+        <!-- Header -->
+        <StackPanel Grid.Row="0" Margin="0,0,0,20">
+            <TextBlock x:Name="txtTitle" 
+                       Text="Add New Medicine" 
+                       FontSize="24" 
+                       FontWeight="Bold"/>
+            <TextBlock Text="Fill in the medicine details below" 
+                       Foreground="#666666" 
+                       FontSize="13"
+                       Margin="0,4,0,0"/>
+        </StackPanel>
+
+        <!-- Form -->
+        <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
+            <StackPanel>
+                <!-- Basic Information -->
+                <TextBlock Text="BASIC INFORMATION" 
+                           FontWeight="Bold" 
+                           FontSize="13"
+                           Foreground="#666666"
+                           Margin="0,0,0,12"/>
+
+                <Border Background="White" 
+                        CornerRadius="8" 
+                        Padding="20" 
+                        Margin="0,0,0,20">
+                    <StackPanel>
+                        <!-- Medicine Name -->
+                        <TextBlock Text="Medicine Name *" 
+                                   FontWeight="SemiBold" 
+                                   Margin="0,0,0,6"/>
+                        <TextBox x:Name="txtName" 
+                                 Height="40" 
+                                 Padding="12,10"
+                                 BorderBrush="#E0E0E0"
+                                 FontSize="14"/>
+
+                        <!-- Generic Name -->
+                        <TextBlock Text="Generic Name" 
+                                   FontWeight="SemiBold" 
+                                   Margin="0,12,0,6"/>
+                        <TextBox x:Name="txtGenericName" 
+                                 Height="40" 
+                                 Padding="12,10"
+                                 BorderBrush="#E0E0E0"
+                                 FontSize="14"/>
+
+                        <!-- Brand -->
+                        <TextBlock Text="Brand" 
+                                   FontWeight="SemiBold" 
+                                   Margin="0,12,0,6"/>
+                        <TextBox x:Name="txtBrand" 
+                                 Height="40" 
+                                 Padding="12,10"
+                                 BorderBrush="#E0E0E0"
+                                 FontSize="14"/>
+
+                        <!-- Category & Type -->
+                        <Grid Margin="0,12,0,0">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition/>
+                                <ColumnDefinition Width="12"/>
+                                <ColumnDefinition/>
+                            </Grid.ColumnDefinitions>
+
+                            <StackPanel Grid.Column="0">
+                                <TextBlock Text="Category *" FontWeight="SemiBold" Margin="0,0,0,6"/>
+                                <ComboBox x:Name="cbCategory" 
+                                          Height="40" 
+                                          Padding="12,10"
+                                          BorderBrush="#E0E0E0"
+                                          FontSize="14">
+                                    <ComboBoxItem Content="Antibiotics"/>
+                                    <ComboBoxItem Content="Pain Relief"/>
+                                    <ComboBoxItem Content="Vitamins"/>
+                                    <ComboBoxItem Content="Antihypertensive"/>
+                                    <ComboBoxItem Content="Antidiabetic"/>
+                                    <ComboBoxItem Content="Antihistamine"/>
+                                    <ComboBoxItem Content="Antacid"/>
+                                </ComboBox>
+                            </StackPanel>
+
+                            <StackPanel Grid.Column="2">
+                                <TextBlock Text="Type *" FontWeight="SemiBold" Margin="0,0,0,6"/>
+                                <ComboBox x:Name="cbType" 
+                                          Height="40" 
+                                          Padding="12,10"
+                                          BorderBrush="#E0E0E0"
+                                          FontSize="14">
+                                    <ComboBoxItem Content="Tablets"/>
+                                    <ComboBoxItem Content="Capsules"/>
+                                    <ComboBoxItem Content="Syrup"/>
+                                    <ComboBoxItem Content="Injection"/>
+                                    <ComboBoxItem Content="Cream/Ointment"/>
+                                </ComboBox>
+                            </StackPanel>
+                        </Grid>
+
+                        <!-- Strength & Unit -->
+                        <Grid Margin="0,12,0,0">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition/>
+                                <ColumnDefinition Width="12"/>
+                                <ColumnDefinition/>
+                            </Grid.ColumnDefinitions>
+
+                            <StackPanel Grid.Column="0">
+                                    <TextBlock Text="Strength" FontWeight="SemiBold" Margin="0,0,0,6"/>
+                                    <TextBox x:Name="txtStrength" 
+                                         Height="40" 
+                                         Padding="12,10"
+                                         BorderBrush="#E0E0E0"
+                                         FontSize="14"
+                                         Text="500mg"/>
+                                </StackPanel>
+
+                                <StackPanel Grid.Column="2">
+                                    <TextBlock Text="Unit" FontWeight="SemiBold" Margin="0,0,0,6"/>
+                                    <ComboBox x:Name="cbUnit" 
+                                          Height="40" 
+                                          Padding="12,10"
+                                          BorderBrush="#E0E0E0"
+                                          FontSize="14">
+                                        <ComboBoxItem Content="Tablet"/>
+                                        <ComboBoxItem Content="Capsule"/>
+                                        <ComboBoxItem Content="ml"/>
+                                        <ComboBoxItem Content="mg"/>
+                                        <ComboBoxItem Content="g"/>
+                                    </ComboBox>
+                                </StackPanel>
+                        </Grid>
+                    </StackPanel>
+                </Border>
+
+                <!-- Stock & Pricing -->
+                <TextBlock Text="STOCK & PRICING" 
+                           FontWeight="Bold" 
+                           FontSize="13"
+                           Foreground="#666666"
+                           Margin="0,0,0,12"/>
+
+                <Border Background="White" 
+                        CornerRadius="8" 
+                        Padding="20" 
+                        Margin="0,0,0,20">
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition/>
+                            <ColumnDefinition Width="12"/>
+                            <ColumnDefinition/>
+                        </Grid.ColumnDefinitions>
+
+                        <StackPanel Grid.Column="0">
+                            <TextBlock Text="Stock Quantity *" FontWeight="SemiBold" Margin="0,0,0,6"/>
+                            <TextBox x:Name="txtStock" 
+                                     Height="40" 
+                                     Padding="12,10"
+                                     BorderBrush="#E0E0E0"
+                                     FontSize="14"
+                                     Text="0"/>
+                        </StackPanel>
+
+                        <StackPanel Grid.Column="2">
+                            <TextBlock Text="Unit Price (₱) *" FontWeight="SemiBold" Margin="0,0,0,6"/>
+                            <TextBox x:Name="txtPrice" 
+                                     Height="40" 
+                                     Padding="12,10"
+                                     BorderBrush="#E0E0E0"
+                                     FontSize="14"
+                                     Text="0.00"/>
+                        </StackPanel>
+                    </Grid>
+                </Border>
+
+                <!-- Expiry Date -->
+                <TextBlock Text="EXPIRY INFORMATION" 
+                           FontWeight="Bold" 
+                           FontSize="13"
+                           Foreground="#666666"
+                           Margin="0,0,0,12"/>
+
+                <Border Background="White" 
+                        CornerRadius="8" 
+                        Padding="20">
+                    <StackPanel>
+                        <TextBlock Text="Expiry Date *" FontWeight="SemiBold" Margin="0,0,0,6"/>
+                        <DatePicker x:Name="dpExpiryDate" 
+                                    Height="40" 
+                                    Padding="12,10"
+                                    BorderBrush="#E0E0E0"
+                                    FontSize="14"/>
+                    </StackPanel>
+                </Border>
+            </StackPanel>
+        </ScrollViewer>
+
+        <!-- Action Buttons -->
+        <StackPanel Grid.Row="2" 
+                    Orientation="Horizontal" 
+                    HorizontalAlignment="Right" 
+                    Margin="0,20,0,0">
+            <Button Content="Cancel" 
+                    Width="100" 
+                    Height="40" 
+                    Margin="0,0,12,0"
+                    Background="#9E9E9E" 
+                    Foreground="White"
+                    BorderThickness="0"
+                    FontWeight="SemiBold"
+                    Click="BtnCancel_Click">
+                <Button.Style>
+                    <Style TargetType="Button">
+                        <Setter Property="Template">
+                            <Setter.Value>
+                                <ControlTemplate TargetType="Button">
+                                    <Border Background="{TemplateBinding Background}"
+                                            CornerRadius="6"
+                                            Padding="16,10">
+                                        <ContentPresenter HorizontalAlignment="Center" 
+                                                        VerticalAlignment="Center"/>
+                                    </Border>
+                                </ControlTemplate>
+                            </Setter.Value>
+                        </Setter>
+                        <Style.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter Property="Background" Value="#757575"/>
+                            </Trigger>
+                        </Style.Triggers>
+                    </Style>
+                </Button.Style>
+            </Button>
+
+            <Button x:Name="btnSave"
+                    Content="Save Medicine" 
+                    Width="140" 
+                    Height="40"
+                    Background="#2E7D32" 
+                    Foreground="White"
+                    BorderThickness="0"
+                    FontWeight="SemiBold"
+                    Click="BtnSave_Click">
+                <Button.Style>
+                    <Style TargetType="Button">
+                        <Setter Property="Template">
+                            <Setter.Value>
+                                <ControlTemplate TargetType="Button">
+                                    <Border Background="{TemplateBinding Background}"
+                                            CornerRadius="6"
+                                            Padding="16,10">
+                                        <ContentPresenter HorizontalAlignment="Center" 
+                                                        VerticalAlignment="Center"/>
+                                    </Border>
+                                </ControlTemplate>
+                            </Setter.Value>
+                        </Setter>
+                        <Style.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter Property="Background" Value="#388E3C"/>
+                            </Trigger>
+                        </Style.Triggers>
+                    </Style>
+                </Button.Style>
+            </Button>
+        </StackPanel>
+    </Grid>
+</Window>
+                                

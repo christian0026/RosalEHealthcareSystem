@@ -25,6 +25,7 @@ namespace RosalEHealthcare.Data.Contexts
         public DbSet<MedicalHistory> MedicalHistories { get; set; }
         public DbSet<MedicalDocument> MedicalDocuments { get; set; }
         public DbSet<Notification> Notifications { get; set; }
+        public DbSet<PrescriptionTemplate> PrescriptionTemplates { get; set; }
 
         protected override void OnModelCreating(DbModelBuilder modelBuilder)
         {

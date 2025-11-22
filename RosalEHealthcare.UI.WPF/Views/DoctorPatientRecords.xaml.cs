@@ -411,6 +411,7 @@ namespace RosalEHealthcare.UI.WPF.Views
             // This would need to be implemented based on your navigation system
             MessageBox.Show($"Opening Prescription Management for {SelectedPatient.FullName}...",
                 "New Prescription", MessageBoxButton.OK, MessageBoxImage.Information);
+
         }
 
         private void BtnViewPrescription_Click(object sender, RoutedEventArgs e)
