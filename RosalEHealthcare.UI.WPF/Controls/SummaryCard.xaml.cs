@@ -4,6 +4,7 @@ using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Media.Animation;
+using System.Windows.Media.Effects;
 
 namespace RosalEHealthcare.UI.WPF.Controls
 {
@@ -12,6 +13,36 @@ namespace RosalEHealthcare.UI.WPF.Controls
         public SummaryCard()
         {
             InitializeComponent();
+            this.Loaded += SummaryCard_Loaded;
+        }
+
+        private void SummaryCard_Loaded(object sender, RoutedEventArgs e)
+        {
+            // Apply initial values after control is loaded
+            ApplyInitialValues();
+        }
+
+        private void ApplyInitialValues()
+        {
+            if (TitleTextBlock != null) TitleTextBlock.Text = Title;
+            if (ValueTextBlock != null) ValueTextBlock.Text = Value;
+            if (IconTextBlock != null) IconTextBlock.Text = Icon;
+            if (TopBorder != null) TopBorder.Background = TopColor;
+            if (IconBorder != null) IconBorder.Background = IconBackground;
+            if (TrendIconTextBlock != null)
+            {
+                TrendIconTextBlock.Text = TrendIcon;
+                TrendIconTextBlock.Foreground = TrendColor;
+            }
+            if (TrendTextBlock != null)
+            {
+                TrendTextBlock.Text = TrendText;
+                TrendTextBlock.Foreground = TrendColor;
+            }
+            if (TrendStackPanel != null)
+            {
+                TrendStackPanel.Visibility = string.IsNullOrEmpty(TrendText) ? Visibility.Collapsed : Visibility.Visible;
+            }
         }
 
         #region Dependency Properties
@@ -178,6 +209,43 @@ namespace RosalEHealthcare.UI.WPF.Controls
                 control.TrendIconTextBlock.Text = e.NewValue?.ToString() ?? "▲";
         }
 
+        // Value Color (optional - for custom value coloring)
+        public static readonly DependencyProperty ValueColorProperty =
+            DependencyProperty.Register("ValueColor", typeof(Brush), typeof(SummaryCard),
+                new PropertyMetadata(new SolidColorBrush(Color.FromRgb(51, 51, 51)), OnValueColorChanged));
+
+        public Brush ValueColor
+        {
+            get { return (Brush)GetValue(ValueColorProperty); }
+            set { SetValue(ValueColorProperty, value); }
+        }
+
+        private static void OnValueColorChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
+        {
+            var control = d as SummaryCard;
+            if (control?.ValueTextBlock != null)
+                control.ValueTextBlock.Foreground = e.NewValue as Brush;
+        }
+
+        #endregion
+
+        #region Click Event
+
+        public static readonly RoutedEvent CardClickEvent = EventManager.RegisterRoutedEvent(
+            "CardClick", RoutingStrategy.Bubble, typeof(RoutedEventHandler), typeof(SummaryCard));
+
+        public event RoutedEventHandler CardClick
+        {
+            add { AddHandler(CardClickEvent, value); }
+            remove { RemoveHandler(CardClickEvent, value); }
+        }
+
+        protected override void OnMouseLeftButtonUp(MouseButtonEventArgs e)
+        {
+            base.OnMouseLeftButtonUp(e);
+            RaiseEvent(new RoutedEventArgs(CardClickEvent));
+        }
+
         #endregion
 
         #region Mouse Events
@@ -185,36 +253,106 @@ namespace RosalEHealthcare.UI.WPF.Controls
         private void CardBorder_MouseEnter(object sender, MouseEventArgs e)
         {
             var storyboard = new Storyboard();
-            var animation = new DoubleAnimation
+
+            // Create Y translation animation
+            var yAnimation = new DoubleAnimation
             {
                 To = -5,
                 Duration = TimeSpan.FromMilliseconds(200),
                 EasingFunction = new CubicEase { EasingMode = EasingMode.EaseOut }
             };
 
-            Storyboard.SetTarget(animation, CardBorder);
-            Storyboard.SetTargetProperty(animation, new PropertyPath("(UIElement.RenderTransform).(TranslateTransform.Y)"));
+            // Ensure transform exists
+            if (CardBorder.RenderTransform == null || !(CardBorder.RenderTransform is TranslateTransform))
+            {
+                CardBorder.RenderTransform = new TranslateTransform();
+            }
 
-            CardBorder.RenderTransform = new TranslateTransform();
-            storyboard.Children.Add(animation);
+            Storyboard.SetTarget(yAnimation, CardBorder);
+            Storyboard.SetTargetProperty(yAnimation, new PropertyPath("(UIElement.RenderTransform).(TranslateTransform.Y)"));
+
+            storyboard.Children.Add(yAnimation);
             storyboard.Begin();
+
+            // Also animate shadow
+            AnimateShadow(15, 0.15);
         }
 
         private void CardBorder_MouseLeave(object sender, MouseEventArgs e)
         {
             var storyboard = new Storyboard();
-            var animation = new DoubleAnimation
+
+            var yAnimation = new DoubleAnimation
             {
                 To = 0,
                 Duration = TimeSpan.FromMilliseconds(200),
                 EasingFunction = new CubicEase { EasingMode = EasingMode.EaseOut }
             };
 
-            Storyboard.SetTarget(animation, CardBorder);
-            Storyboard.SetTargetProperty(animation, new PropertyPath("(UIElement.RenderTransform).(TranslateTransform.Y)"));
+            Storyboard.SetTarget(yAnimation, CardBorder);
+            Storyboard.SetTargetProperty(yAnimation, new PropertyPath("(UIElement.RenderTransform).(TranslateTransform.Y)"));
 
-            storyboard.Children.Add(animation);
+            storyboard.Children.Add(yAnimation);
             storyboard.Begin();
+
+            // Reset shadow
+            AnimateShadow(15, 0.08);
+        }
+
+        private void AnimateShadow(double blurRadius, double opacity)
+        {
+            var shadow = CardBorder.Effect as DropShadowEffect;
+            if (shadow != null)
+            {
+                var blurAnimation = new DoubleAnimation
+                {
+                    To = blurRadius,
+                    Duration = TimeSpan.FromMilliseconds(200)
+                };
+
+                var opacityAnimation = new DoubleAnimation
+                {
+                    To = opacity,
+                    Duration = TimeSpan.FromMilliseconds(200)
+                };
+
+                shadow.BeginAnimation(DropShadowEffect.BlurRadiusProperty, blurAnimation);
+                shadow.BeginAnimation(DropShadowEffect.OpacityProperty, opacityAnimation);
+            }
+        }
+
+        #endregion
+
+        #region Public Methods
+
+        /// <summary>
+        /// Animate the value change
+        /// </summary>
+        public void AnimateValueChange(string newValue)
+        {
+            var fadeOut = new DoubleAnimation(1, 0, TimeSpan.FromMilliseconds(100));
+            fadeOut.Completed += (s, e) =>
+            {
+                Value = newValue;
+                var fadeIn = new DoubleAnimation(0, 1, TimeSpan.FromMilliseconds(100));
+                ValueTextBlock.BeginAnimation(OpacityProperty, fadeIn);
+            };
+            ValueTextBlock.BeginAnimation(OpacityProperty, fadeOut);
+        }
+
+        /// <summary>
+        /// Set all card properties at once
+        /// </summary>
+        public void SetCardData(string title, string value, string icon, Brush topColor, Brush iconBg, string trendText, string trendIcon, Brush trendColor)
+        {
+            Title = title;
+            Value = value;
+            Icon = icon;
+            TopColor = topColor;
+            IconBackground = iconBg;
+            TrendText = trendText;
+            TrendIcon = trendIcon;
+            TrendColor = trendColor;
         }
 
         #endregion

@@ -297,6 +297,7 @@
     </Compile>
     <Compile Include="Converters\BooleanToVisibilityConverter.cs" />
     <Compile Include="Converters\BoolToIndexConverter.cs" />
+    <Compile Include="Converters\FollowUpStatusToColorConverter.cs" />
     <Compile Include="Converters\NameInitialsConverter.cs" />
     <Compile Include="Converters\NullToVisibilityConverter.cs" />
     <Compile Include="Converters\StatusToBackgroundConverter.cs" />
@@ -306,6 +307,7 @@
     <Compile Include="Helpers\PdfExportService.cs" />
     <Compile Include="Helpers\SessionManager.cs" />
     <Compile Include="ViewModels\AdminReportsViewModel.cs" />
+    <Compile Include="ViewModels\DoctorDashboardViewModel.cs" />
     <Compile Include="ViewModels\DoctorPrescriptionViewModel.cs" />
     <Compile Include="Views\AddEditMedicineDialog.xaml.cs">
       <DependentUpon>AddEditMedicineDialog.xaml</DependentUpon>

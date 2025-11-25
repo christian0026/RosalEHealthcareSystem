@@ -198,5 +198,168 @@ namespace RosalEHealthcare.Data.Services
         }
 
         #endregion
+
+        #region Doctor Dashboard Methods
+
+        public int GetPatientsThisMonth()
+        {
+            var startOfMonth = new DateTime(DateTime.Now.Year, DateTime.Now.Month, 1);
+            return _db.Patients.Count(p => p.DateCreated >= startOfMonth && p.Status != "Archived");
+        }
+
+        public double GetPatientGrowthPercentage()
+        {
+            var lastMonth = GetTotalPatientsLastMonth();
+            var thisMonth = GetPatientsThisMonth();
+            return CalculatePercentageChange(thisMonth, lastMonth);
+        }
+
+        public double GetAppointmentGrowthPercentage()
+        {
+            var yesterday = GetYesterdayAppointments();
+            var today = GetTodayAppointments();
+            return CalculatePercentageChange(today, yesterday);
+        }
+
+        public Dictionary<string, int> GetAppointmentStatusDistribution()
+        {
+            var startOfMonth = new DateTime(DateTime.Now.Year, DateTime.Now.Month, 1);
+
+            var statuses = _db.Appointments
+                .Where(a => a.Time >= startOfMonth)
+                .GroupBy(a => a.Status ?? "Unknown")
+                .Select(g => new { Status = g.Key, Count = g.Count() })
+                .ToList();
+
+            var result = new Dictionary<string, int>
+    {
+        { "CONFIRMED", 0 },
+        { "PENDING", 0 },
+        { "CANCELLED", 0 },
+        { "COMPLETED", 0 }
+    };
+
+            foreach (var status in statuses)
+            {
+                var key = status.Status.ToUpper();
+                if (result.ContainsKey(key))
+                    result[key] = status.Count;
+            }
+
+            return result;
+        }
+
+        public Dictionary<string, double> GetAppointmentStatusPercentages()
+        {
+            var distribution = GetAppointmentStatusDistribution();
+            var total = distribution.Values.Sum();
+
+            if (total == 0)
+                return distribution.ToDictionary(kvp => kvp.Key, kvp => 0.0);
+
+            return distribution.ToDictionary(
+                kvp => kvp.Key,
+                kvp => Math.Round((double)kvp.Value / total * 100, 1)
+            );
+        }
+
+        public Dictionary<string, int> GetMonthlyIllnessTrends(int monthsBack = 6)
+        {
+            var results = new Dictionary<string, int>();
+
+            for (int i = monthsBack - 1; i >= 0; i--)
+            {
+                var monthStart = new DateTime(DateTime.Now.Year, DateTime.Now.Month, 1).AddMonths(-i);
+                var monthEnd = monthStart.AddMonths(1).AddDays(-1);
+                var monthLabel = monthStart.ToString("MMM");
+
+                var count = _db.MedicalHistories
+                    .Count(m => m.VisitDate >= monthStart && m.VisitDate <= monthEnd);
+
+                results[monthLabel] = count;
+            }
+
+            return results;
+        }
+
+        public List<ConsultationDisplayModel> GetRecentConsultationsPaged(int pageNumber, int pageSize)
+        {
+            var consultations = _db.MedicalHistories
+                .Include(m => m.Patient)
+                .OrderByDescending(m => m.VisitDate)
+                .Skip((pageNumber - 1) * pageSize)
+                .Take(pageSize)
+                .ToList();
+
+            return consultations.Select(m => new ConsultationDisplayModel
+            {
+                Id = m.Id,
+                Date = m.VisitDate,
+                PatientName = m.Patient?.FullName ?? "Unknown",
+                PatientId = m.PatientId,
+                Age = m.Patient?.Age ?? 0,
+                Diagnosis = m.Diagnosis ?? "N/A",
+                Treatment = m.Treatment ?? "N/A",
+                FollowUpRequired = m.FollowUpRequired,
+                NextFollowUpDate = m.NextFollowUpDate,
+                FollowUpStatus = GetFollowUpStatus(m.FollowUpRequired, m.NextFollowUpDate)
+            }).ToList();
+        }
+
+        public int GetTotalConsultationsCount()
+        {
+            return _db.MedicalHistories.Count();
+        }
+
+        private string GetFollowUpStatus(bool followUpRequired, DateTime? nextFollowUpDate)
+        {
+            if (!followUpRequired || !nextFollowUpDate.HasValue)
+                return "COMPLETED";
+
+            var daysUntil = (nextFollowUpDate.Value.Date - DateTime.Today).Days;
+
+            if (daysUntil < 0) return "OVERDUE";
+            if (daysUntil <= 3) return $"{daysUntil} DAYS";
+            if (daysUntil <= 7) return "1 WEEK";
+            if (daysUntil <= 14) return "2 WEEKS";
+            if (daysUntil <= 30) return "1 MONTH";
+
+            return $"{daysUntil} DAYS";
+        }
+
+        #endregion
+    }
+    public class ConsultationDisplayModel
+    {
+        public int Id { get; set; }
+        public DateTime Date { get; set; }
+        public string DateFormatted => Date.ToString("MMM dd, yyyy");
+        public string PatientName { get; set; }
+        public int PatientId { get; set; }
+        public int Age { get; set; }
+        public string Diagnosis { get; set; }
+        public string Treatment { get; set; }
+        public bool FollowUpRequired { get; set; }
+        public DateTime? NextFollowUpDate { get; set; }
+        public string FollowUpStatus { get; set; }
+
+        public string FollowUpBadgeColor
+        {
+            get
+            {
+                if (FollowUpStatus == "COMPLETED") return "#4CAF50";
+                if (FollowUpStatus == "OVERDUE") return "#F44336";
+                if (FollowUpStatus.Contains("DAYS"))
+                {
+                    var parts = FollowUpStatus.Split(' ');
+                    if (parts.Length >= 1 && int.TryParse(parts[0], out int days))
+                        return days <= 3 ? "#4CAF50" : "#FF9800";
+                }
+                if (FollowUpStatus == "1 WEEK") return "#FF9800";
+                if (FollowUpStatus == "2 WEEKS") return "#2196F3";
+                if (FollowUpStatus == "1 MONTH") return "#9C27B0";
+                return "#757575";
+            }
+        }
     }
 }

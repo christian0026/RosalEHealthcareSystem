@@ -431,6 +431,7 @@
     <Compile Include="Services\AppointmentService.cs" />
     <Compile Include="Services\DashboardService.cs" />
     <Compile Include="Services\ExportService.cs" />
+    <Compile Include="Services\MedicalHistoryService.cs" />
     <Compile Include="Services\MedicineService.cs" />
     <Compile Include="Services\NotificationService.cs" />
     <Compile Include="Services\PatientService.cs" />

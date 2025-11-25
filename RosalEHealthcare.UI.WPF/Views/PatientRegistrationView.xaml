@@ -3,12 +3,14 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:conv="clr-namespace:RosalEHealthcare.UI.WPF.Converters"
              mc:Ignorable="d" 
              d:DesignHeight="800" d:DesignWidth="1000"
              Background="#F5F5F5">
 
     <UserControl.Resources>
         <!-- Tab Button Style -->
+        <conv:StringNullOrEmptyToVisibilityConverter x:Key="StringNullOrEmptyToVis"/>
         <Style x:Key="TabButton" TargetType="Button">
             <Setter Property="Background" Value="White"/>
             <Setter Property="Foreground" Value="#666666"/>
@@ -196,7 +198,7 @@
                                    FontSize="15"
                                    Margin="18,0,0,0"
                                    VerticalAlignment="Center"
-                                   Visibility="{Binding Text, ElementName=txtSearch, Converter={StaticResource StringNullOrEmptyToVis}}"/>
+                                    Visibility="{Binding Text, ElementName=txtSearch, Converter={StaticResource StringNullOrEmptyToVis}}"/>
 
                         <Button Grid.Column="1"
                                 Content="🔍 Search"
