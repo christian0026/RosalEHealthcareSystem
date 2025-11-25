@@ -9,8 +9,6 @@
         Background="#F8F9FA">
 
     <Window.Resources>
-        <conv:StringNullOrEmptyToVisibilityConverter x:Key="StrNullOrEmptyToVis"/>
-
         <!-- Rounded textbox -->
         <Style x:Key="RoundedTextBox" TargetType="TextBox">
             <Setter Property="Background" Value="White"/>

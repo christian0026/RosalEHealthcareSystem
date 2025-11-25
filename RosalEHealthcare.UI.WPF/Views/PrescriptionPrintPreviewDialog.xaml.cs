@@ -4,10 +4,8 @@ using RosalEHealthcare.UI.WPF.ViewModels;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Printing;
 using System.Windows;
 using System.Windows.Controls;
-using System.Windows.Documents;
 using System.Windows.Media;
 
 namespace RosalEHealthcare.UI.WPF.Views
@@ -65,30 +63,28 @@ namespace RosalEHealthcare.UI.WPF.Views
 
             // Diagnosis
             var diagnosisText = _primaryDiagnosis;
+
             if (!string.IsNullOrWhiteSpace(_secondaryDiagnosis))
-            {
                 diagnosisText += $"\nSecondary: {_secondaryDiagnosis}";
-            }
+
             diagnosisText += $"\nSeverity: {_conditionSeverity}";
             txtPrintDiagnosis.Text = diagnosisText;
 
             // Medications
-            icPrintMedicines.ItemsSource = _medicines.Where(m => !string.IsNullOrEmpty(m.MedicineName));
+            icPrintMedicines.ItemsSource =
+                _medicines.Where(m => !string.IsNullOrEmpty(m.MedicineName));
 
             // Special Instructions
             if (string.IsNullOrWhiteSpace(_specialInstructions))
-            {
                 pnlInstructions.Visibility = Visibility.Collapsed;
-            }
             else
-            {
                 txtPrintInstructions.Text = _specialInstructions;
-            }
 
             // Follow-up
             if (_followUpRequired && _nextAppointment.HasValue)
             {
-                txtPrintFollowUp.Text = _nextAppointment.Value.ToString("MMMM dd, yyyy");
+                txtPrintFollowUp.Text =
+                    _nextAppointment.Value.ToString("MMMM dd, yyyy");
                 pnlFollowUp.Visibility = Visibility.Visible;
             }
             else
@@ -96,26 +92,30 @@ namespace RosalEHealthcare.UI.WPF.Views
                 pnlFollowUp.Visibility = Visibility.Collapsed;
             }
 
-            // Priority
+            // Priority Badge Colors
             txtPrintPriority.Text = _priorityLevel;
+
             switch (_priorityLevel)
             {
                 case "Routine":
                     priorityBadge.Background = new SolidColorBrush(Color.FromRgb(232, 245, 233));
                     txtPrintPriority.Foreground = new SolidColorBrush(Color.FromRgb(46, 125, 50));
                     break;
+
                 case "Urgent":
                     priorityBadge.Background = new SolidColorBrush(Color.FromRgb(255, 243, 224));
                     txtPrintPriority.Foreground = new SolidColorBrush(Color.FromRgb(245, 124, 0));
                     break;
+
                 case "High":
                     priorityBadge.Background = new SolidColorBrush(Color.FromRgb(255, 235, 238));
                     txtPrintPriority.Foreground = new SolidColorBrush(Color.FromRgb(198, 40, 40));
                     break;
             }
 
-            // Generate Prescription ID (for display only)
-            txtPrescriptionId.Text = $"PR-{DateTime.Now.Year}-{new Random().Next(1000, 9999)}";
+            // Generate Display-Only Prescription ID
+            txtPrescriptionId.Text =
+                $"PR-{DateTime.Now.Year}-{new Random().Next(1000, 9999)}";
         }
 
         private void BtnPrint_Click(object sender, RoutedEventArgs e)
@@ -123,19 +123,15 @@ namespace RosalEHealthcare.UI.WPF.Views
             try
             {
                 PrintDialog printDialog = new PrintDialog();
+
                 if (printDialog.ShowDialog() == true)
                 {
-                    // Get the printable area
-                    var visual = printableArea;
+                    // Print the visual directly (Supported in .NET Core)
+                    printDialog.PrintVisual(printableArea,
+                        "Prescription - " + _patient.FullName);
 
-                    // Set print settings
-                    printDialog.PrintTicket.PageOrientation = PageOrientation.Portrait;
-
-                    // Print the visual
-                    printDialog.PrintVisual(visual, "Prescription - " + _patient.FullName);
-
-                    MessageBox.Show("Prescription printed successfully!", "Print",
-                        MessageBoxButton.OK, MessageBoxImage.Information);
+                    MessageBox.Show("Prescription printed successfully!",
+                        "Print", MessageBoxButton.OK, MessageBoxImage.Information);
                 }
             }
             catch (Exception ex)

@@ -11,7 +11,7 @@ namespace RosalEHealthcare.Core.Models
     {
         [Key]
         public int Id { get; set; }
-        public int MedicineId { get; set; }
+        public string MedicineId { get; set; }
 
         [Required, MaxLength(100)]
         public string Name { get; set; }

@@ -2,15 +2,17 @@
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:viewmodels="clr-namespace:RosalEHealthcare.UI.WPF.ViewModels"
+             xmlns:converters="clr-namespace:RosalEHealthcare.UI.WPF.Converters"
              Background="#F5F5F5"
              MinWidth="900">
 
     <UserControl.DataContext>
-        <viewmodels:DoctorPrescriptionViewModel/>
-    </UserControl.DataContext>
+    <viewmodels:DoctorPrescriptionViewModel/>
+</UserControl.DataContext>
 
     <UserControl.Resources>
         <BooleanToVisibilityConverter x:Key="BoolToVis"/>
+        <converters:BoolToIndexConverter x:Key="BoolToIndexConverter"/>
 
         <!-- Textbox Style -->
         <Style x:Key="ModernTextBox" TargetType="TextBox">
@@ -618,10 +620,9 @@
                                            Foreground="#666"
                                            Margin="0,0,0,6"/>
                                 <ComboBox Height="40"
-                                          Style="{StaticResource ModernComboBox}"
-                                          SelectedValue="{Binding PriorityLevel, Mode=TwoWay}"
-                                          SelectedValue
-                                          Path="Content">
+          Style="{StaticResource ModernComboBox}"
+          SelectedValue="{Binding PriorityLevel, Mode=TwoWay}"
+          SelectedValuePath="Content">
                                     <ComboBoxItem Content="Routine" IsSelected="True"/>
                                     <ComboBoxItem Content="Urgent"/>
                                     <ComboBoxItem Content="High"/>
@@ -669,7 +670,7 @@
                                     Foreground="White"
                                     Style="{StaticResource ModernButton}"/>
 
-                            <Button Content="💊 Save & Print" 
+                            <Button Content="💊 Save &amp; Print" 
                                     Width="140" 
                                     Height="40" 
                                     Margin="0,0,8,0"

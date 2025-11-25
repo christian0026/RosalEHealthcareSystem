@@ -157,7 +157,7 @@ namespace RosalEHealthcare.Data.Services
                 );
             }
 
-            return q.OrderByDescending(p => p.LastVisit).ToList();
+            return q.OrderByDescending(x => x.LastVisit).ToList();
         }
 
         public IEnumerable<Patient> FilterByDateRange(DateTime startDate, DateTime endDate)

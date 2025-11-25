@@ -8,7 +8,7 @@
     <UserControl.Resources>
         <BooleanToVisibilityConverter x:Key="BoolToVis"/>
 
-        <!-- Status Color Converter -->
+        <!-- Status Badge Style -->
         <Style x:Key="StatusBadgeStyle" TargetType="Border">
             <Setter Property="CornerRadius" Value="12"/>
             <Setter Property="Padding" Value="12,4"/>
@@ -419,9 +419,9 @@
                                 <DataGridTemplateColumn Header="Status" Width="130">
                                     <DataGridTemplateColumn.CellTemplate>
                                         <DataTemplate>
-                                            <Border Style="{StaticResource StatusBadgeStyle}">
+                                            <Border CornerRadius="12" Padding="12,4" HorizontalAlignment="Center">
                                                 <Border.Style>
-                                                    <Style TargetType="Border" BasedOn="{StaticResource StatusBadgeStyle}">
+                                                    <Style TargetType="Border">
                                                         <Style.Triggers>
                                                             <DataTrigger Binding="{Binding Status}" Value="Available">
                                                                 <Setter Property="Background" Value="#E8F5E9"/>
@@ -434,6 +434,9 @@
                                                             </DataTrigger>
                                                             <DataTrigger Binding="{Binding Status}" Value="Expiring Soon">
                                                                 <Setter Property="Background" Value="#FFF3E0"/>
+                                                            </DataTrigger>
+                                                            <DataTrigger Binding="{Binding Status}" Value="Expired">
+                                                                <Setter Property="Background" Value="#FFEBEE"/>
                                                             </DataTrigger>
                                                         </Style.Triggers>
                                                     </Style>
@@ -455,6 +458,9 @@
                                                                 </DataTrigger>
                                                                 <DataTrigger Binding="{Binding Status}" Value="Expiring Soon">
                                                                     <Setter Property="Foreground" Value="#F57C00"/>
+                                                                </DataTrigger>
+                                                                <DataTrigger Binding="{Binding Status}" Value="Expired">
+                                                                    <Setter Property="Foreground" Value="#C62828"/>
                                                                 </DataTrigger>
                                                             </Style.Triggers>
                                                         </Style>
@@ -479,7 +485,7 @@
                                                         FontSize="11"
                                                         Cursor="Hand"
                                                         Click="BtnView_Click"
-                                                        Tag="{Binding Id}">
+                                                        Tag="{Binding MedicineId}">
                                                     <Button.Style>
                                                         <Style TargetType="Button">
                                                             <Setter Property="Template">
@@ -512,7 +518,7 @@
                                                         FontSize="11"
                                                         Cursor="Hand"
                                                         Click="BtnEdit_Click"
-                                                        Tag="{Binding Id}">
+                                                        Tag="{Binding MedicineId}">
                                                     <Button.Style>
                                                         <Style TargetType="Button">
                                                             <Setter Property="Template">
@@ -545,7 +551,7 @@
                                                         FontSize="11"
                                                         Cursor="Hand"
                                                         Click="BtnDelete_Click"
-                                                        Tag="{Binding Id}">
+                                                        Tag="{Binding MedicineId}">
                                                     <Button.Style>
                                                         <Style TargetType="Button">
                                                             <Setter Property="Template">

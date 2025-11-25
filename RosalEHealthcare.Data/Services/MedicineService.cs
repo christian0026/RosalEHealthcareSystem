@@ -100,7 +100,8 @@ namespace RosalEHealthcare.Data.Services
             if (!string.IsNullOrWhiteSpace(status) && status != "All Status")
                 q = q.Where(m => m.Status == status);
 
-            return q.OrderBy(m => m.Name).ToList();
+            // Execute query first, then order in memory
+            return q.ToList().OrderBy(m => m.Name ?? "").ToList();
         }
 
         public IEnumerable<Medicine> SearchPaged(string query, string category, string status, int pageNumber, int pageSize)
@@ -122,10 +123,16 @@ namespace RosalEHealthcare.Data.Services
             if (!string.IsNullOrWhiteSpace(status) && status != "All Status")
                 q = q.Where(m => m.Status == status);
 
-            return q.OrderBy(m => m.Name)
-                .Skip((pageNumber - 1) * pageSize)
-                .Take(pageSize)
-                .ToList();
+            // Get total count first
+            var totalCount = q.Count();
+
+            // Skip and Take work fine with EF
+            var results = q.Skip((pageNumber - 1) * pageSize)
+                           .Take(pageSize)
+                           .ToList();
+
+            // Order in memory
+            return results.OrderBy(m => m.Name ?? "").ToList();
         }
 
         public int GetFilteredCount(string query, string category, string status)
@@ -178,8 +185,8 @@ namespace RosalEHealthcare.Data.Services
         public Dictionary<string, int> GetMedicinesByCategory()
         {
             return _db.Medicines
-                .GroupBy(m => m.Category)
-                .ToDictionary(g => g.Key ?? "Unknown", g => g.Count());
+                .GroupBy(m => m.Category ?? "Unknown")
+                .ToDictionary(g => g.Key, g => g.Count());
         }
 
         public IEnumerable<Medicine> GetLowStockMedicines()
@@ -255,7 +262,7 @@ namespace RosalEHealthcare.Data.Services
                 }
                 else
                 {
-                    nextNumber = (lastMedicine?.Id ?? 0) + 1;
+                    nextNumber = (lastMedicine.Id) + 1;
                 }
             }
 

@@ -21,6 +21,7 @@
                 <RowDefinition Height="*"/>
                 <RowDefinition Height="Auto"/>
             </Grid.RowDefinitions>
+
             <!-- Top Color Bar -->
             <Border x:Name="TopBorder"
                     Grid.Row="0"
@@ -28,6 +29,7 @@
                     Background="#4CAF50"
                     CornerRadius="2"
                     Margin="0,0,0,15"/>
+
             <!-- Content -->
             <Grid Grid.Row="1">
                 <StackPanel VerticalAlignment="Center">
@@ -37,6 +39,7 @@
                                Foreground="#757575" 
                                FontSize="13"
                                FontWeight="Normal"/>
+
                     <!-- Value -->
                     <TextBlock x:Name="ValueTextBlock"
                                Text="0" 
@@ -45,6 +48,7 @@
                                Foreground="#333" 
                                Margin="0,8,0,0"/>
                 </StackPanel>
+
                 <!-- Icon -->
                 <Border x:Name="IconBorder"
                         Background="#E8F5E9" 
@@ -61,6 +65,7 @@
                                VerticalAlignment="Center"/>
                 </Border>
             </Grid>
+
             <!-- Trend Indicator -->
             <StackPanel Grid.Row="2" 
                         Orientation="Horizontal" 
