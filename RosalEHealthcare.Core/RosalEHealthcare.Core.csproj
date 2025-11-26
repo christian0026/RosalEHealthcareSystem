@@ -282,6 +282,8 @@
     </Compile>
     <Compile Include="Models\ActivityLog.cs" />
     <Compile Include="Models\Appointment.cs" />
+    <Compile Include="Models\BackupHistory.cs" />
+    <Compile Include="Models\LoginHistory.cs" />
     <Compile Include="Models\MedicalDocument.cs" />
     <Compile Include="Models\MedicalHistory.cs" />
     <Compile Include="Models\Medicine.cs" />
@@ -294,6 +296,8 @@
     <Compile Include="Models\ReportData.cs" />
     <Compile Include="Models\ReportFilter.cs" />
     <Compile Include="Models\ReportTemplate.cs" />
+    <Compile Include="Models\RolePermission.cs" />
+    <Compile Include="Models\SystemSettings.cs" />
     <Compile Include="Models\User.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />

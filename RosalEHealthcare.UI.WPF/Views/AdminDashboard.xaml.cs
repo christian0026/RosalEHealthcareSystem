@@ -464,7 +464,7 @@ namespace RosalEHealthcare.UI.WPF.Views
         {
             txtPageTitle.Text = "System Settings";
             HideAllContent();
-            // MainContent.Content = new SettingsView();
+            MainContent.Content = new SystemSettingsView();
             MainContent.Visibility = Visibility.Visible;
             SetActiveButton(BtnSettings);
         }

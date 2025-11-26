@@ -5,93 +5,97 @@
              xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
              Background="#F5F5F5">
 
-    <ScrollViewer VerticalScrollBarVisibility="Auto">
-        <StackPanel Margin="30">
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+        </Grid.RowDefinitions>
 
-            <!-- SUMMARY CARDS -->
-            <Grid Margin="0,0,0,24">
-                <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="*"/>
-                    <ColumnDefinition Width="*"/>
-                    <ColumnDefinition Width="*"/>
-                    <ColumnDefinition Width="*"/>
-                </Grid.ColumnDefinitions>
+        <!-- SUMMARY CARDS (Fixed) -->
+        <Grid Grid.Row="0" Margin="30,30,30,24">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="*"/>
+            </Grid.ColumnDefinitions>
 
-                <local:SummaryCard Grid.Column="0" x:Name="CardCompleted" 
-                                   Title="Completed" Value="0" Icon="✅" 
-                                   TopColor="#2E7D32" IconBackground="#E8F5E9"
-                                   TrendText="Finished consultations" TrendColor="#2E7D32" TrendIcon="✓"
-                                   Margin="0,0,10,0"/>
+            <local:SummaryCard Grid.Column="0" x:Name="CardCompleted" 
+                               Title="Completed" Value="0" Icon="✅" 
+                               TopColor="#2E7D32" IconBackground="#E8F5E9"
+                               TrendText="Finished consultations" TrendColor="#2E7D32" TrendIcon="✓"
+                               Margin="0,0,10,0"/>
 
-                <local:SummaryCard Grid.Column="1" x:Name="CardConfirmed" 
-                                   Title="Confirmed" Value="0" Icon="✓" 
-                                   TopColor="#1565C0" IconBackground="#E3F2FD"
-                                   TrendText="Ready for consultation" TrendColor="#1565C0" TrendIcon="✓"
-                                   Margin="5,0,5,0"/>
+            <local:SummaryCard Grid.Column="1" x:Name="CardConfirmed" 
+                               Title="Confirmed" Value="0" Icon="✓" 
+                               TopColor="#1565C0" IconBackground="#E3F2FD"
+                               TrendText="Ready for consultation" TrendColor="#1565C0" TrendIcon="✓"
+                               Margin="5,0,5,0"/>
 
-                <local:SummaryCard Grid.Column="2" x:Name="CardPending" 
-                                   Title="Pending" Value="0" Icon="⏳" 
-                                   TopColor="#FFA000" IconBackground="#FFF3E0"
-                                   TrendText="Awaiting confirmation" TrendColor="#FFA000" TrendIcon="⚠"
-                                   Margin="5,0,5,0"/>
+            <local:SummaryCard Grid.Column="2" x:Name="CardPending" 
+                               Title="Pending" Value="0" Icon="⏳" 
+                               TopColor="#FFA000" IconBackground="#FFF3E0"
+                               TrendText="Awaiting confirmation" TrendColor="#FFA000" TrendIcon="⚠"
+                               Margin="5,0,5,0"/>
 
-                <local:SummaryCard Grid.Column="3" x:Name="CardCancelled" 
-                                   Title="Cancelled" Value="0" Icon="✕" 
-                                   TopColor="#D32F2F" IconBackground="#FFEBEE"
-                                   TrendText="Cancelled appointments" TrendColor="#D32F2F" TrendIcon="▼"
-                                   Margin="10,0,0,0"/>
-            </Grid>
+            <local:SummaryCard Grid.Column="3" x:Name="CardCancelled" 
+                               Title="Cancelled" Value="0" Icon="✕" 
+                               TopColor="#D32F2F" IconBackground="#FFEBEE"
+                               TrendText="Cancelled appointments" TrendColor="#D32F2F" TrendIcon="▼"
+                               Margin="10,0,0,0"/>
+        </Grid>
 
-            <!-- FILTER BAR -->
-            <Border Background="White" CornerRadius="12" Padding="20" BorderBrush="#E0E0E0" BorderThickness="1" Margin="0,0,0,20">
-                <Border.Effect>
-                    <DropShadowEffect Color="#000000" BlurRadius="10" ShadowDepth="2" Opacity="0.1"/>
-                </Border.Effect>
-                <StackPanel>
-                    <TextBlock Text="Filter Appointments" FontSize="16" FontWeight="Bold" Foreground="#333" Margin="0,0,0,15"/>
-                    <Grid>
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="*"/>
-                            <ColumnDefinition Width="15"/>
-                            <ColumnDefinition Width="200"/>
-                            <ColumnDefinition Width="15"/>
-                            <ColumnDefinition Width="200"/>
-                            <ColumnDefinition Width="15"/>
-                            <ColumnDefinition Width="200"/>
-                        </Grid.ColumnDefinitions>
+        <!-- FILTER BAR (Fixed) -->
+        <Border Grid.Row="1" Background="White" CornerRadius="12" Padding="20" BorderBrush="#E0E0E0" BorderThickness="1" Margin="30,0,30,20">
+            <Border.Effect>
+                <DropShadowEffect Color="#000000" BlurRadius="10" ShadowDepth="2" Opacity="0.1"/>
+            </Border.Effect>
+            <StackPanel>
+                <TextBlock Text="Filter Appointments" FontSize="16" FontWeight="Bold" Foreground="#333" Margin="0,0,0,15"/>
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="15"/>
+                        <ColumnDefinition Width="200"/>
+                        <ColumnDefinition Width="15"/>
+                        <ColumnDefinition Width="200"/>
+                        <ColumnDefinition Width="15"/>
+                        <ColumnDefinition Width="200"/>
+                    </Grid.ColumnDefinitions>
 
-                        <TextBox x:Name="txtSearch" Grid.Column="0" Height="45" Padding="12,10" FontSize="14"
-                                 TextChanged="TxtSearch_TextChanged" materialDesign:HintAssist.Hint="Search by patient name..."/>
+                    <TextBox x:Name="txtSearch" Grid.Column="0" Height="45" Padding="12,10" FontSize="14"
+                             TextChanged="TxtSearch_TextChanged" materialDesign:HintAssist.Hint="Search by patient name..."/>
 
-                        <ComboBox x:Name="cbStatus" Grid.Column="2" Height="45" Padding="12,10" FontSize="14"
-                                  SelectionChanged="CbStatus_SelectionChanged">
-                            <ComboBoxItem Content="All Status" IsSelected="True"/>
-                            <ComboBoxItem Content="COMPLETED"/>
-                            <ComboBoxItem Content="CONFIRMED"/>
-                            <ComboBoxItem Content="PENDING"/>
-                            <ComboBoxItem Content="CANCELLED"/>
-                        </ComboBox>
+                    <ComboBox x:Name="cbStatus" Grid.Column="2" Height="45" Padding="12,10" FontSize="14"
+                              SelectionChanged="CbStatus_SelectionChanged">
+                        <ComboBoxItem Content="All Status" IsSelected="True"/>
+                        <ComboBoxItem Content="COMPLETED"/>
+                        <ComboBoxItem Content="CONFIRMED"/>
+                        <ComboBoxItem Content="PENDING"/>
+                        <ComboBoxItem Content="CANCELLED"/>
+                    </ComboBox>
 
-                        <DatePicker x:Name="dpDate" Grid.Column="4" Height="45" Padding="12,10" FontSize="14"
-                                    SelectedDateChanged="DpDate_SelectedDateChanged"/>
+                    <DatePicker x:Name="dpDate" Grid.Column="4" Height="45" Padding="12,10" FontSize="14"
+                                SelectedDateChanged="DpDate_SelectedDateChanged"/>
 
-                        <ComboBox x:Name="cbType" Grid.Column="6" Height="45" Padding="12,10" FontSize="14"
-                                  SelectionChanged="CbType_SelectionChanged">
-                            <ComboBoxItem Content="All Types" IsSelected="True"/>
-                            <ComboBoxItem Content="General Consultation"/>
-                            <ComboBoxItem Content="Follow-up Visit"/>
-                            <ComboBoxItem Content="Laboratory Test"/>
-                            <ComboBoxItem Content="Medical Certificate"/>
-                            <ComboBoxItem Content="Vaccination"/>
-                            <ComboBoxItem Content="Physical Examination"/>
-                        </ComboBox>
-                    </Grid>
-                </StackPanel>
-            </Border>
+                    <ComboBox x:Name="cbType" Grid.Column="6" Height="45" Padding="12,10" FontSize="14"
+                              SelectionChanged="CbType_SelectionChanged">
+                        <ComboBoxItem Content="All Types" IsSelected="True"/>
+                        <ComboBoxItem Content="General Consultation"/>
+                        <ComboBoxItem Content="Follow-up Visit"/>
+                        <ComboBoxItem Content="Laboratory Test"/>
+                        <ComboBoxItem Content="Medical Certificate"/>
+                        <ComboBoxItem Content="Vaccination"/>
+                        <ComboBoxItem Content="Physical Examination"/>
+                    </ComboBox>
+                </Grid>
+            </StackPanel>
+        </Border>
 
-            <!-- APPOINTMENT CARDS -->
-            <WrapPanel x:Name="wpAppointments" Orientation="Horizontal"/>
-
-        </StackPanel>
-    </ScrollViewer>
+        <!-- APPOINTMENT CARDS (Scrollable) -->
+        <ScrollViewer Grid.Row="2" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+            <WrapPanel x:Name="wpAppointments" Orientation="Horizontal" Margin="30,0,30,30"/>
+        </ScrollViewer>
+    </Grid>
 </UserControl>
