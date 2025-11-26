@@ -387,6 +387,9 @@
     <Compile Include="Views\ViewMedicineDialog.xaml.cs">
       <DependentUpon>ViewMedicineDialog.xaml</DependentUpon>
     </Compile>
+    <Compile Include="Views\ViewUserDialog.xaml.cs">
+      <DependentUpon>ViewUserDialog.xaml</DependentUpon>
+    </Compile>
     <Compile Include="Views\ViewVisitDialog.cs" />
     <Page Include="Controls\AppointmentCard.xaml">
       <SubType>Designer</SubType>
@@ -513,6 +516,10 @@
       <Generator>MSBuild:Compile</Generator>
     </Page>
     <Page Include="Views\ViewMedicineDialog.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="Views\ViewUserDialog.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>

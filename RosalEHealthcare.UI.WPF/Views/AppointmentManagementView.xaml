@@ -197,7 +197,7 @@
                 </Button>
 
                 <!-- Appointments DataGrid -->
-                <Border Background="White" CornerRadius="10" Padding="0" Margin="0,0,0,20">
+                <Border Background="White" CornerRadius="10" Padding="0" Margin="0,0,0,20" Height="600">
                     <Border.Effect>
                         <DropShadowEffect Color="#000000" BlurRadius="10" ShadowDepth="2" Opacity="0.1"/>
                     </Border.Effect>
@@ -206,9 +206,18 @@
                             <TextBlock Text="Scheduled Appointments" FontSize="18" FontWeight="Bold" Foreground="#333"/>
                         </Border>
 
-                        <DataGrid x:Name="dgAppointments" AutoGenerateColumns="False" HeadersVisibility="Column" CanUserAddRows="False"
-                                  IsReadOnly="True" GridLinesVisibility="None" BorderThickness="0" Background="White"
-                                  RowBackground="White" AlternatingRowBackground="#FAFAFA" RowHeight="70" SelectionMode="Single" Margin="0">
+                        <Border DockPanel.Dock="Bottom" Background="#FAFAFA" Padding="20" BorderThickness="0,1,0,0" BorderBrush="#E0E0E0" CornerRadius="0,0,10,10">
+                            <Grid>
+                                <TextBlock x:Name="txtPaginationInfo" Text="Showing 0 appointments" FontSize="13" Foreground="#757575" VerticalAlignment="Center"/>
+                                <StackPanel x:Name="paginationPanel" Orientation="Horizontal" HorizontalAlignment="Right"/>
+                            </Grid>
+                        </Border>
+
+                        <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+                            <DataGrid x:Name="dgAppointments" AutoGenerateColumns="False" HeadersVisibility="Column" CanUserAddRows="False"
+                                      IsReadOnly="True" GridLinesVisibility="None" BorderThickness="0" Background="White"
+                                      RowBackground="White" AlternatingRowBackground="#FAFAFA" RowHeight="70" SelectionMode="Single" Margin="0"
+                                      MaxHeight="400" ScrollViewer.VerticalScrollBarVisibility="Auto" ScrollViewer.CanContentScroll="True">
                             <DataGrid.ColumnHeaderStyle>
                                 <Style TargetType="DataGridColumnHeader">
                                     <Setter Property="Background" Value="White"/>
@@ -323,15 +332,9 @@
                                         </DataTemplate>
                                     </DataGridTemplateColumn.CellTemplate>
                                 </DataGridTemplateColumn>
-                            </DataGrid.Columns>
-                        </DataGrid>
-
-                        <Border DockPanel.Dock="Bottom" Background="#FAFAFA" Padding="20" BorderThickness="0,1,0,0" BorderBrush="#E0E0E0" CornerRadius="0,0,10,10">
-                            <Grid>
-                                <TextBlock x:Name="txtPaginationInfo" Text="Showing 0 appointments" FontSize="13" Foreground="#757575" VerticalAlignment="Center"/>
-                                <StackPanel x:Name="paginationPanel" Orientation="Horizontal" HorizontalAlignment="Right"/>
-                            </Grid>
-                        </Border>
+                                </DataGrid.Columns>
+                            </DataGrid>
+                        </ScrollViewer>
                     </DockPanel>
                 </Border>
             </StackPanel>

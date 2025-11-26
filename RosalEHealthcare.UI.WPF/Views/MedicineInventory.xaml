@@ -35,11 +35,6 @@
             <StackPanel Margin="24">
 
                 <!-- SUMMARY CARDS -->
-                <TextBlock Text="Medicine Inventory Overview" 
-                           FontSize="20" 
-                           FontWeight="Bold" 
-                           Margin="0,0,0,16"/>
-
                 <UniformGrid Columns="4" Margin="0,0,0,24">
                     <controls:SummaryCard x:Name="cardTotalMedicines"
                                         Title="Total Medicines"

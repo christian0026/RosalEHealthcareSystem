@@ -200,13 +200,13 @@ namespace RosalEHealthcare.UI.WPF.Views
                 return;
             }
 
-            string email = txtUsername.Text?.Trim() ?? "";
+            string username = txtUsername.Text?.Trim() ?? "";
             string password = GetPassword()?.Trim() ?? "";
             string role = rbAdmin.IsChecked == true ? "Administrator" :
                           rbDoctor.IsChecked == true ? "Doctor" : "Receptionist";
 
             // Validation
-            if (string.IsNullOrWhiteSpace(email))
+            if (string.IsNullOrWhiteSpace(username))
             {
                 MessageBox.Show(
                     "Please enter your username.",
@@ -237,9 +237,9 @@ namespace RosalEHealthcare.UI.WPF.Views
                 using (var db = new RosalEHealthcareDbContext())
                 {
                     var userService = new UserService(db);
-                    var user = userService.GetByEmail(email);
+                    var user = userService.GetByUsername(username);
 
-                    if (user != null && user.Role == role && userService.ValidateUser(email, password))
+                    if (user != null && user.Role == role && userService.ValidateUserByUsername(username, password))
                     {
                         // Successful login - reset failed attempts
                         _failedAttempts = 0;
