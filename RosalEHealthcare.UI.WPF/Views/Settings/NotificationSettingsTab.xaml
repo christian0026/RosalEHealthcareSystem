@@ -3,15 +3,574 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:iconPacks="http://metro.mahapps.com/winfx/xaml/iconpacks"
              mc:Ignorable="d" 
-             d:DesignHeight="600" d:DesignWidth="800"
+             d:DesignHeight="700" d:DesignWidth="900"
              Background="White">
 
-    <Grid>
-        <TextBlock Text="Notification Settings - Coming in Part 5" 
-                   FontSize="18" 
-                   Foreground="#888"
-                   HorizontalAlignment="Center" 
-                   VerticalAlignment="Center"/>
-    </Grid>
+    <UserControl.Resources>
+        <!-- Section Card Style -->
+        <Style x:Key="SectionCard" TargetType="Border">
+            <Setter Property="Background" Value="#FAFAFA"/>
+            <Setter Property="BorderBrush" Value="#E8E8E8"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="CornerRadius" Value="8"/>
+            <Setter Property="Padding" Value="20"/>
+            <Setter Property="Margin" Value="0,0,0,16"/>
+        </Style>
+
+        <!-- Section Title Style -->
+        <Style x:Key="SectionTitle" TargetType="TextBlock">
+            <Setter Property="FontSize" Value="16"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="Foreground" Value="#333333"/>
+            <Setter Property="Margin" Value="0,0,0,4"/>
+        </Style>
+
+        <!-- Section Subtitle Style -->
+        <Style x:Key="SectionSubtitle" TargetType="TextBlock">
+            <Setter Property="FontSize" Value="12"/>
+            <Setter Property="Foreground" Value="#888888"/>
+            <Setter Property="Margin" Value="0,0,0,16"/>
+        </Style>
+
+        <!-- Field Label Style -->
+        <Style x:Key="FieldLabel" TargetType="TextBlock">
+            <Setter Property="FontSize" Value="13"/>
+            <Setter Property="FontWeight" Value="Medium"/>
+            <Setter Property="Foreground" Value="#555555"/>
+            <Setter Property="Margin" Value="0,0,0,6"/>
+        </Style>
+
+        <!-- ComboBox Style -->
+        <Style x:Key="ComboInput" TargetType="ComboBox">
+            <Setter Property="Height" Value="40"/>
+            <Setter Property="Padding" Value="12,8"/>
+            <Setter Property="FontSize" Value="14"/>
+            <Setter Property="Background" Value="White"/>
+            <Setter Property="BorderBrush" Value="#D0D0D0"/>
+            <Setter Property="BorderThickness" Value="1"/>
+        </Style>
+
+        <!-- Primary Button Style -->
+        <Style x:Key="PrimaryButton" TargetType="Button">
+            <Setter Property="Background" Value="#2E7D32"/>
+            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="Padding" Value="24,12"/>
+            <Setter Property="FontSize" Value="14"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border x:Name="border"
+                                Background="{TemplateBinding Background}"
+                                Padding="{TemplateBinding Padding}"
+                                CornerRadius="8">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="border" Property="Background" Value="#388E3C"/>
+                            </Trigger>
+                            <Trigger Property="IsPressed" Value="True">
+                                <Setter TargetName="border" Property="Background" Value="#1B5E20"/>
+                            </Trigger>
+                            <Trigger Property="IsEnabled" Value="False">
+                                <Setter TargetName="border" Property="Background" Value="#BDBDBD"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <!-- Secondary Button Style -->
+        <Style x:Key="SecondaryButton" TargetType="Button">
+            <Setter Property="Background" Value="White"/>
+            <Setter Property="Foreground" Value="#666666"/>
+            <Setter Property="Padding" Value="24,12"/>
+            <Setter Property="FontSize" Value="14"/>
+            <Setter Property="FontWeight" Value="Medium"/>
+            <Setter Property="BorderBrush" Value="#D0D0D0"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border x:Name="border"
+                                Background="{TemplateBinding Background}"
+                                BorderBrush="{TemplateBinding BorderBrush}"
+                                BorderThickness="{TemplateBinding BorderThickness}"
+                                Padding="{TemplateBinding Padding}"
+                                CornerRadius="8">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="border" Property="Background" Value="#F5F5F5"/>
+                                <Setter TargetName="border" Property="BorderBrush" Value="#BDBDBD"/>
+                            </Trigger>
+                            <Trigger Property="IsPressed" Value="True">
+                                <Setter TargetName="border" Property="Background" Value="#EEEEEE"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <!-- Toggle Switch Style -->
+        <Style x:Key="ToggleSwitch" TargetType="CheckBox">
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="CheckBox">
+                        <StackPanel Orientation="Horizontal">
+                            <Grid Width="50" Height="26">
+                                <Border x:Name="track"
+                                        Background="#E0E0E0"
+                                        CornerRadius="13"
+                                        Cursor="Hand"/>
+                                <Border x:Name="thumb"
+                                        Width="22" Height="22"
+                                        CornerRadius="11"
+                                        Background="White"
+                                        HorizontalAlignment="Left"
+                                        Margin="2,0,0,0"
+                                        Cursor="Hand">
+                                    <Border.Effect>
+                                        <DropShadowEffect Color="#000000" BlurRadius="4" ShadowDepth="1" Opacity="0.2"/>
+                                    </Border.Effect>
+                                </Border>
+                            </Grid>
+                            <ContentPresenter Margin="10,0,0,0" VerticalAlignment="Center"/>
+                        </StackPanel>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsChecked" Value="True">
+                                <Setter TargetName="track" Property="Background" Value="#4CAF50"/>
+                                <Setter TargetName="thumb" Property="HorizontalAlignment" Value="Right"/>
+                                <Setter TargetName="thumb" Property="Margin" Value="0,0,2,0"/>
+                            </Trigger>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="track" Property="Opacity" Value="0.9"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <!-- Notification Item Style -->
+        <Style x:Key="NotificationItem" TargetType="Border">
+            <Setter Property="Background" Value="White"/>
+            <Setter Property="BorderBrush" Value="#EEEEEE"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="CornerRadius" Value="8"/>
+            <Setter Property="Padding" Value="16"/>
+            <Setter Property="Margin" Value="0,0,0,12"/>
+        </Style>
+    </UserControl.Resources>
+
+    <ScrollViewer VerticalScrollBarVisibility="Auto" 
+                  HorizontalScrollBarVisibility="Disabled"
+                  Padding="24">
+        <StackPanel>
+
+            <!-- SYSTEM NOTIFICATIONS Section -->
+            <Border Style="{StaticResource SectionCard}">
+                <StackPanel>
+                    <StackPanel Orientation="Horizontal" Margin="0,0,0,4">
+                        <iconPacks:PackIconMaterial Kind="BellRing" 
+                                                    Width="20" Height="20" 
+                                                    Foreground="#FF9800"
+                                                    VerticalAlignment="Center"/>
+                        <TextBlock Text="System Notifications" 
+                                   Style="{StaticResource SectionTitle}"
+                                   Margin="10,0,0,0"/>
+                    </StackPanel>
+                    <TextBlock Text="Configure in-app notifications and alerts" 
+                               Style="{StaticResource SectionSubtitle}"/>
+
+                    <!-- Enable In-App Notifications -->
+                    <Border Style="{StaticResource NotificationItem}">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
+                            <StackPanel Grid.Column="0">
+                                <TextBlock Text="Enable In-App Notifications" 
+                                           FontSize="14" 
+                                           FontWeight="Medium" 
+                                           Foreground="#333"/>
+                                <TextBlock Text="Show notification popups and badges within the application" 
+                                           FontSize="12" 
+                                           Foreground="#888"
+                                           Margin="0,4,0,0"/>
+                            </StackPanel>
+                            <CheckBox x:Name="ChkEnableNotifications" 
+                                      Grid.Column="1"
+                                      Style="{StaticResource ToggleSwitch}"
+                                      VerticalAlignment="Center"/>
+                        </Grid>
+                    </Border>
+
+                </StackPanel>
+            </Border>
+
+            <!-- INVENTORY ALERTS Section -->
+            <Border Style="{StaticResource SectionCard}">
+                <StackPanel>
+                    <StackPanel Orientation="Horizontal" Margin="0,0,0,4">
+                        <iconPacks:PackIconMaterial Kind="PackageVariant" 
+                                                    Width="20" Height="20" 
+                                                    Foreground="#F44336"
+                                                    VerticalAlignment="Center"/>
+                        <TextBlock Text="Inventory Alerts" 
+                                   Style="{StaticResource SectionTitle}"
+                                   Margin="10,0,0,0"/>
+                    </StackPanel>
+                    <TextBlock Text="Configure alerts for medicine inventory management" 
+                               Style="{StaticResource SectionSubtitle}"/>
+
+                    <!-- Low Stock Alerts -->
+                    <Border Style="{StaticResource NotificationItem}">
+                        <StackPanel>
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                </Grid.ColumnDefinitions>
+                                <StackPanel Grid.Column="0">
+                                    <TextBlock Text="Low Stock Alerts" 
+                                               FontSize="14" 
+                                               FontWeight="Medium" 
+                                               Foreground="#333"/>
+                                    <TextBlock Text="Get notified when medicine stock falls below threshold" 
+                                               FontSize="12" 
+                                               Foreground="#888"
+                                               Margin="0,4,0,0"/>
+                                </StackPanel>
+                                <CheckBox x:Name="ChkLowStockAlerts" 
+                                          Grid.Column="1"
+                                          Style="{StaticResource ToggleSwitch}"
+                                          VerticalAlignment="Center"
+                                          Checked="ChkLowStockAlerts_Changed"
+                                          Unchecked="ChkLowStockAlerts_Changed"/>
+                            </Grid>
+
+                            <!-- Threshold Setting -->
+                            <Border x:Name="LowStockThresholdPanel"
+                                    Background="#F5F5F5" 
+                                    CornerRadius="6" 
+                                    Padding="12" 
+                                    Margin="0,12,0,0">
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="150"/>
+                                    </Grid.ColumnDefinitions>
+                                    <StackPanel Grid.Column="0" VerticalAlignment="Center">
+                                        <TextBlock Text="Low Stock Threshold" 
+                                                   FontSize="13" 
+                                                   FontWeight="Medium" 
+                                                   Foreground="#555"/>
+                                        <TextBlock Text="Alert when stock quantity falls below this number" 
+                                                   FontSize="11" 
+                                                   Foreground="#888"
+                                                   Margin="0,2,0,0"/>
+                                    </StackPanel>
+                                    <ComboBox x:Name="CmbLowStockThreshold" 
+                                              Grid.Column="1"
+                                              Style="{StaticResource ComboInput}">
+                                        <ComboBoxItem Content="10 units" Tag="10"/>
+                                        <ComboBoxItem Content="25 units" Tag="25"/>
+                                        <ComboBoxItem Content="50 units" Tag="50"/>
+                                        <ComboBoxItem Content="100 units" Tag="100"/>
+                                        <ComboBoxItem Content="200 units" Tag="200"/>
+                                    </ComboBox>
+                                </Grid>
+                            </Border>
+                        </StackPanel>
+                    </Border>
+
+                    <!-- Expiring Medicine Alerts -->
+                    <Border Style="{StaticResource NotificationItem}">
+                        <StackPanel>
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                </Grid.ColumnDefinitions>
+                                <StackPanel Grid.Column="0">
+                                    <TextBlock Text="Expiring Medicine Alerts" 
+                                               FontSize="14" 
+                                               FontWeight="Medium" 
+                                               Foreground="#333"/>
+                                    <TextBlock Text="Get notified when medicines are about to expire" 
+                                               FontSize="12" 
+                                               Foreground="#888"
+                                               Margin="0,4,0,0"/>
+                                </StackPanel>
+                                <CheckBox x:Name="ChkExpiryAlerts" 
+                                          Grid.Column="1"
+                                          Style="{StaticResource ToggleSwitch}"
+                                          VerticalAlignment="Center"
+                                          Checked="ChkExpiryAlerts_Changed"
+                                          Unchecked="ChkExpiryAlerts_Changed"/>
+                            </Grid>
+
+                            <!-- Expiry Days Setting -->
+                            <Border x:Name="ExpiryDaysPanel"
+                                    Background="#F5F5F5" 
+                                    CornerRadius="6" 
+                                    Padding="12" 
+                                    Margin="0,12,0,0">
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="150"/>
+                                    </Grid.ColumnDefinitions>
+                                    <StackPanel Grid.Column="0" VerticalAlignment="Center">
+                                        <TextBlock Text="Alert Before Expiry" 
+                                                   FontSize="13" 
+                                                   FontWeight="Medium" 
+                                                   Foreground="#555"/>
+                                        <TextBlock Text="Days before expiry date to send alert" 
+                                                   FontSize="11" 
+                                                   Foreground="#888"
+                                                   Margin="0,2,0,0"/>
+                                    </StackPanel>
+                                    <ComboBox x:Name="CmbExpiryDays" 
+                                              Grid.Column="1"
+                                              Style="{StaticResource ComboInput}">
+                                        <ComboBoxItem Content="7 days" Tag="7"/>
+                                        <ComboBoxItem Content="14 days" Tag="14"/>
+                                        <ComboBoxItem Content="30 days" Tag="30"/>
+                                        <ComboBoxItem Content="60 days" Tag="60"/>
+                                        <ComboBoxItem Content="90 days" Tag="90"/>
+                                    </ComboBox>
+                                </Grid>
+                            </Border>
+                        </StackPanel>
+                    </Border>
+
+                </StackPanel>
+            </Border>
+
+            <!-- APPOINTMENT REMINDERS Section -->
+            <Border Style="{StaticResource SectionCard}">
+                <StackPanel>
+                    <StackPanel Orientation="Horizontal" Margin="0,0,0,4">
+                        <iconPacks:PackIconMaterial Kind="CalendarClock" 
+                                                    Width="20" Height="20" 
+                                                    Foreground="#2196F3"
+                                                    VerticalAlignment="Center"/>
+                        <TextBlock Text="Appointment Reminders" 
+                                   Style="{StaticResource SectionTitle}"
+                                   Margin="10,0,0,0"/>
+                    </StackPanel>
+                    <TextBlock Text="Configure reminders for upcoming appointments" 
+                               Style="{StaticResource SectionSubtitle}"/>
+
+                    <!-- Enable Appointment Reminders -->
+                    <Border Style="{StaticResource NotificationItem}">
+                        <StackPanel>
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                </Grid.ColumnDefinitions>
+                                <StackPanel Grid.Column="0">
+                                    <TextBlock Text="Enable Appointment Reminders" 
+                                               FontSize="14" 
+                                               FontWeight="Medium" 
+                                               Foreground="#333"/>
+                                    <TextBlock Text="Get notified before scheduled appointments" 
+                                               FontSize="12" 
+                                               Foreground="#888"
+                                               Margin="0,4,0,0"/>
+                                </StackPanel>
+                                <CheckBox x:Name="ChkAppointmentReminders" 
+                                          Grid.Column="1"
+                                          Style="{StaticResource ToggleSwitch}"
+                                          VerticalAlignment="Center"
+                                          Checked="ChkAppointmentReminders_Changed"
+                                          Unchecked="ChkAppointmentReminders_Changed"/>
+                            </Grid>
+
+                            <!-- Reminder Time Setting -->
+                            <Border x:Name="ReminderTimePanel"
+                                    Background="#F5F5F5" 
+                                    CornerRadius="6" 
+                                    Padding="12" 
+                                    Margin="0,12,0,0">
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="150"/>
+                                    </Grid.ColumnDefinitions>
+                                    <StackPanel Grid.Column="0" VerticalAlignment="Center">
+                                        <TextBlock Text="Remind Before Appointment" 
+                                                   FontSize="13" 
+                                                   FontWeight="Medium" 
+                                                   Foreground="#555"/>
+                                        <TextBlock Text="Hours before appointment to send reminder" 
+                                                   FontSize="11" 
+                                                   Foreground="#888"
+                                                   Margin="0,2,0,0"/>
+                                    </StackPanel>
+                                    <ComboBox x:Name="CmbReminderHours" 
+                                              Grid.Column="1"
+                                              Style="{StaticResource ComboInput}">
+                                        <ComboBoxItem Content="30 minutes" Tag="0.5"/>
+                                        <ComboBoxItem Content="1 hour" Tag="1"/>
+                                        <ComboBoxItem Content="2 hours" Tag="2"/>
+                                        <ComboBoxItem Content="4 hours" Tag="4"/>
+                                        <ComboBoxItem Content="24 hours" Tag="24"/>
+                                    </ComboBox>
+                                </Grid>
+                            </Border>
+                        </StackPanel>
+                    </Border>
+
+                </StackPanel>
+            </Border>
+
+            <!-- NOTIFICATION RECIPIENTS Section -->
+            <Border Style="{StaticResource SectionCard}">
+                <StackPanel>
+                    <StackPanel Orientation="Horizontal" Margin="0,0,0,4">
+                        <iconPacks:PackIconMaterial Kind="AccountGroup" 
+                                                    Width="20" Height="20" 
+                                                    Foreground="#9C27B0"
+                                                    VerticalAlignment="Center"/>
+                        <TextBlock Text="Notification Recipients" 
+                                   Style="{StaticResource SectionTitle}"
+                                   Margin="10,0,0,0"/>
+                    </StackPanel>
+                    <TextBlock Text="Configure which roles receive specific notifications" 
+                               Style="{StaticResource SectionSubtitle}"/>
+
+                    <!-- Low Stock Alert Recipients -->
+                    <Border Style="{StaticResource NotificationItem}">
+                        <StackPanel>
+                            <TextBlock Text="Low Stock Alert Recipients" 
+                                       FontSize="14" 
+                                       FontWeight="Medium" 
+                                       Foreground="#333"
+                                       Margin="0,0,0,12"/>
+                            <WrapPanel>
+                                <CheckBox x:Name="ChkLowStockAdmin" 
+                                          Content="Administrator" 
+                                          Margin="0,0,24,8"
+                                          FontSize="13"/>
+                                <CheckBox x:Name="ChkLowStockDoctor" 
+                                          Content="Doctor" 
+                                          Margin="0,0,24,8"
+                                          FontSize="13"/>
+                                <CheckBox x:Name="ChkLowStockReceptionist" 
+                                          Content="Receptionist" 
+                                          Margin="0,0,24,8"
+                                          FontSize="13"/>
+                            </WrapPanel>
+                        </StackPanel>
+                    </Border>
+
+                    <!-- Appointment Reminder Recipients -->
+                    <Border Style="{StaticResource NotificationItem}">
+                        <StackPanel>
+                            <TextBlock Text="Appointment Reminder Recipients" 
+                                       FontSize="14" 
+                                       FontWeight="Medium" 
+                                       Foreground="#333"
+                                       Margin="0,0,0,12"/>
+                            <WrapPanel>
+                                <CheckBox x:Name="ChkAppointmentAdmin" 
+                                          Content="Administrator" 
+                                          Margin="0,0,24,8"
+                                          FontSize="13"/>
+                                <CheckBox x:Name="ChkAppointmentDoctor" 
+                                          Content="Doctor" 
+                                          Margin="0,0,24,8"
+                                          FontSize="13"/>
+                                <CheckBox x:Name="ChkAppointmentReceptionist" 
+                                          Content="Receptionist" 
+                                          Margin="0,0,24,8"
+                                          FontSize="13"/>
+                            </WrapPanel>
+                        </StackPanel>
+                    </Border>
+
+                    <!-- Expiry Alert Recipients -->
+                    <Border Style="{StaticResource NotificationItem}">
+                        <StackPanel>
+                            <TextBlock Text="Expiry Alert Recipients" 
+                                       FontSize="14" 
+                                       FontWeight="Medium" 
+                                       Foreground="#333"
+                                       Margin="0,0,0,12"/>
+                            <WrapPanel>
+                                <CheckBox x:Name="ChkExpiryAdmin" 
+                                          Content="Administrator" 
+                                          Margin="0,0,24,8"
+                                          FontSize="13"/>
+                                <CheckBox x:Name="ChkExpiryDoctor" 
+                                          Content="Doctor" 
+                                          Margin="0,0,24,8"
+                                          FontSize="13"/>
+                                <CheckBox x:Name="ChkExpiryReceptionist" 
+                                          Content="Receptionist" 
+                                          Margin="0,0,24,8"
+                                          FontSize="13"/>
+                            </WrapPanel>
+                        </StackPanel>
+                    </Border>
+
+                </StackPanel>
+            </Border>
+
+            <!-- Action Buttons -->
+            <Border Background="#F5F5F5" 
+                    CornerRadius="8" 
+                    Padding="20" 
+                    Margin="0,8,0,0">
+                <Grid>
+                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Left">
+                        <Button x:Name="BtnResetDefaults" 
+                                Style="{StaticResource SecondaryButton}"
+                                Click="BtnResetDefaults_Click">
+                            <StackPanel Orientation="Horizontal">
+                                <iconPacks:PackIconMaterial Kind="Restore" 
+                                                            Width="16" Height="16" 
+                                                            VerticalAlignment="Center"/>
+                                <TextBlock Text="Reset to Defaults" Margin="8,0,0,0"/>
+                            </StackPanel>
+                        </Button>
+                    </StackPanel>
+
+                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                        <Button x:Name="BtnCancel" 
+                                Style="{StaticResource SecondaryButton}"
+                                Click="BtnCancel_Click"
+                                Margin="0,0,12,0">
+                            <TextBlock Text="Cancel"/>
+                        </Button>
+                        <Button x:Name="BtnSave" 
+                                Style="{StaticResource PrimaryButton}"
+                                Click="BtnSave_Click">
+                            <StackPanel Orientation="Horizontal">
+                                <iconPacks:PackIconMaterial Kind="ContentSave" 
+                                                            Width="16" Height="16" 
+                                                            VerticalAlignment="Center"/>
+                                <TextBlock Text="Save Changes" Margin="8,0,0,0"/>
+                            </StackPanel>
+                        </Button>
+                    </StackPanel>
+                </Grid>
+            </Border>
+
+        </StackPanel>
+    </ScrollViewer>
 </UserControl>

@@ -7,17 +7,18 @@ namespace RosalEHealthcare.UI.WPF.Helpers
         public static User CurrentUser { get; set; }
         public static DateTime LoginTime { get; set; }
         public static string SessionId { get; set; }
+        public static string CurrentSessionId { get; private set; }
         public static void StartSession(User user)
         {
             CurrentUser = user;
             LoginTime = DateTime.Now;
-            SessionId = Guid.NewGuid().ToString();
+            CurrentSessionId = Guid.NewGuid().ToString();
         }
         public static void EndSession()
         {
             CurrentUser = null;
             LoginTime = DateTime.MinValue;
-            SessionId = null;
+            CurrentSessionId = null;
         }
         public static bool IsLoggedIn()
         {

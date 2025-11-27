@@ -3,15 +3,970 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:iconPacks="http://metro.mahapps.com/winfx/xaml/iconpacks"
              mc:Ignorable="d" 
-             d:DesignHeight="600" d:DesignWidth="800"
+             d:DesignHeight="900" d:DesignWidth="900"
              Background="White">
 
+    <UserControl.Resources>
+        <!-- Section Card Style -->
+        <Style x:Key="SectionCard" TargetType="Border">
+            <Setter Property="Background" Value="#FAFAFA"/>
+            <Setter Property="BorderBrush" Value="#E8E8E8"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="CornerRadius" Value="8"/>
+            <Setter Property="Padding" Value="20"/>
+            <Setter Property="Margin" Value="0,0,0,16"/>
+        </Style>
+
+        <!-- Section Title Style -->
+        <Style x:Key="SectionTitle" TargetType="TextBlock">
+            <Setter Property="FontSize" Value="16"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="Foreground" Value="#333333"/>
+            <Setter Property="Margin" Value="0,0,0,4"/>
+        </Style>
+
+        <!-- Section Subtitle Style -->
+        <Style x:Key="SectionSubtitle" TargetType="TextBlock">
+            <Setter Property="FontSize" Value="12"/>
+            <Setter Property="Foreground" Value="#888888"/>
+            <Setter Property="Margin" Value="0,0,0,16"/>
+        </Style>
+
+        <!-- Field Label Style -->
+        <Style x:Key="FieldLabel" TargetType="TextBlock">
+            <Setter Property="FontSize" Value="13"/>
+            <Setter Property="FontWeight" Value="Medium"/>
+            <Setter Property="Foreground" Value="#555555"/>
+            <Setter Property="Margin" Value="0,0,0,6"/>
+        </Style>
+
+        <!-- ComboBox Style -->
+        <Style x:Key="ComboInput" TargetType="ComboBox">
+            <Setter Property="Height" Value="40"/>
+            <Setter Property="Padding" Value="12,8"/>
+            <Setter Property="FontSize" Value="14"/>
+            <Setter Property="Background" Value="White"/>
+            <Setter Property="BorderBrush" Value="#D0D0D0"/>
+            <Setter Property="BorderThickness" Value="1"/>
+        </Style>
+
+        <!-- Primary Button Style -->
+        <Style x:Key="PrimaryButton" TargetType="Button">
+            <Setter Property="Background" Value="#2E7D32"/>
+            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="Padding" Value="24,12"/>
+            <Setter Property="FontSize" Value="14"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border x:Name="border"
+                                Background="{TemplateBinding Background}"
+                                Padding="{TemplateBinding Padding}"
+                                CornerRadius="8">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="border" Property="Background" Value="#388E3C"/>
+                            </Trigger>
+                            <Trigger Property="IsPressed" Value="True">
+                                <Setter TargetName="border" Property="Background" Value="#1B5E20"/>
+                            </Trigger>
+                            <Trigger Property="IsEnabled" Value="False">
+                                <Setter TargetName="border" Property="Background" Value="#BDBDBD"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <!-- Secondary Button Style -->
+        <Style x:Key="SecondaryButton" TargetType="Button">
+            <Setter Property="Background" Value="White"/>
+            <Setter Property="Foreground" Value="#666666"/>
+            <Setter Property="Padding" Value="24,12"/>
+            <Setter Property="FontSize" Value="14"/>
+            <Setter Property="FontWeight" Value="Medium"/>
+            <Setter Property="BorderBrush" Value="#D0D0D0"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border x:Name="border"
+                                Background="{TemplateBinding Background}"
+                                BorderBrush="{TemplateBinding BorderBrush}"
+                                BorderThickness="{TemplateBinding BorderThickness}"
+                                Padding="{TemplateBinding Padding}"
+                                CornerRadius="8">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="border" Property="Background" Value="#F5F5F5"/>
+                                <Setter TargetName="border" Property="BorderBrush" Value="#BDBDBD"/>
+                            </Trigger>
+                            <Trigger Property="IsPressed" Value="True">
+                                <Setter TargetName="border" Property="Background" Value="#EEEEEE"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <!-- Toggle Switch Style -->
+        <Style x:Key="ToggleSwitch" TargetType="CheckBox">
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="CheckBox">
+                        <StackPanel Orientation="Horizontal">
+                            <Grid Width="50" Height="26">
+                                <Border x:Name="track"
+                                        Background="#E0E0E0"
+                                        CornerRadius="13"
+                                        Cursor="Hand"/>
+                                <Border x:Name="thumb"
+                                        Width="22" Height="22"
+                                        CornerRadius="11"
+                                        Background="White"
+                                        HorizontalAlignment="Left"
+                                        Margin="2,0,0,0"
+                                        Cursor="Hand">
+                                    <Border.Effect>
+                                        <DropShadowEffect Color="#000000" BlurRadius="4" ShadowDepth="1" Opacity="0.2"/>
+                                    </Border.Effect>
+                                </Border>
+                            </Grid>
+                            <ContentPresenter Margin="10,0,0,0" VerticalAlignment="Center"/>
+                        </StackPanel>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsChecked" Value="True">
+                                <Setter TargetName="track" Property="Background" Value="#4CAF50"/>
+                                <Setter TargetName="thumb" Property="HorizontalAlignment" Value="Right"/>
+                                <Setter TargetName="thumb" Property="Margin" Value="0,0,2,0"/>
+                            </Trigger>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="track" Property="Opacity" Value="0.9"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <!-- Setting Row Style -->
+        <Style x:Key="SettingRow" TargetType="Border">
+            <Setter Property="Background" Value="White"/>
+            <Setter Property="BorderBrush" Value="#EEEEEE"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="CornerRadius" Value="8"/>
+            <Setter Property="Padding" Value="16"/>
+            <Setter Property="Margin" Value="0,0,0,12"/>
+        </Style>
+
+        <!-- Sub Tab Button Style -->
+        <Style x:Key="SubTabButton" TargetType="Button">
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="Foreground" Value="#666666"/>
+            <Setter Property="Padding" Value="16,10"/>
+            <Setter Property="FontSize" Value="13"/>
+            <Setter Property="FontWeight" Value="Medium"/>
+            <Setter Property="BorderThickness" Value="0,0,0,2"/>
+            <Setter Property="BorderBrush" Value="Transparent"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border Background="{TemplateBinding Background}"
+                                BorderBrush="{TemplateBinding BorderBrush}"
+                                BorderThickness="{TemplateBinding BorderThickness}"
+                                Padding="{TemplateBinding Padding}">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter Property="Background" Value="#F5F5F5"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <!-- Active Sub Tab Button Style -->
+        <Style x:Key="SubTabButtonActive" TargetType="Button" BasedOn="{StaticResource SubTabButton}">
+            <Setter Property="Foreground" Value="#2E7D32"/>
+            <Setter Property="BorderBrush" Value="#2E7D32"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+        </Style>
+
+        <!-- RBAC Header Style -->
+        <Style x:Key="RBACHeader" TargetType="TextBlock">
+            <Setter Property="FontSize" Value="12"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="Foreground" Value="#555"/>
+            <Setter Property="HorizontalAlignment" Value="Center"/>
+            <Setter Property="VerticalAlignment" Value="Center"/>
+        </Style>
+
+        <!-- RBAC CheckBox Style -->
+        <Style x:Key="RBACCheckBox" TargetType="CheckBox">
+            <Setter Property="HorizontalAlignment" Value="Center"/>
+            <Setter Property="VerticalAlignment" Value="Center"/>
+        </Style>
+    </UserControl.Resources>
+
     <Grid>
-        <TextBlock Text="Security Settings - Coming in Part 6" 
-                   FontSize="18" 
-                   Foreground="#888"
-                   HorizontalAlignment="Center" 
-                   VerticalAlignment="Center"/>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+
+        <!-- Sub-Tab Navigation -->
+        <Border Grid.Row="0" 
+                BorderBrush="#E0E0E0" 
+                BorderThickness="0,0,0,1"
+                Margin="24,0">
+            <StackPanel Orientation="Horizontal">
+                <Button x:Name="BtnPasswordPolicy" 
+                        Content="Password Policy"
+                        Style="{StaticResource SubTabButtonActive}"
+                        Click="SubTab_Click"
+                        Tag="PasswordPolicy"/>
+                <Button x:Name="BtnLoginSecurity" 
+                        Content="Login Security"
+                        Style="{StaticResource SubTabButton}"
+                        Click="SubTab_Click"
+                        Tag="LoginSecurity"/>
+                <Button x:Name="BtnSessionSecurity" 
+                        Content="Session Security"
+                        Style="{StaticResource SubTabButton}"
+                        Click="SubTab_Click"
+                        Tag="SessionSecurity"/>
+                <Button x:Name="BtnRBAC" 
+                        Content="Access Control (RBAC)"
+                        Style="{StaticResource SubTabButton}"
+                        Click="SubTab_Click"
+                        Tag="RBAC"/>
+            </StackPanel>
+        </Border>
+
+        <!-- Content Area -->
+        <ScrollViewer Grid.Row="1" 
+                      VerticalScrollBarVisibility="Auto" 
+                      HorizontalScrollBarVisibility="Disabled"
+                      Padding="24,16,24,0">
+            <Grid>
+                <!-- PASSWORD POLICY Panel -->
+                <StackPanel x:Name="PasswordPolicyPanel" Visibility="Visible">
+
+                    <Border Style="{StaticResource SectionCard}">
+                        <StackPanel>
+                            <StackPanel Orientation="Horizontal" Margin="0,0,0,4">
+                                <iconPacks:PackIconMaterial Kind="KeyVariant" 
+                                                            Width="20" Height="20" 
+                                                            Foreground="#FF9800"
+                                                            VerticalAlignment="Center"/>
+                                <TextBlock Text="Password Requirements" 
+                                           Style="{StaticResource SectionTitle}"
+                                           Margin="10,0,0,0"/>
+                            </StackPanel>
+                            <TextBlock Text="Configure minimum password requirements for all users" 
+                                       Style="{StaticResource SectionSubtitle}"/>
+
+                            <!-- Minimum Length -->
+                            <Border Style="{StaticResource SettingRow}">
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="150"/>
+                                    </Grid.ColumnDefinitions>
+                                    <StackPanel Grid.Column="0" VerticalAlignment="Center">
+                                        <TextBlock Text="Minimum Password Length" 
+                                                   FontSize="14" 
+                                                   FontWeight="Medium" 
+                                                   Foreground="#333"/>
+                                        <TextBlock Text="Minimum number of characters required" 
+                                                   FontSize="12" 
+                                                   Foreground="#888"
+                                                   Margin="0,4,0,0"/>
+                                    </StackPanel>
+                                    <ComboBox x:Name="CmbPasswordLength" 
+                                              Grid.Column="1"
+                                              Style="{StaticResource ComboInput}">
+                                        <ComboBoxItem Content="6 characters" Tag="6"/>
+                                        <ComboBoxItem Content="8 characters" Tag="8"/>
+                                        <ComboBoxItem Content="10 characters" Tag="10"/>
+                                        <ComboBoxItem Content="12 characters" Tag="12"/>
+                                        <ComboBoxItem Content="16 characters" Tag="16"/>
+                                    </ComboBox>
+                                </Grid>
+                            </Border>
+
+                            <!-- Require Uppercase -->
+                            <Border Style="{StaticResource SettingRow}">
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="Auto"/>
+                                    </Grid.ColumnDefinitions>
+                                    <StackPanel Grid.Column="0" VerticalAlignment="Center">
+                                        <TextBlock Text="Require Uppercase Letter" 
+                                                   FontSize="14" 
+                                                   FontWeight="Medium" 
+                                                   Foreground="#333"/>
+                                        <TextBlock Text="At least one uppercase letter (A-Z)" 
+                                                   FontSize="12" 
+                                                   Foreground="#888"
+                                                   Margin="0,4,0,0"/>
+                                    </StackPanel>
+                                    <CheckBox x:Name="ChkRequireUppercase" 
+                                              Grid.Column="1"
+                                              Style="{StaticResource ToggleSwitch}"/>
+                                </Grid>
+                            </Border>
+
+                            <!-- Require Lowercase -->
+                            <Border Style="{StaticResource SettingRow}">
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="Auto"/>
+                                    </Grid.ColumnDefinitions>
+                                    <StackPanel Grid.Column="0" VerticalAlignment="Center">
+                                        <TextBlock Text="Require Lowercase Letter" 
+                                                   FontSize="14" 
+                                                   FontWeight="Medium" 
+                                                   Foreground="#333"/>
+                                        <TextBlock Text="At least one lowercase letter (a-z)" 
+                                                   FontSize="12" 
+                                                   Foreground="#888"
+                                                   Margin="0,4,0,0"/>
+                                    </StackPanel>
+                                    <CheckBox x:Name="ChkRequireLowercase" 
+                                              Grid.Column="1"
+                                              Style="{StaticResource ToggleSwitch}"/>
+                                </Grid>
+                            </Border>
+
+                            <!-- Require Numbers -->
+                            <Border Style="{StaticResource SettingRow}">
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="Auto"/>
+                                    </Grid.ColumnDefinitions>
+                                    <StackPanel Grid.Column="0" VerticalAlignment="Center">
+                                        <TextBlock Text="Require Number" 
+                                                   FontSize="14" 
+                                                   FontWeight="Medium" 
+                                                   Foreground="#333"/>
+                                        <TextBlock Text="At least one numeric digit (0-9)" 
+                                                   FontSize="12" 
+                                                   Foreground="#888"
+                                                   Margin="0,4,0,0"/>
+                                    </StackPanel>
+                                    <CheckBox x:Name="ChkRequireNumbers" 
+                                              Grid.Column="1"
+                                              Style="{StaticResource ToggleSwitch}"/>
+                                </Grid>
+                            </Border>
+
+                            <!-- Require Special Characters -->
+                            <Border Style="{StaticResource SettingRow}">
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="Auto"/>
+                                    </Grid.ColumnDefinitions>
+                                    <StackPanel Grid.Column="0" VerticalAlignment="Center">
+                                        <TextBlock Text="Require Special Character" 
+                                                   FontSize="14" 
+                                                   FontWeight="Medium" 
+                                                   Foreground="#333"/>
+                                        <TextBlock Text="At least one special character (!@#$%^&amp;*)" 
+                                                   FontSize="12" 
+                                                   Foreground="#888"
+                                                   Margin="0,4,0,0"/>
+                                    </StackPanel>
+                                    <CheckBox x:Name="ChkRequireSpecial" 
+                                              Grid.Column="1"
+                                              Style="{StaticResource ToggleSwitch}"/>
+                                </Grid>
+                            </Border>
+                        </StackPanel>
+                    </Border>
+
+                    <Border Style="{StaticResource SectionCard}">
+                        <StackPanel>
+                            <StackPanel Orientation="Horizontal" Margin="0,0,0,4">
+                                <iconPacks:PackIconMaterial Kind="History" 
+                                                            Width="20" Height="20" 
+                                                            Foreground="#2196F3"
+                                                            VerticalAlignment="Center"/>
+                                <TextBlock Text="Password Expiry and History" 
+                                           Style="{StaticResource SectionTitle}"
+                                           Margin="10,0,0,0"/>
+                            </StackPanel>
+                            <TextBlock Text="Configure password expiration and reuse policies" 
+                                       Style="{StaticResource SectionSubtitle}"/>
+
+                            <!-- Password Expiry -->
+                            <Border Style="{StaticResource SettingRow}">
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="150"/>
+                                    </Grid.ColumnDefinitions>
+                                    <StackPanel Grid.Column="0" VerticalAlignment="Center">
+                                        <TextBlock Text="Password Expiry" 
+                                                   FontSize="14" 
+                                                   FontWeight="Medium" 
+                                                   Foreground="#333"/>
+                                        <TextBlock Text="Days until password must be changed (0 = never)" 
+                                                   FontSize="12" 
+                                                   Foreground="#888"
+                                                   Margin="0,4,0,0"/>
+                                    </StackPanel>
+                                    <ComboBox x:Name="CmbPasswordExpiry" 
+                                              Grid.Column="1"
+                                              Style="{StaticResource ComboInput}">
+                                        <ComboBoxItem Content="Never" Tag="0"/>
+                                        <ComboBoxItem Content="30 days" Tag="30"/>
+                                        <ComboBoxItem Content="60 days" Tag="60"/>
+                                        <ComboBoxItem Content="90 days" Tag="90"/>
+                                        <ComboBoxItem Content="180 days" Tag="180"/>
+                                        <ComboBoxItem Content="365 days" Tag="365"/>
+                                    </ComboBox>
+                                </Grid>
+                            </Border>
+
+                            <!-- Password History -->
+                            <Border Style="{StaticResource SettingRow}">
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="150"/>
+                                    </Grid.ColumnDefinitions>
+                                    <StackPanel Grid.Column="0" VerticalAlignment="Center">
+                                        <TextBlock Text="Password History" 
+                                                   FontSize="14" 
+                                                   FontWeight="Medium" 
+                                                   Foreground="#333"/>
+                                        <TextBlock Text="Number of previous passwords that cannot be reused" 
+                                                   FontSize="12" 
+                                                   Foreground="#888"
+                                                   Margin="0,4,0,0"/>
+                                    </StackPanel>
+                                    <ComboBox x:Name="CmbPasswordHistory" 
+                                              Grid.Column="1"
+                                              Style="{StaticResource ComboInput}">
+                                        <ComboBoxItem Content="None" Tag="0"/>
+                                        <ComboBoxItem Content="Last 3" Tag="3"/>
+                                        <ComboBoxItem Content="Last 5" Tag="5"/>
+                                        <ComboBoxItem Content="Last 10" Tag="10"/>
+                                        <ComboBoxItem Content="Last 24" Tag="24"/>
+                                    </ComboBox>
+                                </Grid>
+                            </Border>
+
+                            <!-- Force Change on First Login -->
+                            <Border Style="{StaticResource SettingRow}">
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="Auto"/>
+                                    </Grid.ColumnDefinitions>
+                                    <StackPanel Grid.Column="0" VerticalAlignment="Center">
+                                        <TextBlock Text="Force Password Change on First Login" 
+                                                   FontSize="14" 
+                                                   FontWeight="Medium" 
+                                                   Foreground="#333"/>
+                                        <TextBlock Text="New users must change their password after first login" 
+                                                   FontSize="12" 
+                                                   Foreground="#888"
+                                                   Margin="0,4,0,0"/>
+                                    </StackPanel>
+                                    <CheckBox x:Name="ChkForceChangeFirstLogin" 
+                                              Grid.Column="1"
+                                              Style="{StaticResource ToggleSwitch}"/>
+                                </Grid>
+                            </Border>
+                        </StackPanel>
+                    </Border>
+                </StackPanel>
+
+                <!-- LOGIN SECURITY Panel -->
+                <StackPanel x:Name="LoginSecurityPanel" Visibility="Collapsed">
+
+                    <Border Style="{StaticResource SectionCard}">
+                        <StackPanel>
+                            <StackPanel Orientation="Horizontal" Margin="0,0,0,4">
+                                <iconPacks:PackIconMaterial Kind="ShieldLock" 
+                                                            Width="20" Height="20" 
+                                                            Foreground="#F44336"
+                                                            VerticalAlignment="Center"/>
+                                <TextBlock Text="Account Lockout" 
+                                           Style="{StaticResource SectionTitle}"
+                                           Margin="10,0,0,0"/>
+                            </StackPanel>
+                            <TextBlock Text="Configure account lockout settings after failed login attempts" 
+                                       Style="{StaticResource SectionSubtitle}"/>
+
+                            <!-- Max Failed Attempts -->
+                            <Border Style="{StaticResource SettingRow}">
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="150"/>
+                                    </Grid.ColumnDefinitions>
+                                    <StackPanel Grid.Column="0" VerticalAlignment="Center">
+                                        <TextBlock Text="Maximum Failed Login Attempts" 
+                                                   FontSize="14" 
+                                                   FontWeight="Medium" 
+                                                   Foreground="#333"/>
+                                        <TextBlock Text="Number of failed attempts before account is locked" 
+                                                   FontSize="12" 
+                                                   Foreground="#888"
+                                                   Margin="0,4,0,0"/>
+                                    </StackPanel>
+                                    <ComboBox x:Name="CmbMaxFailedAttempts" 
+                                              Grid.Column="1"
+                                              Style="{StaticResource ComboInput}">
+                                        <ComboBoxItem Content="3 attempts" Tag="3"/>
+                                        <ComboBoxItem Content="5 attempts" Tag="5"/>
+                                        <ComboBoxItem Content="10 attempts" Tag="10"/>
+                                        <ComboBoxItem Content="Unlimited" Tag="0"/>
+                                    </ComboBox>
+                                </Grid>
+                            </Border>
+
+                            <!-- Lockout Duration -->
+                            <Border Style="{StaticResource SettingRow}">
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="150"/>
+                                    </Grid.ColumnDefinitions>
+                                    <StackPanel Grid.Column="0" VerticalAlignment="Center">
+                                        <TextBlock Text="Lockout Duration" 
+                                                   FontSize="14" 
+                                                   FontWeight="Medium" 
+                                                   Foreground="#333"/>
+                                        <TextBlock Text="How long the account remains locked" 
+                                                   FontSize="12" 
+                                                   Foreground="#888"
+                                                   Margin="0,4,0,0"/>
+                                    </StackPanel>
+                                    <ComboBox x:Name="CmbLockoutDuration" 
+                                              Grid.Column="1"
+                                              Style="{StaticResource ComboInput}">
+                                        <ComboBoxItem Content="1 minute" Tag="1"/>
+                                        <ComboBoxItem Content="5 minutes" Tag="5"/>
+                                        <ComboBoxItem Content="15 minutes" Tag="15"/>
+                                        <ComboBoxItem Content="30 minutes" Tag="30"/>
+                                        <ComboBoxItem Content="1 hour" Tag="60"/>
+                                        <ComboBoxItem Content="Until unlocked" Tag="-1"/>
+                                    </ComboBox>
+                                </Grid>
+                            </Border>
+                        </StackPanel>
+                    </Border>
+
+                    <Border Style="{StaticResource SectionCard}">
+                        <StackPanel>
+                            <StackPanel Orientation="Horizontal" Margin="0,0,0,4">
+                                <iconPacks:PackIconMaterial Kind="AccountCheck" 
+                                                            Width="20" Height="20" 
+                                                            Foreground="#4CAF50"
+                                                            VerticalAlignment="Center"/>
+                                <TextBlock Text="Remember Me" 
+                                           Style="{StaticResource SectionTitle}"
+                                           Margin="10,0,0,0"/>
+                            </StackPanel>
+                            <TextBlock Text="Configure 'Remember Me' functionality on login" 
+                                       Style="{StaticResource SectionSubtitle}"/>
+
+                            <!-- Enable Remember Me -->
+                            <Border Style="{StaticResource SettingRow}">
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="Auto"/>
+                                    </Grid.ColumnDefinitions>
+                                    <StackPanel Grid.Column="0" VerticalAlignment="Center">
+                                        <TextBlock Text="Allow Remember Me" 
+                                                   FontSize="14" 
+                                                   FontWeight="Medium" 
+                                                   Foreground="#333"/>
+                                        <TextBlock Text="Show 'Remember Me' option on login screen" 
+                                                   FontSize="12" 
+                                                   Foreground="#888"
+                                                   Margin="0,4,0,0"/>
+                                    </StackPanel>
+                                    <CheckBox x:Name="ChkEnableRememberMe" 
+                                              Grid.Column="1"
+                                              Style="{StaticResource ToggleSwitch}"
+                                              Checked="ChkEnableRememberMe_Changed"
+                                              Unchecked="ChkEnableRememberMe_Changed"/>
+                                </Grid>
+                            </Border>
+
+                            <!-- Remember Me Duration -->
+                            <Border x:Name="RememberMeDurationPanel" 
+                                    Style="{StaticResource SettingRow}">
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="150"/>
+                                    </Grid.ColumnDefinitions>
+                                    <StackPanel Grid.Column="0" VerticalAlignment="Center">
+                                        <TextBlock Text="Remember Me Duration" 
+                                                   FontSize="14" 
+                                                   FontWeight="Medium" 
+                                                   Foreground="#333"/>
+                                        <TextBlock Text="How long to remember the user" 
+                                                   FontSize="12" 
+                                                   Foreground="#888"
+                                                   Margin="0,4,0,0"/>
+                                    </StackPanel>
+                                    <ComboBox x:Name="CmbRememberMeDays" 
+                                              Grid.Column="1"
+                                              Style="{StaticResource ComboInput}">
+                                        <ComboBoxItem Content="1 day" Tag="1"/>
+                                        <ComboBoxItem Content="7 days" Tag="7"/>
+                                        <ComboBoxItem Content="14 days" Tag="14"/>
+                                        <ComboBoxItem Content="30 days" Tag="30"/>
+                                    </ComboBox>
+                                </Grid>
+                            </Border>
+                        </StackPanel>
+                    </Border>
+                </StackPanel>
+
+                <!-- SESSION SECURITY Panel -->
+                <StackPanel x:Name="SessionSecurityPanel" Visibility="Collapsed">
+
+                    <Border Style="{StaticResource SectionCard}">
+                        <StackPanel>
+                            <StackPanel Orientation="Horizontal" Margin="0,0,0,4">
+                                <iconPacks:PackIconMaterial Kind="Timer" 
+                                                            Width="20" Height="20" 
+                                                            Foreground="#9C27B0"
+                                                            VerticalAlignment="Center"/>
+                                <TextBlock Text="Session Timeout" 
+                                           Style="{StaticResource SectionTitle}"
+                                           Margin="10,0,0,0"/>
+                            </StackPanel>
+                            <TextBlock Text="Configure automatic logout after inactivity" 
+                                       Style="{StaticResource SectionSubtitle}"/>
+
+                            <!-- Session Timeout -->
+                            <Border Style="{StaticResource SettingRow}">
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="150"/>
+                                    </Grid.ColumnDefinitions>
+                                    <StackPanel Grid.Column="0" VerticalAlignment="Center">
+                                        <TextBlock Text="Session Timeout" 
+                                                   FontSize="14" 
+                                                   FontWeight="Medium" 
+                                                   Foreground="#333"/>
+                                        <TextBlock Text="Auto-logout after period of inactivity" 
+                                                   FontSize="12" 
+                                                   Foreground="#888"
+                                                   Margin="0,4,0,0"/>
+                                    </StackPanel>
+                                    <ComboBox x:Name="CmbSessionTimeout" 
+                                              Grid.Column="1"
+                                              Style="{StaticResource ComboInput}">
+                                        <ComboBoxItem Content="15 minutes" Tag="15"/>
+                                        <ComboBoxItem Content="30 minutes" Tag="30"/>
+                                        <ComboBoxItem Content="1 hour" Tag="60"/>
+                                        <ComboBoxItem Content="2 hours" Tag="120"/>
+                                        <ComboBoxItem Content="4 hours" Tag="240"/>
+                                        <ComboBoxItem Content="Never" Tag="0"/>
+                                    </ComboBox>
+                                </Grid>
+                            </Border>
+
+                            <!-- Warning Before Timeout -->
+                            <Border Style="{StaticResource SettingRow}">
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="150"/>
+                                    </Grid.ColumnDefinitions>
+                                    <StackPanel Grid.Column="0" VerticalAlignment="Center">
+                                        <TextBlock Text="Timeout Warning" 
+                                                   FontSize="14" 
+                                                   FontWeight="Medium" 
+                                                   Foreground="#333"/>
+                                        <TextBlock Text="Show warning before session expires" 
+                                                   FontSize="12" 
+                                                   Foreground="#888"
+                                                   Margin="0,4,0,0"/>
+                                    </StackPanel>
+                                    <ComboBox x:Name="CmbSessionWarning" 
+                                              Grid.Column="1"
+                                              Style="{StaticResource ComboInput}">
+                                        <ComboBoxItem Content="1 minute" Tag="1"/>
+                                        <ComboBoxItem Content="2 minutes" Tag="2"/>
+                                        <ComboBoxItem Content="5 minutes" Tag="5"/>
+                                        <ComboBoxItem Content="10 minutes" Tag="10"/>
+                                    </ComboBox>
+                                </Grid>
+                            </Border>
+                        </StackPanel>
+                    </Border>
+
+                    <Border Style="{StaticResource SectionCard}">
+                        <StackPanel>
+                            <StackPanel Orientation="Horizontal" Margin="0,0,0,4">
+                                <iconPacks:PackIconMaterial Kind="AccountMultiple" 
+                                                            Width="20" Height="20" 
+                                                            Foreground="#FF5722"
+                                                            VerticalAlignment="Center"/>
+                                <TextBlock Text="Concurrent Sessions" 
+                                           Style="{StaticResource SectionTitle}"
+                                           Margin="10,0,0,0"/>
+                            </StackPanel>
+                            <TextBlock Text="Configure how multiple logins are handled" 
+                                       Style="{StaticResource SectionSubtitle}"/>
+
+                            <!-- Allow Concurrent Sessions -->
+                            <Border Style="{StaticResource SettingRow}">
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="Auto"/>
+                                    </Grid.ColumnDefinitions>
+                                    <StackPanel Grid.Column="0" VerticalAlignment="Center">
+                                        <TextBlock Text="Allow Concurrent Sessions" 
+                                                   FontSize="14" 
+                                                   FontWeight="Medium" 
+                                                   Foreground="#333"/>
+                                        <TextBlock Text="Allow same user to login from multiple locations" 
+                                                   FontSize="12" 
+                                                   Foreground="#888"
+                                                   Margin="0,4,0,0"/>
+                                    </StackPanel>
+                                    <CheckBox x:Name="ChkAllowConcurrentSessions" 
+                                              Grid.Column="1"
+                                              Style="{StaticResource ToggleSwitch}"/>
+                                </Grid>
+                            </Border>
+
+                            <!-- Force Logout Other Sessions -->
+                            <Border Style="{StaticResource SettingRow}">
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="Auto"/>
+                                    </Grid.ColumnDefinitions>
+                                    <StackPanel Grid.Column="0" VerticalAlignment="Center">
+                                        <TextBlock Text="Force Logout Other Sessions on New Login" 
+                                                   FontSize="14" 
+                                                   FontWeight="Medium" 
+                                                   Foreground="#333"/>
+                                        <TextBlock Text="Automatically logout other sessions when user logs in" 
+                                                   FontSize="12" 
+                                                   Foreground="#888"
+                                                   Margin="0,4,0,0"/>
+                                    </StackPanel>
+                                    <CheckBox x:Name="ChkForceLogoutOthers" 
+                                              Grid.Column="1"
+                                              Style="{StaticResource ToggleSwitch}"/>
+                                </Grid>
+                            </Border>
+                        </StackPanel>
+                    </Border>
+                </StackPanel>
+
+                <!-- RBAC Panel -->
+                <StackPanel x:Name="RBACPanel" Visibility="Collapsed">
+
+                    <Border Style="{StaticResource SectionCard}">
+                        <StackPanel>
+                            <StackPanel Orientation="Horizontal" Margin="0,0,0,4">
+                                <iconPacks:PackIconMaterial Kind="ShieldAccount" 
+                                                            Width="20" Height="20" 
+                                                            Foreground="#673AB7"
+                                                            VerticalAlignment="Center"/>
+                                <TextBlock Text="Role-Based Access Control" 
+                                           Style="{StaticResource SectionTitle}"
+                                           Margin="10,0,0,0"/>
+                            </StackPanel>
+                            <TextBlock Text="Configure access permissions for each role and module" 
+                                       Style="{StaticResource SectionSubtitle}"/>
+
+                            <!-- Role Selector -->
+                            <StackPanel Orientation="Horizontal" Margin="0,0,0,16">
+                                <TextBlock Text="Select Role:" 
+                                           FontSize="14" 
+                                           FontWeight="Medium"
+                                           VerticalAlignment="Center"
+                                           Margin="0,0,12,0"/>
+                                <ComboBox x:Name="CmbRoleSelector" 
+                                          Width="200"
+                                          Style="{StaticResource ComboInput}"
+                                          SelectionChanged="CmbRoleSelector_SelectionChanged">
+                                    <ComboBoxItem Content="Administrator" Tag="Administrator"/>
+                                    <ComboBoxItem Content="Doctor" Tag="Doctor"/>
+                                    <ComboBoxItem Content="Receptionist" Tag="Receptionist"/>
+                                </ComboBox>
+                            </StackPanel>
+
+                            <!-- Permissions Grid -->
+                            <Border Background="White" 
+                                    BorderBrush="#E0E0E0" 
+                                    BorderThickness="1" 
+                                    CornerRadius="8">
+                                <Grid>
+                                    <Grid.RowDefinitions>
+                                        <RowDefinition Height="Auto"/>
+                                        <RowDefinition Height="*"/>
+                                    </Grid.RowDefinitions>
+
+                                    <!-- Header Row -->
+                                    <Border Grid.Row="0" 
+                                            Background="#F5F5F5" 
+                                            Padding="12"
+                                            CornerRadius="8,8,0,0">
+                                        <Grid>
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="200"/>
+                                                <ColumnDefinition Width="*"/>
+                                                <ColumnDefinition Width="*"/>
+                                                <ColumnDefinition Width="*"/>
+                                                <ColumnDefinition Width="*"/>
+                                                <ColumnDefinition Width="*"/>
+                                            </Grid.ColumnDefinitions>
+                                            <TextBlock Grid.Column="0" Text="Module" Style="{StaticResource RBACHeader}" HorizontalAlignment="Left"/>
+                                            <TextBlock Grid.Column="1" Text="View" Style="{StaticResource RBACHeader}"/>
+                                            <TextBlock Grid.Column="2" Text="Create" Style="{StaticResource RBACHeader}"/>
+                                            <TextBlock Grid.Column="3" Text="Edit" Style="{StaticResource RBACHeader}"/>
+                                            <TextBlock Grid.Column="4" Text="Delete" Style="{StaticResource RBACHeader}"/>
+                                            <TextBlock Grid.Column="5" Text="Export" Style="{StaticResource RBACHeader}"/>
+                                        </Grid>
+                                    </Border>
+
+                                    <!-- Permission Rows -->
+                                    <ItemsControl x:Name="PermissionsItemsControl" Grid.Row="1">
+                                        <ItemsControl.ItemTemplate>
+                                            <DataTemplate>
+                                                <Border BorderBrush="#F0F0F0" 
+                                                        BorderThickness="0,0,0,1" 
+                                                        Padding="12,10">
+                                                    <Grid>
+                                                        <Grid.ColumnDefinitions>
+                                                            <ColumnDefinition Width="200"/>
+                                                            <ColumnDefinition Width="*"/>
+                                                            <ColumnDefinition Width="*"/>
+                                                            <ColumnDefinition Width="*"/>
+                                                            <ColumnDefinition Width="*"/>
+                                                            <ColumnDefinition Width="*"/>
+                                                        </Grid.ColumnDefinitions>
+                                                        <TextBlock Grid.Column="0" 
+                                                                   Text="{Binding ModuleDisplayName}" 
+                                                                   FontSize="13"
+                                                                   VerticalAlignment="Center"/>
+                                                        <CheckBox Grid.Column="1" 
+                                                                  IsChecked="{Binding CanView, Mode=TwoWay}" 
+                                                                  Style="{StaticResource RBACCheckBox}"/>
+                                                        <CheckBox Grid.Column="2" 
+                                                                  IsChecked="{Binding CanCreate, Mode=TwoWay}" 
+                                                                  Style="{StaticResource RBACCheckBox}"/>
+                                                        <CheckBox Grid.Column="3" 
+                                                                  IsChecked="{Binding CanEdit, Mode=TwoWay}" 
+                                                                  Style="{StaticResource RBACCheckBox}"/>
+                                                        <CheckBox Grid.Column="4" 
+                                                                  IsChecked="{Binding CanDelete, Mode=TwoWay}" 
+                                                                  Style="{StaticResource RBACCheckBox}"/>
+                                                        <CheckBox Grid.Column="5" 
+                                                                  IsChecked="{Binding CanExport, Mode=TwoWay}" 
+                                                                  Style="{StaticResource RBACCheckBox}"/>
+                                                    </Grid>
+                                                </Border>
+                                            </DataTemplate>
+                                        </ItemsControl.ItemTemplate>
+                                    </ItemsControl>
+                                </Grid>
+                            </Border>
+
+                            <!-- Quick Actions -->
+                            <StackPanel Orientation="Horizontal" Margin="0,16,0,0">
+                                <Button x:Name="BtnGrantAll" 
+                                        Content="Grant All" 
+                                        Style="{StaticResource SecondaryButton}"
+                                        Padding="16,8"
+                                        Margin="0,0,8,0"
+                                        Click="BtnGrantAll_Click"/>
+                                <Button x:Name="BtnRevokeAll" 
+                                        Content="Revoke All" 
+                                        Style="{StaticResource SecondaryButton}"
+                                        Padding="16,8"
+                                        Margin="0,0,8,0"
+                                        Click="BtnRevokeAll_Click"/>
+                                <Button x:Name="BtnResetRoleDefaults" 
+                                        Content="Reset to Role Defaults" 
+                                        Style="{StaticResource SecondaryButton}"
+                                        Padding="16,8"
+                                        Click="BtnResetRoleDefaults_Click"/>
+                            </StackPanel>
+                        </StackPanel>
+                    </Border>
+                </StackPanel>
+            </Grid>
+        </ScrollViewer>
+
+        <!-- Action Buttons -->
+        <Border Grid.Row="2" 
+                Background="#F5F5F5" 
+                Padding="24,16"
+                Margin="0,8,0,0">
+            <Grid>
+                <StackPanel Orientation="Horizontal" HorizontalAlignment="Left">
+                    <Button x:Name="BtnResetDefaults" 
+                            Style="{StaticResource SecondaryButton}"
+                            Click="BtnResetDefaults_Click">
+                        <StackPanel Orientation="Horizontal">
+                            <iconPacks:PackIconMaterial Kind="Restore" 
+                                                        Width="16" Height="16" 
+                                                        VerticalAlignment="Center"/>
+                            <TextBlock Text="Reset All Security Settings" Margin="8,0,0,0"/>
+                        </StackPanel>
+                    </Button>
+                </StackPanel>
+
+                <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                    <Button x:Name="BtnCancel" 
+                            Style="{StaticResource SecondaryButton}"
+                            Click="BtnCancel_Click"
+                            Margin="0,0,12,0">
+                        <TextBlock Text="Cancel"/>
+                    </Button>
+                    <Button x:Name="BtnSave" 
+                            Style="{StaticResource PrimaryButton}"
+                            Click="BtnSave_Click">
+                        <StackPanel Orientation="Horizontal">
+                            <iconPacks:PackIconMaterial Kind="ContentSave" 
+                                                        Width="16" Height="16" 
+                                                        VerticalAlignment="Center"/>
+                            <TextBlock Text="Save Changes" Margin="8,0,0,0"/>
+                        </StackPanel>
+                    </Button>
+                </StackPanel>
+            </Grid>
+        </Border>
     </Grid>
 </UserControl>

@@ -3,15 +3,926 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:iconPacks="http://metro.mahapps.com/winfx/xaml/iconpacks"
              mc:Ignorable="d" 
-             d:DesignHeight="600" d:DesignWidth="800"
+             d:DesignHeight="800" d:DesignWidth="900"
              Background="White">
 
+    <UserControl.Resources>
+        <!-- Section Card Style -->
+        <Style x:Key="SectionCard" TargetType="Border">
+            <Setter Property="Background" Value="#FAFAFA"/>
+            <Setter Property="BorderBrush" Value="#E8E8E8"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="CornerRadius" Value="8"/>
+            <Setter Property="Padding" Value="20"/>
+            <Setter Property="Margin" Value="0,0,0,16"/>
+        </Style>
+
+        <!-- Section Title Style -->
+        <Style x:Key="SectionTitle" TargetType="TextBlock">
+            <Setter Property="FontSize" Value="16"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="Foreground" Value="#333333"/>
+            <Setter Property="Margin" Value="0,0,0,4"/>
+        </Style>
+
+        <!-- Text Input Style -->
+        <Style x:Key="TextInput" TargetType="TextBox">
+            <Setter Property="Height" Value="36"/>
+            <Setter Property="Padding" Value="10,6"/>
+            <Setter Property="FontSize" Value="13"/>
+            <Setter Property="Background" Value="White"/>
+            <Setter Property="BorderBrush" Value="#D0D0D0"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="VerticalContentAlignment" Value="Center"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="TextBox">
+                        <Border Background="{TemplateBinding Background}"
+                                BorderBrush="{TemplateBinding BorderBrush}"
+                                BorderThickness="{TemplateBinding BorderThickness}"
+                                CornerRadius="6">
+                            <ScrollViewer x:Name="PART_ContentHost" 
+                                          Padding="{TemplateBinding Padding}"
+                                          VerticalAlignment="Center"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsFocused" Value="True">
+                                <Setter Property="BorderBrush" Value="#2E7D32"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <!-- ComboBox Style -->
+        <Style x:Key="ComboInput" TargetType="ComboBox">
+            <Setter Property="Height" Value="36"/>
+            <Setter Property="Padding" Value="10,6"/>
+            <Setter Property="FontSize" Value="13"/>
+            <Setter Property="Background" Value="White"/>
+            <Setter Property="BorderBrush" Value="#D0D0D0"/>
+            <Setter Property="BorderThickness" Value="1"/>
+        </Style>
+
+        <!-- Primary Button Style -->
+        <Style x:Key="PrimaryButton" TargetType="Button">
+            <Setter Property="Background" Value="#2E7D32"/>
+            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="Padding" Value="16,10"/>
+            <Setter Property="FontSize" Value="13"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border x:Name="border"
+                                Background="{TemplateBinding Background}"
+                                Padding="{TemplateBinding Padding}"
+                                CornerRadius="6">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="border" Property="Background" Value="#388E3C"/>
+                            </Trigger>
+                            <Trigger Property="IsPressed" Value="True">
+                                <Setter TargetName="border" Property="Background" Value="#1B5E20"/>
+                            </Trigger>
+                            <Trigger Property="IsEnabled" Value="False">
+                                <Setter TargetName="border" Property="Background" Value="#BDBDBD"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <!-- Secondary Button Style -->
+        <Style x:Key="SecondaryButton" TargetType="Button">
+            <Setter Property="Background" Value="White"/>
+            <Setter Property="Foreground" Value="#666666"/>
+            <Setter Property="Padding" Value="16,10"/>
+            <Setter Property="FontSize" Value="13"/>
+            <Setter Property="FontWeight" Value="Medium"/>
+            <Setter Property="BorderBrush" Value="#D0D0D0"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border x:Name="border"
+                                Background="{TemplateBinding Background}"
+                                BorderBrush="{TemplateBinding BorderBrush}"
+                                BorderThickness="{TemplateBinding BorderThickness}"
+                                Padding="{TemplateBinding Padding}"
+                                CornerRadius="6">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="border" Property="Background" Value="#F5F5F5"/>
+                            </Trigger>
+                            <Trigger Property="IsPressed" Value="True">
+                                <Setter TargetName="border" Property="Background" Value="#EEEEEE"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <!-- Danger Button Style -->
+        <Style x:Key="DangerButton" TargetType="Button">
+            <Setter Property="Background" Value="#F44336"/>
+            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="Padding" Value="16,10"/>
+            <Setter Property="FontSize" Value="13"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border x:Name="border"
+                                Background="{TemplateBinding Background}"
+                                Padding="{TemplateBinding Padding}"
+                                CornerRadius="6">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="border" Property="Background" Value="#E53935"/>
+                            </Trigger>
+                            <Trigger Property="IsPressed" Value="True">
+                                <Setter TargetName="border" Property="Background" Value="#C62828"/>
+                            </Trigger>
+                            <Trigger Property="IsEnabled" Value="False">
+                                <Setter TargetName="border" Property="Background" Value="#BDBDBD"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <!-- Sub Tab Button Style -->
+        <Style x:Key="SubTabButton" TargetType="Button">
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="Foreground" Value="#666666"/>
+            <Setter Property="Padding" Value="16,10"/>
+            <Setter Property="FontSize" Value="13"/>
+            <Setter Property="FontWeight" Value="Medium"/>
+            <Setter Property="BorderThickness" Value="0,0,0,2"/>
+            <Setter Property="BorderBrush" Value="Transparent"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border Background="{TemplateBinding Background}"
+                                BorderBrush="{TemplateBinding BorderBrush}"
+                                BorderThickness="{TemplateBinding BorderThickness}"
+                                Padding="{TemplateBinding Padding}">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter Property="Background" Value="#F5F5F5"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <!-- Active Sub Tab Button Style -->
+        <Style x:Key="SubTabButtonActive" TargetType="Button" BasedOn="{StaticResource SubTabButton}">
+            <Setter Property="Foreground" Value="#2E7D32"/>
+            <Setter Property="BorderBrush" Value="#2E7D32"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+        </Style>
+
+        <!-- Stat Card Style -->
+        <Style x:Key="StatCard" TargetType="Border">
+            <Setter Property="Background" Value="White"/>
+            <Setter Property="BorderBrush" Value="#E8E8E8"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="CornerRadius" Value="8"/>
+            <Setter Property="Padding" Value="16"/>
+        </Style>
+
+        <!-- Table Row Style -->
+        <Style x:Key="TableRow" TargetType="Border">
+            <Setter Property="Background" Value="White"/>
+            <Setter Property="BorderBrush" Value="#F0F0F0"/>
+            <Setter Property="BorderThickness" Value="0,0,0,1"/>
+            <Setter Property="Padding" Value="12,10"/>
+        </Style>
+    </UserControl.Resources>
+
     <Grid>
-        <TextBlock Text="System Logs - Coming in Part 8" 
-                   FontSize="18" 
-                   Foreground="#888"
-                   HorizontalAlignment="Center" 
-                   VerticalAlignment="Center"/>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+        </Grid.RowDefinitions>
+
+        <!-- Sub-Tab Navigation -->
+        <Border Grid.Row="0" 
+                BorderBrush="#E0E0E0" 
+                BorderThickness="0,0,0,1"
+                Margin="24,0">
+            <StackPanel Orientation="Horizontal">
+                <Button x:Name="BtnActivityLogs" 
+                        Content="Activity Logs"
+                        Style="{StaticResource SubTabButtonActive}"
+                        Click="SubTab_Click"
+                        Tag="ActivityLogs"/>
+                <Button x:Name="BtnLoginHistory" 
+                        Content="Login History"
+                        Style="{StaticResource SubTabButton}"
+                        Click="SubTab_Click"
+                        Tag="LoginHistory"/>
+                <Button x:Name="BtnActiveSessions" 
+                        Content="Active Sessions"
+                        Style="{StaticResource SubTabButton}"
+                        Click="SubTab_Click"
+                        Tag="ActiveSessions"/>
+            </StackPanel>
+        </Border>
+
+        <!-- Content Area -->
+        <ScrollViewer Grid.Row="1" 
+                      VerticalScrollBarVisibility="Auto" 
+                      HorizontalScrollBarVisibility="Disabled"
+                      Padding="24,16,24,24">
+            <Grid>
+
+                <!-- ACTIVITY LOGS Panel -->
+                <StackPanel x:Name="ActivityLogsPanel" Visibility="Visible">
+
+                    <!-- Stats Cards -->
+                    <Grid Margin="0,0,0,16">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="12"/>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="12"/>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="12"/>
+                            <ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
+
+                        <Border Grid.Column="0" Style="{StaticResource StatCard}">
+                            <StackPanel>
+                                <TextBlock Text="Today's Activities" FontSize="12" Foreground="#888"/>
+                                <TextBlock x:Name="TxtTodayActivities" Text="0" FontSize="24" FontWeight="Bold" Foreground="#2E7D32" Margin="0,4,0,0"/>
+                            </StackPanel>
+                        </Border>
+
+                        <Border Grid.Column="2" Style="{StaticResource StatCard}">
+                            <StackPanel>
+                                <TextBlock Text="This Week" FontSize="12" Foreground="#888"/>
+                                <TextBlock x:Name="TxtWeekActivities" Text="0" FontSize="24" FontWeight="Bold" Foreground="#1976D2" Margin="0,4,0,0"/>
+                            </StackPanel>
+                        </Border>
+
+                        <Border Grid.Column="4" Style="{StaticResource StatCard}">
+                            <StackPanel>
+                                <TextBlock Text="This Month" FontSize="12" Foreground="#888"/>
+                                <TextBlock x:Name="TxtMonthActivities" Text="0" FontSize="24" FontWeight="Bold" Foreground="#FF9800" Margin="0,4,0,0"/>
+                            </StackPanel>
+                        </Border>
+
+                        <Border Grid.Column="6" Style="{StaticResource StatCard}">
+                            <StackPanel>
+                                <TextBlock Text="Total Logs" FontSize="12" Foreground="#888"/>
+                                <TextBlock x:Name="TxtTotalActivities" Text="0" FontSize="24" FontWeight="Bold" Foreground="#9C27B0" Margin="0,4,0,0"/>
+                            </StackPanel>
+                        </Border>
+                    </Grid>
+
+                    <!-- Filters -->
+                    <Border Style="{StaticResource SectionCard}" Padding="16">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="12"/>
+                                <ColumnDefinition Width="150"/>
+                                <ColumnDefinition Width="12"/>
+                                <ColumnDefinition Width="150"/>
+                                <ColumnDefinition Width="12"/>
+                                <ColumnDefinition Width="Auto"/>
+                                <ColumnDefinition Width="12"/>
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
+
+                            <!-- Search -->
+                            <Grid Grid.Column="0">
+                                <TextBox x:Name="TxtActivitySearch" 
+                                         Style="{StaticResource TextInput}"
+                                         KeyDown="TxtActivitySearch_KeyDown"/>
+                                <TextBlock Text="Search activities..." 
+                                           IsHitTestVisible="False"
+                                           Foreground="#999999"
+                                           VerticalAlignment="Center"
+                                           Margin="12,0,0,0"
+                                           Visibility="{Binding Text.IsEmpty, ElementName=TxtActivitySearch, Converter={StaticResource BooleanToVisibilityConverter}, FallbackValue=Visible}"/>
+                            </Grid>
+
+                            <!-- Module Filter -->
+                            <ComboBox x:Name="CmbActivityModule" 
+                                      Grid.Column="2"
+                                      Style="{StaticResource ComboInput}"
+                                      SelectionChanged="CmbActivityFilter_Changed">
+                                <ComboBoxItem Content="All Modules" Tag="" IsSelected="True"/>
+                                <ComboBoxItem Content="Dashboard" Tag="Dashboard"/>
+                                <ComboBoxItem Content="Patients" Tag="PatientManagement"/>
+                                <ComboBoxItem Content="Appointments" Tag="Appointments"/>
+                                <ComboBoxItem Content="Inventory" Tag="MedicineInventory"/>
+                                <ComboBoxItem Content="Prescriptions" Tag="Prescriptions"/>
+                                <ComboBoxItem Content="Users" Tag="UserManagement"/>
+                                <ComboBoxItem Content="Settings" Tag="SystemSettings"/>
+                            </ComboBox>
+
+                            <!-- Activity Type Filter -->
+                            <ComboBox x:Name="CmbActivityType" 
+                                      Grid.Column="4"
+                                      Style="{StaticResource ComboInput}"
+                                      SelectionChanged="CmbActivityFilter_Changed">
+                                <ComboBoxItem Content="All Types" Tag="" IsSelected="True"/>
+                                <ComboBoxItem Content="View" Tag="View"/>
+                                <ComboBoxItem Content="Create" Tag="Create"/>
+                                <ComboBoxItem Content="Update" Tag="Update"/>
+                                <ComboBoxItem Content="Delete" Tag="Delete"/>
+                                <ComboBoxItem Content="Login" Tag="Login"/>
+                                <ComboBoxItem Content="Logout" Tag="Logout"/>
+                                <ComboBoxItem Content="Export" Tag="Export"/>
+                            </ComboBox>
+
+                            <!-- Search Button -->
+                            <Button Grid.Column="6" 
+                                    Style="{StaticResource PrimaryButton}"
+                                    Padding="14,8"
+                                    Click="BtnSearchActivities_Click">
+                                <StackPanel Orientation="Horizontal">
+                                    <iconPacks:PackIconMaterial Kind="Magnify" Width="16" Height="16"/>
+                                    <TextBlock Text="Search" Margin="6,0,0,0"/>
+                                </StackPanel>
+                            </Button>
+
+                            <!-- Refresh Button -->
+                            <Button Grid.Column="8" 
+                                    Style="{StaticResource SecondaryButton}"
+                                    Padding="14,8"
+                                    Click="BtnRefreshActivities_Click">
+                                <iconPacks:PackIconMaterial Kind="Refresh" Width="16" Height="16"/>
+                            </Button>
+                        </Grid>
+                    </Border>
+
+                    <!-- Activity Logs Table -->
+                    <Border Background="White" 
+                            BorderBrush="#E0E0E0" 
+                            BorderThickness="1" 
+                            CornerRadius="8">
+                        <Grid>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="*"/>
+                            </Grid.RowDefinitions>
+
+                            <!-- Header -->
+                            <Border Grid.Row="0" 
+                                    Background="#F5F5F5" 
+                                    Padding="12,10"
+                                    CornerRadius="8,8,0,0">
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="140"/>
+                                        <ColumnDefinition Width="120"/>
+                                        <ColumnDefinition Width="100"/>
+                                        <ColumnDefinition Width="100"/>
+                                        <ColumnDefinition Width="*"/>
+                                    </Grid.ColumnDefinitions>
+                                    <TextBlock Grid.Column="0" Text="Date/Time" FontWeight="SemiBold" FontSize="12" Foreground="#555"/>
+                                    <TextBlock Grid.Column="1" Text="User" FontWeight="SemiBold" FontSize="12" Foreground="#555"/>
+                                    <TextBlock Grid.Column="2" Text="Module" FontWeight="SemiBold" FontSize="12" Foreground="#555"/>
+                                    <TextBlock Grid.Column="3" Text="Action" FontWeight="SemiBold" FontSize="12" Foreground="#555"/>
+                                    <TextBlock Grid.Column="4" Text="Description" FontWeight="SemiBold" FontSize="12" Foreground="#555"/>
+                                </Grid>
+                            </Border>
+
+                            <!-- Activity Items -->
+                            <ScrollViewer Grid.Row="1" MaxHeight="400" VerticalScrollBarVisibility="Auto">
+                                <ItemsControl x:Name="ActivityLogsList">
+                                    <ItemsControl.ItemTemplate>
+                                        <DataTemplate>
+                                            <Border Style="{StaticResource TableRow}">
+                                                <Grid>
+                                                    <Grid.ColumnDefinitions>
+                                                        <ColumnDefinition Width="140"/>
+                                                        <ColumnDefinition Width="120"/>
+                                                        <ColumnDefinition Width="100"/>
+                                                        <ColumnDefinition Width="100"/>
+                                                        <ColumnDefinition Width="*"/>
+                                                    </Grid.ColumnDefinitions>
+                                                    <TextBlock Grid.Column="0" 
+                                                               Text="{Binding PerformedAt, StringFormat='{}{0:MM/dd/yy HH:mm}'}" 
+                                                               FontSize="12" Foreground="#666"/>
+                                                    <TextBlock Grid.Column="1" 
+                                                               Text="{Binding PerformedBy}" 
+                                                               FontSize="12" 
+                                                               TextTrimming="CharacterEllipsis"/>
+                                                    <TextBlock Grid.Column="2" 
+                                                               Text="{Binding Module}" 
+                                                               FontSize="12" Foreground="#888"/>
+                                                    <Border Grid.Column="3" 
+                                                            Background="#E8F5E9" 
+                                                            CornerRadius="4" 
+                                                            Padding="6,2" 
+                                                            HorizontalAlignment="Left">
+                                                        <TextBlock Text="{Binding ActivityType}" 
+                                                                   FontSize="11" 
+                                                                   Foreground="#2E7D32"/>
+                                                    </Border>
+                                                    <TextBlock Grid.Column="4" 
+                                                               Text="{Binding Description}" 
+                                                               FontSize="12" 
+                                                               Foreground="#555"
+                                                               TextTrimming="CharacterEllipsis"/>
+                                                </Grid>
+                                            </Border>
+                                        </DataTemplate>
+                                    </ItemsControl.ItemTemplate>
+                                </ItemsControl>
+                            </ScrollViewer>
+
+                            <!-- Empty State -->
+                            <Border x:Name="EmptyActivityPanel" 
+                                    Grid.Row="1" 
+                                    Padding="40"
+                                    Visibility="Collapsed">
+                                <StackPanel HorizontalAlignment="Center">
+                                    <iconPacks:PackIconMaterial Kind="FileDocumentOutline" 
+                                                                Width="48" Height="48" 
+                                                                Foreground="#BDBDBD"
+                                                                HorizontalAlignment="Center"/>
+                                    <TextBlock Text="No activity logs found" 
+                                               FontSize="14" 
+                                               Foreground="#888"
+                                               HorizontalAlignment="Center"
+                                               Margin="0,12,0,0"/>
+                                </StackPanel>
+                            </Border>
+                        </Grid>
+                    </Border>
+
+                    <!-- Pagination -->
+                    <Grid Margin="0,16,0,0">
+                        <TextBlock x:Name="TxtActivityPagination" 
+                                   Text="Showing 0-0 of 0" 
+                                   FontSize="12" 
+                                   Foreground="#888"
+                                   VerticalAlignment="Center"/>
+                        <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                            <Button x:Name="BtnActivityPrevPage" 
+                                    Content="Previous" 
+                                    Style="{StaticResource SecondaryButton}"
+                                    Padding="12,6"
+                                    Margin="0,0,8,0"
+                                    Click="BtnActivityPrevPage_Click"/>
+                            <Button x:Name="BtnActivityNextPage" 
+                                    Content="Next" 
+                                    Style="{StaticResource SecondaryButton}"
+                                    Padding="12,6"
+                                    Click="BtnActivityNextPage_Click"/>
+                        </StackPanel>
+                    </Grid>
+                </StackPanel>
+
+                <!-- LOGIN HISTORY Panel -->
+                <StackPanel x:Name="LoginHistoryPanel" Visibility="Collapsed">
+
+                    <!-- Stats Cards -->
+                    <Grid Margin="0,0,0,16">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="12"/>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="12"/>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="12"/>
+                            <ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
+
+                        <Border Grid.Column="0" Style="{StaticResource StatCard}">
+                            <StackPanel>
+                                <TextBlock Text="Today's Logins" FontSize="12" Foreground="#888"/>
+                                <TextBlock x:Name="TxtTodayLogins" Text="0" FontSize="24" FontWeight="Bold" Foreground="#2E7D32" Margin="0,4,0,0"/>
+                            </StackPanel>
+                        </Border>
+
+                        <Border Grid.Column="2" Style="{StaticResource StatCard}">
+                            <StackPanel>
+                                <TextBlock Text="Successful" FontSize="12" Foreground="#888"/>
+                                <TextBlock x:Name="TxtSuccessfulLogins" Text="0" FontSize="24" FontWeight="Bold" Foreground="#4CAF50" Margin="0,4,0,0"/>
+                            </StackPanel>
+                        </Border>
+
+                        <Border Grid.Column="4" Style="{StaticResource StatCard}">
+                            <StackPanel>
+                                <TextBlock Text="Failed Attempts" FontSize="12" Foreground="#888"/>
+                                <TextBlock x:Name="TxtFailedLogins" Text="0" FontSize="24" FontWeight="Bold" Foreground="#F44336" Margin="0,4,0,0"/>
+                            </StackPanel>
+                        </Border>
+
+                        <Border Grid.Column="6" Style="{StaticResource StatCard}">
+                            <StackPanel>
+                                <TextBlock Text="Success Rate" FontSize="12" Foreground="#888"/>
+                                <TextBlock x:Name="TxtLoginSuccessRate" Text="0%" FontSize="24" FontWeight="Bold" Foreground="#1976D2" Margin="0,4,0,0"/>
+                            </StackPanel>
+                        </Border>
+                    </Grid>
+
+                    <!-- Filters -->
+                    <Border Style="{StaticResource SectionCard}" Padding="16">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="12"/>
+                                <ColumnDefinition Width="150"/>
+                                <ColumnDefinition Width="12"/>
+                                <ColumnDefinition Width="Auto"/>
+                                <ColumnDefinition Width="12"/>
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
+
+                            <!-- Search -->
+                            <Grid Grid.Column="0">
+                                <TextBox x:Name="TxtLoginSearch" 
+                                         Style="{StaticResource TextInput}"
+                                         KeyDown="TxtLoginSearch_KeyDown"/>
+                                <TextBlock Text="Search by username..." 
+                                           IsHitTestVisible="False"
+                                           Foreground="#999999"
+                                           VerticalAlignment="Center"
+                                           Margin="12,0,0,0"
+                                           Visibility="{Binding Text.IsEmpty, ElementName=TxtLoginSearch, Converter={StaticResource BooleanToVisibilityConverter}, FallbackValue=Visible}"/>
+                            </Grid>
+
+                            <!-- Status Filter -->
+                            <ComboBox x:Name="CmbLoginStatus" 
+                                      Grid.Column="2"
+                                      Style="{StaticResource ComboInput}"
+                                      SelectionChanged="CmbLoginFilter_Changed">
+                                <ComboBoxItem Content="All Status" Tag="" IsSelected="True"/>
+                                <ComboBoxItem Content="Success" Tag="Success"/>
+                                <ComboBoxItem Content="Failed" Tag="Failed"/>
+                                <ComboBoxItem Content="Locked" Tag="Locked"/>
+                            </ComboBox>
+
+                            <!-- Search Button -->
+                            <Button Grid.Column="4" 
+                                    Style="{StaticResource PrimaryButton}"
+                                    Padding="14,8"
+                                    Click="BtnSearchLogins_Click">
+                                <StackPanel Orientation="Horizontal">
+                                    <iconPacks:PackIconMaterial Kind="Magnify" Width="16" Height="16"/>
+                                    <TextBlock Text="Search" Margin="6,0,0,0"/>
+                                </StackPanel>
+                            </Button>
+
+                            <!-- Refresh Button -->
+                            <Button Grid.Column="6" 
+                                    Style="{StaticResource SecondaryButton}"
+                                    Padding="14,8"
+                                    Click="BtnRefreshLogins_Click">
+                                <iconPacks:PackIconMaterial Kind="Refresh" Width="16" Height="16"/>
+                            </Button>
+                        </Grid>
+                    </Border>
+
+                    <!-- Login History Table -->
+                    <Border Background="White" 
+                            BorderBrush="#E0E0E0" 
+                            BorderThickness="1" 
+                            CornerRadius="8">
+                        <Grid>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="*"/>
+                            </Grid.RowDefinitions>
+
+                            <!-- Header -->
+                            <Border Grid.Row="0" 
+                                    Background="#F5F5F5" 
+                                    Padding="12,10"
+                                    CornerRadius="8,8,0,0">
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="40"/>
+                                        <ColumnDefinition Width="140"/>
+                                        <ColumnDefinition Width="150"/>
+                                        <ColumnDefinition Width="100"/>
+                                        <ColumnDefinition Width="140"/>
+                                        <ColumnDefinition Width="*"/>
+                                    </Grid.ColumnDefinitions>
+                                    <TextBlock Grid.Column="0" Text="" FontWeight="SemiBold" FontSize="12" Foreground="#555"/>
+                                    <TextBlock Grid.Column="1" Text="Login Time" FontWeight="SemiBold" FontSize="12" Foreground="#555"/>
+                                    <TextBlock Grid.Column="2" Text="User" FontWeight="SemiBold" FontSize="12" Foreground="#555"/>
+                                    <TextBlock Grid.Column="3" Text="Role" FontWeight="SemiBold" FontSize="12" Foreground="#555"/>
+                                    <TextBlock Grid.Column="4" Text="Machine" FontWeight="SemiBold" FontSize="12" Foreground="#555"/>
+                                    <TextBlock Grid.Column="5" Text="Status / Reason" FontWeight="SemiBold" FontSize="12" Foreground="#555"/>
+                                </Grid>
+                            </Border>
+
+                            <!-- Login Items -->
+                            <ScrollViewer Grid.Row="1" MaxHeight="400" VerticalScrollBarVisibility="Auto">
+                                <ItemsControl x:Name="LoginHistoryList">
+                                    <ItemsControl.ItemTemplate>
+                                        <DataTemplate>
+                                            <Border Style="{StaticResource TableRow}">
+                                                <Grid>
+                                                    <Grid.ColumnDefinitions>
+                                                        <ColumnDefinition Width="40"/>
+                                                        <ColumnDefinition Width="140"/>
+                                                        <ColumnDefinition Width="150"/>
+                                                        <ColumnDefinition Width="100"/>
+                                                        <ColumnDefinition Width="140"/>
+                                                        <ColumnDefinition Width="*"/>
+                                                    </Grid.ColumnDefinitions>
+                                                    <TextBlock Grid.Column="0" 
+                                                               Text="{Binding StatusIcon}" 
+                                                               FontSize="16"
+                                                               HorizontalAlignment="Center"/>
+                                                    <TextBlock Grid.Column="1" 
+                                                               Text="{Binding LoginTime, StringFormat='{}{0:MM/dd/yy HH:mm}'}" 
+                                                               FontSize="12" Foreground="#666"/>
+                                                    <StackPanel Grid.Column="2">
+                                                        <TextBlock Text="{Binding FullName}" 
+                                                                   FontSize="12" 
+                                                                   TextTrimming="CharacterEllipsis"/>
+                                                        <TextBlock Text="{Binding Username}" 
+                                                                   FontSize="11" 
+                                                                   Foreground="#888"/>
+                                                    </StackPanel>
+                                                    <TextBlock Grid.Column="3" 
+                                                               Text="{Binding Role}" 
+                                                               FontSize="12" Foreground="#888"/>
+                                                    <TextBlock Grid.Column="4" 
+                                                               Text="{Binding MachineName}" 
+                                                               FontSize="11" 
+                                                               Foreground="#888"
+                                                               TextTrimming="CharacterEllipsis"/>
+                                                    <TextBlock Grid.Column="5" 
+                                                               FontSize="12">
+                                                        <TextBlock.Style>
+                                                            <Style TargetType="TextBlock">
+                                                                <Setter Property="Foreground" Value="#4CAF50"/>
+                                                                <Style.Triggers>
+                                                                    <DataTrigger Binding="{Binding Status}" Value="Failed">
+                                                                        <Setter Property="Foreground" Value="#F44336"/>
+                                                                    </DataTrigger>
+                                                                    <DataTrigger Binding="{Binding Status}" Value="Locked">
+                                                                        <Setter Property="Foreground" Value="#FF9800"/>
+                                                                    </DataTrigger>
+                                                                </Style.Triggers>
+                                                            </Style>
+                                                        </TextBlock.Style>
+                                                        <Run Text="{Binding Status, Mode=OneWay}"/>
+                                                        <Run Text="{Binding FailureReason, Mode=OneWay, StringFormat=' - {0}'}" 
+                                                             Foreground="#888"/>
+                                                    </TextBlock>
+                                                </Grid>
+                                            </Border>
+                                        </DataTemplate>
+                                    </ItemsControl.ItemTemplate>
+                                </ItemsControl>
+                            </ScrollViewer>
+
+                            <!-- Empty State -->
+                            <Border x:Name="EmptyLoginPanel" 
+                                    Grid.Row="1" 
+                                    Padding="40"
+                                    Visibility="Collapsed">
+                                <StackPanel HorizontalAlignment="Center">
+                                    <iconPacks:PackIconMaterial Kind="AccountClock" 
+                                                                Width="48" Height="48" 
+                                                                Foreground="#BDBDBD"
+                                                                HorizontalAlignment="Center"/>
+                                    <TextBlock Text="No login history found" 
+                                               FontSize="14" 
+                                               Foreground="#888"
+                                               HorizontalAlignment="Center"
+                                               Margin="0,12,0,0"/>
+                                </StackPanel>
+                            </Border>
+                        </Grid>
+                    </Border>
+
+                    <!-- Pagination -->
+                    <Grid Margin="0,16,0,0">
+                        <TextBlock x:Name="TxtLoginPagination" 
+                                   Text="Showing 0-0 of 0" 
+                                   FontSize="12" 
+                                   Foreground="#888"
+                                   VerticalAlignment="Center"/>
+                        <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                            <Button x:Name="BtnLoginPrevPage" 
+                                    Content="Previous" 
+                                    Style="{StaticResource SecondaryButton}"
+                                    Padding="12,6"
+                                    Margin="0,0,8,0"
+                                    Click="BtnLoginPrevPage_Click"/>
+                            <Button x:Name="BtnLoginNextPage" 
+                                    Content="Next" 
+                                    Style="{StaticResource SecondaryButton}"
+                                    Padding="12,6"
+                                    Click="BtnLoginNextPage_Click"/>
+                        </StackPanel>
+                    </Grid>
+                </StackPanel>
+
+                <!-- ACTIVE SESSIONS Panel -->
+                <StackPanel x:Name="ActiveSessionsPanel" Visibility="Collapsed">
+
+                    <!-- Info Card -->
+                    <Border Background="#E3F2FD" 
+                            BorderBrush="#90CAF9" 
+                            BorderThickness="1" 
+                            CornerRadius="8" 
+                            Padding="16" 
+                            Margin="0,0,0,16">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto"/>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
+                            <iconPacks:PackIconMaterial Kind="AccountMultiple" 
+                                                        Width="24" Height="24" 
+                                                        Foreground="#1976D2"
+                                                        VerticalAlignment="Center"
+                                                        Margin="0,0,12,0"/>
+                            <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                                <TextBlock FontSize="14" FontWeight="Medium" Foreground="#1976D2">
+                                    <Run Text="Active Sessions:"/>
+                                    <Run x:Name="TxtActiveSessionCount" Text="0" FontWeight="Bold"/>
+                                </TextBlock>
+                                <TextBlock Text="Users currently logged in to the system" 
+                                           FontSize="12" 
+                                           Foreground="#64B5F6"
+                                           Margin="0,2,0,0"/>
+                            </StackPanel>
+                            <Button Grid.Column="2" 
+                                    x:Name="BtnForceLogoutAll"
+                                    Style="{StaticResource DangerButton}"
+                                    Padding="14,8"
+                                    Click="BtnForceLogoutAll_Click">
+                                <StackPanel Orientation="Horizontal">
+                                    <iconPacks:PackIconMaterial Kind="AccountOff" Width="16" Height="16"/>
+                                    <TextBlock Text="Force Logout All" Margin="8,0,0,0"/>
+                                </StackPanel>
+                            </Button>
+                        </Grid>
+                    </Border>
+
+                    <!-- Active Sessions Table -->
+                    <Border Background="White" 
+                            BorderBrush="#E0E0E0" 
+                            BorderThickness="1" 
+                            CornerRadius="8">
+                        <Grid>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="*"/>
+                            </Grid.RowDefinitions>
+
+                            <!-- Header -->
+                            <Border Grid.Row="0" 
+                                    Background="#F5F5F5" 
+                                    Padding="12,10"
+                                    CornerRadius="8,8,0,0">
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="180"/>
+                                        <ColumnDefinition Width="120"/>
+                                        <ColumnDefinition Width="140"/>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="100"/>
+                                    </Grid.ColumnDefinitions>
+                                    <TextBlock Grid.Column="0" Text="User" FontWeight="SemiBold" FontSize="12" Foreground="#555"/>
+                                    <TextBlock Grid.Column="1" Text="Role" FontWeight="SemiBold" FontSize="12" Foreground="#555"/>
+                                    <TextBlock Grid.Column="2" Text="Login Time" FontWeight="SemiBold" FontSize="12" Foreground="#555"/>
+                                    <TextBlock Grid.Column="3" Text="Machine / IP" FontWeight="SemiBold" FontSize="12" Foreground="#555"/>
+                                    <TextBlock Grid.Column="4" Text="Action" FontWeight="SemiBold" FontSize="12" Foreground="#555" HorizontalAlignment="Center"/>
+                                </Grid>
+                            </Border>
+
+                            <!-- Session Items -->
+                            <ScrollViewer Grid.Row="1" MaxHeight="400" VerticalScrollBarVisibility="Auto">
+                                <ItemsControl x:Name="ActiveSessionsList">
+                                    <ItemsControl.ItemTemplate>
+                                        <DataTemplate>
+                                            <Border Style="{StaticResource TableRow}">
+                                                <Grid>
+                                                    <Grid.ColumnDefinitions>
+                                                        <ColumnDefinition Width="180"/>
+                                                        <ColumnDefinition Width="120"/>
+                                                        <ColumnDefinition Width="140"/>
+                                                        <ColumnDefinition Width="*"/>
+                                                        <ColumnDefinition Width="100"/>
+                                                    </Grid.ColumnDefinitions>
+                                                    <StackPanel Grid.Column="0">
+                                                        <TextBlock Text="{Binding FullName}" 
+                                                                   FontSize="13" 
+                                                                   FontWeight="Medium"/>
+                                                        <TextBlock Text="{Binding Username}" 
+                                                                   FontSize="11" 
+                                                                   Foreground="#888"/>
+                                                    </StackPanel>
+                                                    <Border Grid.Column="1" 
+                                                            Background="#E8F5E9" 
+                                                            CornerRadius="4" 
+                                                            Padding="8,4" 
+                                                            HorizontalAlignment="Left"
+                                                            VerticalAlignment="Center">
+                                                        <TextBlock Text="{Binding Role}" 
+                                                                   FontSize="11" 
+                                                                   Foreground="#2E7D32"/>
+                                                    </Border>
+                                                    <TextBlock Grid.Column="2" 
+                                                               Text="{Binding LoginTime, StringFormat='{}{0:MM/dd/yy HH:mm}'}" 
+                                                               FontSize="12" 
+                                                               Foreground="#666"
+                                                               VerticalAlignment="Center"/>
+                                                    <StackPanel Grid.Column="3" VerticalAlignment="Center">
+                                                        <TextBlock Text="{Binding MachineName}" 
+                                                                   FontSize="12"/>
+                                                        <TextBlock Text="{Binding IpAddress}" 
+                                                                   FontSize="11" 
+                                                                   Foreground="#888"/>
+                                                    </StackPanel>
+                                                    <Button Grid.Column="4" 
+                                                            Style="{StaticResource DangerButton}"
+                                                            Padding="10,6"
+                                                            HorizontalAlignment="Center"
+                                                            Tag="{Binding}"
+                                                            Click="BtnForceLogoutSession_Click">
+                                                        <StackPanel Orientation="Horizontal">
+                                                            <iconPacks:PackIconMaterial Kind="Logout" Width="14" Height="14"/>
+                                                            <TextBlock Text="Logout" Margin="6,0,0,0" FontSize="11"/>
+                                                        </StackPanel>
+                                                    </Button>
+                                                </Grid>
+                                            </Border>
+                                        </DataTemplate>
+                                    </ItemsControl.ItemTemplate>
+                                </ItemsControl>
+                            </ScrollViewer>
+
+                            <!-- Empty State -->
+                            <Border x:Name="EmptySessionsPanel" 
+                                    Grid.Row="1" 
+                                    Padding="40"
+                                    Visibility="Collapsed">
+                                <StackPanel HorizontalAlignment="Center">
+                                    <iconPacks:PackIconMaterial Kind="AccountOff" 
+                                                                Width="48" Height="48" 
+                                                                Foreground="#BDBDBD"
+                                                                HorizontalAlignment="Center"/>
+                                    <TextBlock Text="No active sessions" 
+                                               FontSize="14" 
+                                               Foreground="#888"
+                                               HorizontalAlignment="Center"
+                                               Margin="0,12,0,0"/>
+                                    <TextBlock Text="No users are currently logged in" 
+                                               FontSize="12" 
+                                               Foreground="#AAA"
+                                               HorizontalAlignment="Center"
+                                               Margin="0,4,0,0"/>
+                                </StackPanel>
+                            </Border>
+                        </Grid>
+                    </Border>
+
+                    <!-- Refresh Button -->
+                    <Button Style="{StaticResource SecondaryButton}"
+                            Padding="14,8"
+                            HorizontalAlignment="Left"
+                            Margin="0,16,0,0"
+                            Click="BtnRefreshSessions_Click">
+                        <StackPanel Orientation="Horizontal">
+                            <iconPacks:PackIconMaterial Kind="Refresh" Width="16" Height="16"/>
+                            <TextBlock Text="Refresh Sessions" Margin="8,0,0,0"/>
+                        </StackPanel>
+                    </Button>
+                </StackPanel>
+
+            </Grid>
+        </ScrollViewer>
     </Grid>
 </UserControl>

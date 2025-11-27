@@ -53,11 +53,16 @@ namespace RosalEHealthcare.Core.Models
             {
                 switch (Status)
                 {
-                    case "Success": return "✓";
-                    case "Failed": return "✗";
-                    case "Locked": return "🔒";
-                    case "Expired": return "⏰";
-                    default: return "?";
+                    case "Success":
+                        return "✓";
+                    case "Failed":
+                        return "✕";
+                    case "Locked":
+                        return "🔒";
+                    case "Expired":
+                        return "⏱";
+                    default:
+                        return "•";
                 }
             }
         }
