@@ -13,11 +13,13 @@ namespace RosalEHealthcare.Data.Services
     {
         private readonly RosalEHealthcareDbContext _db;
         private readonly SystemSettingsService _settingsService;
+        private readonly NotificationService _notificationService;
 
         public BackupService(RosalEHealthcareDbContext db)
         {
             _db = db;
             _settingsService = new SystemSettingsService(db);
+            _notificationService = new NotificationService(db);
         }
 
         #region Backup Operations
@@ -163,6 +165,42 @@ namespace RosalEHealthcare.Data.Services
         }
 
         /// <summary>
+        /// Restore database with notification
+        /// </summary>
+        public bool RestoreDatabaseWithNotification(string backupFilePath, out string errorMessage)
+        {
+            errorMessage = null;
+            bool success = false;
+
+            try
+            {
+                // Your existing restore logic here
+                success = RestoreDatabase(backupFilePath);
+
+                // Send notification
+                if (success)
+                {
+                    _notificationService.NotifyRestoreCompleted(true, backupFilePath);
+                }
+                else
+                {
+                    _notificationService.NotifyRestoreCompleted(false, backupFilePath, "Restore operation failed");
+                }
+            }
+            catch (Exception ex)
+            {
+                errorMessage = ex.Message;
+                try
+                {
+                    _notificationService.NotifyRestoreCompleted(false, backupFilePath, ex.Message);
+                }
+                catch { }
+            }
+
+            return success;
+        }
+
+        /// <summary>
         /// Restore database from backup
         /// </summary>
         public BackupResult RestoreBackup(string backupFilePath, string restoredBy, Action<int, string> progressCallback = null)
@@ -285,6 +323,39 @@ namespace RosalEHealthcare.Data.Services
             }
 
             return result;
+        }
+
+        public bool CreateBackupWithNotification(string backupPath, out string errorMessage)
+        {
+            errorMessage = null;
+            bool success = false;
+
+            try
+            {
+                // Your existing backup logic here
+                success = CreateBackup(backupPath);
+
+                // Send notification
+                if (success)
+                {
+                    _notificationService.NotifyBackupCompleted(true, backupPath);
+                }
+                else
+                {
+                    _notificationService.NotifyBackupCompleted(false, null, "Backup operation failed");
+                }
+            }
+            catch (Exception ex)
+            {
+                errorMessage = ex.Message;
+                try
+                {
+                    _notificationService.NotifyBackupCompleted(false, null, ex.Message);
+                }
+                catch { }
+            }
+
+            return success;
         }
 
         #endregion

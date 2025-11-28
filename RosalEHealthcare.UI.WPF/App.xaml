@@ -23,6 +23,11 @@
             <converters:StatusToColorConverter x:Key="StatusToColorConverter"/>
             <converters:StringNullOrEmptyToVisibilityConverter x:Key="StrNullOrEmptyToVis"/>
             <converters:StringNullOrEmptyToVisibilityConverter x:Key="StringNullOrEmptyToVisibilityConverter"/>
+
+            <!-- Notification Converters -->
+            <controls:ColorToLightBackgroundConverter x:Key="ColorToLightBackgroundConverter"/>
+            <controls:ReadToFontWeightConverter x:Key="ReadToFontWeightConverter"/>
+            <controls:InverseBoolToVisibilityConverter x:Key="InverseBoolToVisibilityConverter"/>
         </ResourceDictionary>
     </Application.Resources>
 </Application>

@@ -4,6 +4,7 @@
                       xmlns:controls="http://metro.mahapps.com/winfx/xaml/controls"
                       xmlns:lvc="clr-namespace:LiveCharts.Wpf;assembly=LiveCharts.Wpf"
                       xmlns:local="clr-namespace:RosalEHealthcare.UI.WPF.Controls"
+                      xmlns:local="clr-namespace:RosalEHealthcare.UI.WPF.Controls"
                       Title=""
                       ShowTitleBar="False"
                       WindowStartupLocation="CenterScreen"
@@ -313,37 +314,10 @@
                                    Foreground="#2E7D32" 
                                    VerticalAlignment="Center"/>
                         <StackPanel Orientation="Horizontal" 
-                                    HorizontalAlignment="Right" 
-                                    VerticalAlignment="Center">
-                            <Border Background="#FFF3E0" 
-                                    CornerRadius="20"
-                                    Width="40"
-                                    Height="40"
-                                    Cursor="Hand">
-                                <Grid>
-                                    <TextBlock Text="🔔" 
-                                               FontSize="20"
-                                               HorizontalAlignment="Center"
-                                               VerticalAlignment="Center"/>
-                                    <Border x:Name="NotificationBadge"
-                                            Background="#FF5722"
-                                            Width="18"
-                                            Height="18"
-                                            CornerRadius="9"
-                                            HorizontalAlignment="Right"
-                                            VerticalAlignment="Top"
-                                            Margin="0,-2,-2,0"
-                                            Visibility="Collapsed">
-                                        <TextBlock x:Name="NotificationCount"
-                                                   Text="0"
-                                                   Foreground="White"
-                                                   FontSize="10"
-                                                   FontWeight="Bold"
-                                                   HorizontalAlignment="Center"
-                                                   VerticalAlignment="Center"/>
-                                    </Border>
-                                </Grid>
-                            </Border>
+            HorizontalAlignment="Right" 
+            VerticalAlignment="Center">
+                            <!-- Notification Bell Button -->
+                            <local:NotificationBellButton x:Name="NotificationBell"/>
                         </StackPanel>
                     </Grid>
                 </Border>
@@ -771,5 +745,12 @@
                 </Grid>
             </DockPanel>
         </Grid>
+        <!-- Notification Toast Container - Add this at the end, inside the main Grid -->
+        <Canvas x:Name="ToastContainer" 
+                Grid.Row="1"
+                IsHitTestVisible="False"
+                HorizontalAlignment="Right"
+                VerticalAlignment="Bottom"
+                Margin="0,0,20,20"/>
     </Grid>
 </controls:MetroWindow>

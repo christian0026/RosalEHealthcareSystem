@@ -75,7 +75,7 @@
 
     <ScrollViewer VerticalScrollBarVisibility="Auto" 
                   HorizontalScrollBarVisibility="Disabled"
-                  Padding="32,24">
+                  Padding="32,24" Margin="0,0,0,-573">
         <StackPanel MaxWidth="800">
 
             <!-- APPLICATION INFO Section -->
@@ -103,7 +103,7 @@
 
                         <!-- App Info -->
                         <StackPanel Grid.Column="1" VerticalAlignment="Center">
-                            <TextBlock Text="RosalE Healthcare System"
+                            <TextBlock Text="Rosal EHealthcare System"
                                        FontSize="22"
                                        FontWeight="Bold"
                                        Foreground="#2E7D32"/>
@@ -126,7 +126,7 @@
                                         CornerRadius="4" 
                                         Padding="10,4">
                                     <TextBlock x:Name="TxtBuildDate"
-                                               Text="Build: 2024"
+                                               Text="Build: 2025"
                                                FontSize="12"
                                                FontWeight="SemiBold"
                                                Foreground="#1976D2"/>
@@ -432,7 +432,7 @@
 
                     <Border Background="#FAFAFA" CornerRadius="8" Padding="20">
                         <StackPanel>
-                            <TextBlock Text="© 2024 Rosal Medical Clinic"
+                            <TextBlock Text="© 2025 Rosal Medical Clinic"
                                        FontSize="14"
                                        FontWeight="SemiBold"
                                        Foreground="#333"/>

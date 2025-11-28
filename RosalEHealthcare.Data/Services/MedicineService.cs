@@ -10,10 +10,17 @@ namespace RosalEHealthcare.Data.Services
     public class MedicineService
     {
         private readonly RosalEHealthcareDbContext _db;
+        private readonly NotificationService _notificationService;
+
+        // Stock threshold for low stock alerts
+        private const int LOW_STOCK_THRESHOLD = 20;
+        // Days before expiry to trigger alert
+        private const int EXPIRY_WARNING_DAYS = 30;
 
         public MedicineService(RosalEHealthcareDbContext db)
         {
             _db = db;
+            _notificationService = new NotificationService(db);
         }
 
         #region Basic CRUD
@@ -35,11 +42,13 @@ namespace RosalEHealthcare.Data.Services
             return _db.Medicines.FirstOrDefault(m => m.MedicineId == medicineId);
         }
 
-        public Medicine AddMedicine(Medicine medicine)
+        /// <summary>
+        /// Add a new medicine and check for alerts
+        /// </summary>
+        public Medicine AddMedicine(Medicine medicine, string addedBy = null)
         {
             if (medicine == null) throw new ArgumentNullException(nameof(medicine));
 
-            // Auto-generate MedicineId if not provided
             if (string.IsNullOrEmpty(medicine.MedicineId))
             {
                 medicine.MedicineId = GenerateMedicineId();
@@ -49,12 +58,30 @@ namespace RosalEHealthcare.Data.Services
 
             _db.Medicines.Add(medicine);
             _db.SaveChanges();
+
+            // Check and send alerts for new medicine
+            try
+            {
+                CheckAndSendAlerts(medicine);
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Failed to send notification: {ex.Message}");
+            }
+
             return medicine;
         }
 
-        public void UpdateMedicine(Medicine medicine)
+        /// <summary>
+        /// Update medicine and check for stock/expiry alerts
+        /// </summary>
+        public void UpdateMedicine(Medicine medicine, string updatedBy = null)
         {
             if (medicine == null) throw new ArgumentNullException(nameof(medicine));
+
+            // Get old values for comparison
+            var oldMedicine = _db.Medicines.AsNoTracking().FirstOrDefault(m => m.Id == medicine.Id);
+            int? oldStock = oldMedicine?.Stock;
 
             medicine.Status = DetermineStatus(medicine);
 
@@ -63,6 +90,16 @@ namespace RosalEHealthcare.Data.Services
                 _db.Medicines.Attach(medicine);
             entry.State = EntityState.Modified;
             _db.SaveChanges();
+
+            // Check and send alerts
+            try
+            {
+                CheckAndSendAlerts(medicine, oldStock);
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Failed to send notification: {ex.Message}");
+            }
         }
 
         public void DeleteMedicine(int id)
@@ -72,6 +109,169 @@ namespace RosalEHealthcare.Data.Services
             {
                 _db.Medicines.Remove(medicine);
                 _db.SaveChanges();
+            }
+        }
+
+        /// <summary>
+        /// Update stock quantity with alert checking
+        /// </summary>
+        /// <param name="id">Medicine ID</param>
+        /// <param name="newStock">New stock quantity</param>
+        /// <param name="updatedBy">Name of user who updated</param>
+        public void UpdateStock(int id, int newStock, string updatedBy = null)
+        {
+            var medicine = GetById(id);
+            if (medicine == null) return;
+
+            int oldStock = medicine.Stock;
+            medicine.Stock = newStock;
+            medicine.Status = DetermineStatus(medicine);
+            _db.SaveChanges();
+
+            // Check for stock alerts
+            try
+            {
+                CheckStockAlerts(medicine, oldStock);
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Failed to send notification: {ex.Message}");
+            }
+        }
+
+        #endregion
+
+        #region Alert Checking
+
+        /// <summary>
+        /// Check and send appropriate alerts for a medicine
+        /// </summary>
+        private void CheckAndSendAlerts(Medicine medicine, int? oldStock = null)
+        {
+            CheckStockAlerts(medicine, oldStock);
+            CheckExpiryAlerts(medicine);
+        }
+
+        /// <summary>
+        /// Check for stock-related alerts
+        /// </summary>
+        private void CheckStockAlerts(Medicine medicine, int? oldStock = null)
+        {
+            // Out of stock alert
+            if (medicine.Stock == 0)
+            {
+                // Only alert if stock just became 0
+                if (!oldStock.HasValue || oldStock.Value > 0)
+                {
+                    _notificationService.NotifyOutOfStock(medicine.Name, medicine.MedicineId);
+                }
+            }
+            // Low stock alert
+            else if (medicine.Stock <= LOW_STOCK_THRESHOLD)
+            {
+                // Only alert if stock just dropped below threshold
+                if (!oldStock.HasValue || oldStock.Value > LOW_STOCK_THRESHOLD)
+                {
+                    _notificationService.NotifyLowStock(medicine.Name, medicine.MedicineId, medicine.Stock, LOW_STOCK_THRESHOLD);
+                }
+            }
+        }
+
+        /// <summary>
+        /// Check for expiry-related alerts
+        /// </summary>
+        private void CheckExpiryAlerts(Medicine medicine)
+        {
+            if (medicine.ExpiryDate.HasValue)
+            {
+                var daysUntilExpiry = (medicine.ExpiryDate.Value - DateTime.Today).Days;
+
+                // Alert if expiring within warning period
+                if (daysUntilExpiry >= 0 && daysUntilExpiry <= EXPIRY_WARNING_DAYS)
+                {
+                    _notificationService.NotifyExpiringMedicine(
+                        medicine.Name,
+                        medicine.MedicineId,
+                        medicine.ExpiryDate.Value
+                    );
+                }
+            }
+        }
+
+        /// <summary>
+        /// Run daily check for expiring medicines (call from scheduled task or on dashboard load)
+        /// </summary>
+        public void CheckAllExpiringMedicines()
+        {
+            try
+            {
+                var warningDate = DateTime.Today.AddDays(EXPIRY_WARNING_DAYS);
+                var expiringMedicines = _db.Medicines
+                    .Where(m => m.ExpiryDate.HasValue &&
+                               m.ExpiryDate.Value >= DateTime.Today &&
+                               m.ExpiryDate.Value <= warningDate &&
+                               m.Stock > 0)
+                    .ToList();
+
+                foreach (var medicine in expiringMedicines)
+                {
+                    // Check if we already sent a notification today for this medicine
+                    var today = DateTime.Today;
+                    var existingNotification = _db.Notifications
+                        .Any(n => n.Type == "ExpiringMedicine" &&
+                                 n.RelatedEntityId == medicine.MedicineId &&
+                                 DbFunctions.TruncateTime(n.CreatedAt) == today);
+
+                    if (!existingNotification)
+                    {
+                        _notificationService.NotifyExpiringMedicine(
+                            medicine.Name,
+                            medicine.MedicineId,
+                            medicine.ExpiryDate.Value
+                        );
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Error checking expiring medicines: {ex.Message}");
+            }
+        }
+
+        /// <summary>
+        /// Run daily check for low stock medicines (call from scheduled task or on dashboard load)
+        /// </summary>
+        public void CheckAllLowStockMedicines()
+        {
+            try
+            {
+                var lowStockMedicines = _db.Medicines
+                    .Where(m => m.Stock > 0 && m.Stock <= LOW_STOCK_THRESHOLD)
+                    .ToList();
+
+                foreach (var medicine in lowStockMedicines)
+                {
+                    // Check if we already sent a notification today for this medicine
+                    var today = DateTime.Today;
+                    var existingNotification = _db.Notifications
+                        .Any(n => n.Type == "LowStock" &&
+                                 n.RelatedEntityId == medicine.MedicineId &&
+                                 DbFunctions.TruncateTime(n.CreatedAt) == today);
+
+                    if (!existingNotification)
+                    {
+                        _notificationService.NotifyLowStock(
+                            medicine.Name,
+                            medicine.MedicineId,
+                            medicine.Stock,
+                            LOW_STOCK_THRESHOLD
+                        );
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Error checking low stock medicines: {ex.Message}");
             }
         }
 
@@ -100,7 +300,6 @@ namespace RosalEHealthcare.Data.Services
             if (!string.IsNullOrWhiteSpace(status) && status != "All Status")
                 q = q.Where(m => m.Status == status);
 
-            // Execute query first, then order in memory
             return q.ToList().OrderBy(m => m.Name ?? "").ToList();
         }
 
@@ -123,15 +322,12 @@ namespace RosalEHealthcare.Data.Services
             if (!string.IsNullOrWhiteSpace(status) && status != "All Status")
                 q = q.Where(m => m.Status == status);
 
-            // Get total count first
             var totalCount = q.Count();
 
-            // Skip and Take work fine with EF
             var results = q.Skip((pageNumber - 1) * pageSize)
                            .Take(pageSize)
                            .ToList();
 
-            // Order in memory
             return results.OrderBy(m => m.Name ?? "").ToList();
         }
 
@@ -168,13 +364,13 @@ namespace RosalEHealthcare.Data.Services
 
         public int GetLowStockCount()
         {
-            return _db.Medicines.Count(m => m.Stock > 0 && m.Stock <= 20);
+            return _db.Medicines.Count(m => m.Stock > 0 && m.Stock <= LOW_STOCK_THRESHOLD);
         }
 
         public int GetExpiringSoonCount()
         {
-            var threeMonthsFromNow = DateTime.Now.AddMonths(3);
-            return _db.Medicines.Count(m => m.ExpiryDate <= threeMonthsFromNow && m.ExpiryDate >= DateTime.Now);
+            var warningDate = DateTime.Now.AddDays(EXPIRY_WARNING_DAYS);
+            return _db.Medicines.Count(m => m.ExpiryDate <= warningDate && m.ExpiryDate >= DateTime.Now);
         }
 
         public int GetOutOfStockCount()
@@ -192,16 +388,16 @@ namespace RosalEHealthcare.Data.Services
         public IEnumerable<Medicine> GetLowStockMedicines()
         {
             return _db.Medicines
-                .Where(m => m.Stock > 0 && m.Stock <= 20)
+                .Where(m => m.Stock > 0 && m.Stock <= LOW_STOCK_THRESHOLD)
                 .OrderBy(m => m.Stock)
                 .ToList();
         }
 
         public IEnumerable<Medicine> GetExpiringSoonMedicines()
         {
-            var threeMonthsFromNow = DateTime.Now.AddMonths(3);
+            var warningDate = DateTime.Now.AddDays(EXPIRY_WARNING_DAYS);
             return _db.Medicines
-                .Where(m => m.ExpiryDate <= threeMonthsFromNow && m.ExpiryDate >= DateTime.Now)
+                .Where(m => m.ExpiryDate <= warningDate && m.ExpiryDate >= DateTime.Now)
                 .OrderBy(m => m.ExpiryDate)
                 .ToList();
         }
@@ -233,15 +429,18 @@ namespace RosalEHealthcare.Data.Services
             if (medicine.Stock == 0)
                 return "Out of Stock";
 
-            if (medicine.Stock <= 20)
+            if (medicine.Stock <= LOW_STOCK_THRESHOLD)
                 return "Low Stock";
 
-            var threeMonthsFromNow = DateTime.Now.AddMonths(3);
-            if (medicine.ExpiryDate <= threeMonthsFromNow && medicine.ExpiryDate >= DateTime.Now)
-                return "Expiring Soon";
+            if (medicine.ExpiryDate.HasValue)
+            {
+                var warningDate = DateTime.Now.AddDays(EXPIRY_WARNING_DAYS);
+                if (medicine.ExpiryDate <= warningDate && medicine.ExpiryDate >= DateTime.Now)
+                    return "Expiring Soon";
 
-            if (medicine.ExpiryDate < DateTime.Now)
-                return "Expired";
+                if (medicine.ExpiryDate < DateTime.Now)
+                    return "Expired";
+            }
 
             return "Available";
         }

@@ -14,6 +14,7 @@ using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using RosalEHealthcare.UI.WPF.Views.UserSettings;
+using RosalEHealthcare.UI.WPF.Controls;
 
 namespace RosalEHealthcare.UI.WPF.Views
 {
@@ -263,6 +264,70 @@ namespace RosalEHealthcare.UI.WPF.Views
 
         #endregion
 
+        #region Notifications
+        private void InitializeNotifications()
+        {
+            try
+            {
+                var currentUser = SessionManager.CurrentUser;
+                if (currentUser != null)
+                {
+                    // Initialize the notification bell
+                    NotificationBell.Initialize(
+                        currentUser.Username,
+                        currentUser.Role,
+                        ToastContainer
+                    );
+
+                    // Handle navigation requests from notifications
+                    NotificationBell.OnNavigateRequested += NavigateToSection;
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Error initializing notifications: {ex.Message}");
+            }
+        }
+
+        /// <summary>
+        /// Navigate to a section based on notification action URL
+        /// </summary>
+        private void NavigateToSection(string section)
+        {
+            try
+            {
+                switch (section)
+                {
+                    case "Dashboard":
+                        Dashboard_Click(null, null);
+                        break;
+                    case "PatientManagement":
+                    case "Patients":
+                        PatientManagement_Click(null, null);
+                        break;
+                    case "Appointments":
+                        Appointments_Click(null, null);
+                        break;
+                    case "MedicineInventory":
+                    case "Medicines":
+                        // If receptionist has medicine view
+                        // MedicineInventory_Click(null, null);
+                        break;
+                    case "Settings":
+                    case "SystemSettings":
+                        Settings_Click(null, null);
+                        break;
+                    default:
+                        Dashboard_Click(null, null);
+                        break;
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Error navigating to section: {ex.Message}");
+            }
+        }
+
         #region Navigation
 
         private void HideAllContent()
@@ -391,5 +456,13 @@ namespace RosalEHealthcare.UI.WPF.Views
         }
 
         #endregion
+
+        protected override void OnClosing(System.ComponentModel.CancelEventArgs e)
+        {
+            // Stop notification polling
+            NotificationBell?.Stop();
+
+            base.OnClosing(e);
+        }
     }
 }

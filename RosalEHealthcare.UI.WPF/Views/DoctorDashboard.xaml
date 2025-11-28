@@ -386,50 +386,12 @@
                                     HorizontalAlignment="Right" 
                                     VerticalAlignment="Center">
                             <!-- Notification Bell -->
-                            <Button x:Name="BtnNotification"
-                                    Background="Transparent"
-                                    BorderThickness="0"
-                                    Cursor="Hand"
-                                    Click="Notification_Click"
-                                    Padding="8">
-                                <Button.Template>
-                                    <ControlTemplate TargetType="Button">
-                                        <Border Background="{TemplateBinding Background}"
-                                                Padding="{TemplateBinding Padding}">
-                                            <ContentPresenter/>
-                                        </Border>
-                                    </ControlTemplate>
-                                </Button.Template>
-                                <Grid>
-                                    <Border Background="#FFF3E0" 
-                                            CornerRadius="20"
-                                            Width="44"
-                                            Height="44">
-                                        <iconPacks:PackIconMaterial Kind="Bell" 
-                                                                    Width="22" Height="22"
-                                                                    Foreground="#FF9800"
-                                                                    HorizontalAlignment="Center"
-                                                                    VerticalAlignment="Center"/>
-                                    </Border>
-                                    <!-- Notification Badge -->
-                                    <Border x:Name="NotificationBadge"
-                                            Background="#F44336"
-                                            Width="20"
-                                            Height="20"
-                                            CornerRadius="10"
-                                            HorizontalAlignment="Right"
-                                            VerticalAlignment="Top"
-                                            Margin="0,-4,-4,0">
-                                        <TextBlock x:Name="TxtNotificationCount"
-                                                   Text="3"
-                                                   Foreground="White"
-                                                   FontSize="11"
-                                                   FontWeight="Bold"
-                                                   HorizontalAlignment="Center"
-                                                   VerticalAlignment="Center"/>
-                                    </Border>
-                                </Grid>
-                            </Button>
+                            <StackPanel Orientation="Horizontal" 
+                                        HorizontalAlignment="Right" 
+                                        VerticalAlignment="Center">
+                                <!-- Notification Bell Button -->
+                                <local:NotificationBellButton x:Name="NotificationBell"/>
+                            </StackPanel>
                         </StackPanel>
                     </Grid>
                 </Border>
@@ -842,5 +804,12 @@
                 </Grid>
             </DockPanel>
         </Grid>
+        <!-- Notification Toast Container -->
+        <Canvas x:Name="ToastContainer" 
+                Grid.Row="1"
+                IsHitTestVisible="False"
+                HorizontalAlignment="Right"
+                VerticalAlignment="Bottom"
+                Margin="0,0,20,20"/>
     </Grid>
 </controls:MetroWindow>

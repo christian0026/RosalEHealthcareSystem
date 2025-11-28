@@ -1,10 +1,12 @@
-﻿using RosalEHealthcare.Core.Models;
+﻿using DocumentFormat.OpenXml.InkML;
+using Newtonsoft.Json;
+using RosalEHealthcare.Core.Models;
 using RosalEHealthcare.Data.Contexts;
+using RosalEHealthcare.Data.Services;
 using System;
 using System.Collections.Generic;
 using System.Data.Entity;
 using System.Linq;
-using Newtonsoft.Json;
 
 namespace RosalEHealthcare.Data.Services
 {
@@ -14,10 +16,12 @@ namespace RosalEHealthcare.Data.Services
         private const int MAX_LOGIN_ATTEMPTS = 3;
         private const int LOCKOUT_DURATION_MINUTES = 5;
         private const int PASSWORD_HISTORY_COUNT = 5;
+        private readonly NotificationService _notificationService;
 
         public UserService(RosalEHealthcareDbContext db)
         {
             _db = db;
+            _notificationService = new NotificationService(db);
         }
 
         #region Basic CRUD
@@ -46,6 +50,27 @@ namespace RosalEHealthcare.Data.Services
         {
             if (user == null) throw new ArgumentNullException(nameof(user));
 
+            user.CreatedAt = DateTime.Now;
+            user.IsActive = true;
+
+            _db.Users.Add(user);
+            _db.SaveChanges();
+
+            // Notify admin about new user
+            try
+            {
+                if (!string.IsNullOrEmpty(createdBy))
+                {
+                    _notificationService.NotifyNewUserCreated(user.Username, user.Role, createdBy);
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Failed to send notification: {ex.Message}");
+            }
+
+            return user;
+
             // Generate UserCode if not provided
             if (string.IsNullOrEmpty(user.UserCode))
             {
@@ -63,6 +88,13 @@ namespace RosalEHealthcare.Data.Services
             return user;
         }
 
+
+        /// <summary>
+        /// Update user and optionally notify admin
+        /// </summary>
+         <param name="user">User to update</param>
+        <param name="modifiedBy">Name of user who modified</param>
+        <param name="changes">Description of changes made</param>
         public void UpdateUser(User user)
         {
             if (user == null) throw new ArgumentNullException(nameof(user));
@@ -76,6 +108,18 @@ namespace RosalEHealthcare.Data.Services
             }
             entry.State = EntityState.Modified;
             _db.SaveChanges();
+
+            try
+            {
+                if (!string.IsNullOrEmpty(modifiedBy) && !string.IsNullOrEmpty(changes))
+                {
+                    _notificationService.NotifyUserModified(user.Username, modifiedBy, changes);
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Failed to send notification: {ex.Message}");
+            }
         }
 
         public void DeleteUser(int id)
@@ -176,6 +220,13 @@ namespace RosalEHealthcare.Data.Services
             return false;
         }
 
+
+        /// <summary>
+        /// Handle failed login attempt and notify admin if threshold reached
+        /// </summary>
+        /// <param name="username">Username that failed login</param>
+        /// <param name="attemptCount">Number of failed attempts</param>
+        /// <param name="ipAddress">IP address of attempt</param>
         public void RecordFailedLogin(User user)
         {
             user.FailedLoginAttempts++;

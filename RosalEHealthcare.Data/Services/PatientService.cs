@@ -10,10 +10,12 @@ namespace RosalEHealthcare.Data.Services
     public class PatientService
     {
         private readonly RosalEHealthcareDbContext _db;
+        private readonly NotificationService _notificationService;
 
         public PatientService(RosalEHealthcareDbContext db)
         {
             _db = db;
+            _notificationService = new NotificationService(db);
         }
 
         #region Patient CRUD
@@ -36,7 +38,13 @@ namespace RosalEHealthcare.Data.Services
             return _db.Patients.FirstOrDefault(p => p.PatientId == patientId);
         }
 
-        public Patient AddPatient(Patient p)
+        /// <summary>
+        /// Add a new patient and notify doctors
+        /// </summary>
+        /// <param name="p">Patient to add</param>
+        /// <param name="registeredBy">Name of user who registered the patient</param>
+        /// <returns>Added patient</returns>
+        public Patient AddPatient(Patient p, string registeredBy = null)
         {
             if (p == null) throw new ArgumentNullException(nameof(p));
 
@@ -51,10 +59,31 @@ namespace RosalEHealthcare.Data.Services
 
             _db.Patients.Add(p);
             _db.SaveChanges();
+
+            // Send notification to doctors
+            try
+            {
+                if (!string.IsNullOrEmpty(registeredBy))
+                {
+                    _notificationService.NotifyNewPatient(p.FullName, p.PatientId, registeredBy);
+                }
+            }
+            catch (Exception ex)
+            {
+                // Log but don't fail the operation
+                System.Diagnostics.Debug.WriteLine($"Failed to send notification: {ex.Message}");
+            }
+
             return p;
         }
 
-        public void UpdatePatient(Patient p)
+        /// <summary>
+        /// Update patient information and optionally notify
+        /// </summary>
+        /// <param name="p">Patient to update</param>
+        /// <param name="updatedBy">Name of user who updated the patient</param>
+        /// <param name="sendNotification">Whether to send notification</param>
+        public void UpdatePatient(Patient p, string updatedBy = null, bool sendNotification = false)
         {
             if (p == null) throw new ArgumentNullException(nameof(p));
             var entry = _db.Entry(p);
@@ -62,6 +91,25 @@ namespace RosalEHealthcare.Data.Services
                 _db.Patients.Attach(p);
             entry.State = EntityState.Modified;
             _db.SaveChanges();
+
+            // Send notification if requested
+            try
+            {
+                if (sendNotification && !string.IsNullOrEmpty(updatedBy))
+                {
+                    _notificationService.NotifyPatientUpdated(p.FullName, p.PatientId, updatedBy);
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Failed to send notification: {ex.Message}");
+            }
+        }
+
+        // Overload for backward compatibility
+        public void UpdatePatient(Patient p)
+        {
+            UpdatePatient(p, null, false);
         }
 
         public void ArchivePatient(int id)
@@ -86,7 +134,6 @@ namespace RosalEHealthcare.Data.Services
 
         #region Search & Filter
 
-        // Add these new methods
         public IEnumerable<Patient> SearchPaged(string query, string status, string gender, int pageNumber, int pageSize)
         {
             var q = _db.Patients.Where(p => p.Status != "Archived");
@@ -336,12 +383,11 @@ namespace RosalEHealthcare.Data.Services
 
         private string GeneratePatientId()
         {
-            // Get ALL patients from DB first, then filter in memory
             var year = DateTime.Now.Year;
             var yearStr = year.ToString();
 
             var lastPatient = _db.Patients
-                .ToList() // Get all patients first
+                .ToList()
                 .Where(p => p.PatientId != null && p.PatientId.StartsWith("PT-" + yearStr))
                 .OrderByDescending(p => p.PatientId)
                 .FirstOrDefault();

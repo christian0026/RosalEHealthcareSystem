@@ -15,6 +15,8 @@ using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using RosalEHealthcare.UI.WPF.Views.UserSettings;
+using RosalEHealthcare.UI.WPF.Controls;
+using RosalEHealthcare.UI.WPF.Helpers;
 
 namespace RosalEHealthcare.UI.WPF.Views
 {
@@ -65,6 +67,9 @@ namespace RosalEHealthcare.UI.WPF.Views
 
             // Load dashboard data when window loads
             this.Loaded += DoctorDashboard_Loaded;
+
+
+            InitializeNotifications();
         }
 
         public DoctorDashboard(User user) : this()
@@ -500,6 +505,7 @@ namespace RosalEHealthcare.UI.WPF.Views
 
         #endregion
 
+
         #region Navigation
 
         private void HideAllContent()
@@ -584,6 +590,82 @@ namespace RosalEHealthcare.UI.WPF.Views
 
         #endregion
 
+        #region Notifications
+        private void InitializeNotifications()
+        {
+            try
+            {
+                var currentUser = SessionManager.CurrentUser;
+                if (currentUser != null)
+                {
+                    // Initialize the notification bell
+                    NotificationBell.Initialize(
+                        currentUser.Username,
+                        currentUser.Role,
+                        ToastContainer
+                    );
+
+                    // Handle navigation requests from notifications
+                    NotificationBell.OnNavigateRequested += NavigateToSection;
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Error initializing notifications: {ex.Message}");
+            }
+        }
+
+        /// <summary>
+        /// Navigate to a section based on notification action URL
+        /// </summary>
+        private void NavigateToSection(string section)
+        {
+            try
+            {
+                switch (section)
+                {
+                    case "Dashboard":
+                        Dashboard_Click(null, null);
+                        break;
+                    case "PatientManagement":
+                    case "Patients":
+                        PatientManagement_Click(null, null);
+                        break;
+                    case "Appointments":
+                        Appointments_Click(null, null);
+                        break;
+                    case "MedicineInventory":
+                    case "Medicines":
+                        MedicineInventory_Click(null, null);
+                        break;
+                    case "Prescriptions":
+                        // If you have prescriptions view
+                        // Prescriptions_Click(null, null);
+                        break;
+                    case "Settings":
+                    case "SystemSettings":
+                        Settings_Click(null, null);
+                        break;
+                    default:
+                        Dashboard_Click(null, null);
+                        break;
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Error navigating to section: {ex.Message}");
+            }
+        }
+        #endregion
+
+        protected override void OnClosing(System.ComponentModel.CancelEventArgs e)
+        {
+            // Stop notification polling
+            NotificationBell?.Stop();
+
+            base.OnClosing(e);
+        }
+
         #region Actions
 
         private void Logout_Click(object sender, RoutedEventArgs e)
@@ -656,6 +738,7 @@ namespace RosalEHealthcare.UI.WPF.Views
 
         #endregion
     }
+
 
     #region Extension Methods
 

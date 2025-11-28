@@ -33,6 +33,73 @@ namespace RosalEHealthcare.Data.Services
                 .ToList();
         }
 
+        /// <summary>
+        /// Add a new prescription and notify receptionist
+        /// </summary>
+        /// <param name="prescription">Prescription to add</param>
+        /// <param name="doctorName">Name of doctor who created the prescription</param>
+        public Prescription AddPrescription(Prescription prescription, string doctorName = null)
+        {
+            if (prescription == null) throw new ArgumentNullException(nameof(prescription));
+
+            prescription.CreatedAt = DateTime.Now;
+
+            // Generate prescription ID if not set
+            if (string.IsNullOrEmpty(prescription.PrescriptionId))
+            {
+                prescription.PrescriptionId = GeneratePrescriptionId();
+            }
+
+            _db.Prescriptions.Add(prescription);
+            _db.SaveChanges();
+
+            // Notify receptionist that prescription is ready
+            try
+            {
+                if (!string.IsNullOrEmpty(doctorName))
+                {
+                    _notificationService.NotifyPrescriptionReady(
+                        prescription.PatientName,
+                        prescription.PrescriptionId,
+                        doctorName
+                    );
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Failed to send notification: {ex.Message}");
+            }
+
+            return prescription;
+        }
+
+        public void UpdatePrescription(Prescription prescription)
+        {
+            if (prescription == null) throw new ArgumentNullException(nameof(prescription));
+
+            var existing = _db.Prescriptions.Find(prescription.Id);
+            if (existing == null) return;
+
+            // Update properties
+            existing.PatientName = prescription.PatientName;
+            existing.Diagnosis = prescription.Diagnosis;
+            existing.Medications = prescription.Medications;
+            existing.Instructions = prescription.Instructions;
+            existing.Notes = prescription.Notes;
+
+            _db.SaveChanges();
+        }
+
+        public void DeletePrescription(int id)
+        {
+            var prescription = GetById(id);
+            if (prescription != null)
+            {
+                _db.Prescriptions.Remove(prescription);
+                _db.SaveChanges();
+            }
+        }
+
         public Prescription GetById(int id)
         {
             return _db.Prescriptions
@@ -133,6 +200,9 @@ namespace RosalEHealthcare.Data.Services
         }
 
         #endregion
+
+        #region Notifications
+
 
         #region Helper Methods
 

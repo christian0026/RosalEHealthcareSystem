@@ -1,0 +1,114 @@
+﻿<UserControl x:Class="RosalEHealthcare.UI.WPF.Controls.NotificationBellButton"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
+             mc:Ignorable="d" 
+             d:DesignHeight="50" d:DesignWidth="50">
+
+    <Grid>
+        <!-- Bell Button -->
+        <Button x:Name="BtnNotification"
+                Width="44" Height="44"
+                Background="#FFF8E1"
+                BorderThickness="0"
+                Cursor="Hand"
+                Click="BtnNotification_Click"
+                ToolTip="Notifications">
+            <Button.Template>
+                <ControlTemplate TargetType="Button">
+                    <Border x:Name="border"
+                            Background="{TemplateBinding Background}"
+                            CornerRadius="22">
+                        <Grid>
+                            <!-- Bell Icon -->
+                            <materialDesign:PackIcon x:Name="BellIcon"
+                                                     Kind="Bell"
+                                                     Width="24" Height="24"
+                                                     Foreground="#FF9800"
+                                                     HorizontalAlignment="Center"
+                                                     VerticalAlignment="Center"/>
+                        </Grid>
+                    </Border>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter TargetName="border" Property="Background" Value="#FFECB3"/>
+                        </Trigger>
+                        <Trigger Property="IsPressed" Value="True">
+                            <Setter TargetName="border" Property="Background" Value="#FFE082"/>
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Button.Template>
+        </Button>
+
+        <!-- Notification Badge -->
+        <Border x:Name="NotificationBadge"
+                Background="#F44336"
+                MinWidth="20" Height="20"
+                CornerRadius="10"
+                HorizontalAlignment="Right"
+                VerticalAlignment="Top"
+                Margin="0,-4,-4,0"
+                Padding="4,0"
+                Visibility="Collapsed">
+            <TextBlock x:Name="NotificationCount"
+                       Text="0"
+                       Foreground="White"
+                       FontSize="11"
+                       FontWeight="Bold"
+                       HorizontalAlignment="Center"
+                       VerticalAlignment="Center"/>
+        </Border>
+
+        <!-- Pulse Animation for New Notifications -->
+        <Border x:Name="PulseIndicator"
+                Width="44" Height="44"
+                CornerRadius="22"
+                Background="Transparent"
+                BorderBrush="#4CAF50"
+                BorderThickness="2"
+                Opacity="0"
+                IsHitTestVisible="False">
+            <Border.Triggers>
+                <EventTrigger RoutedEvent="Border.Loaded">
+                    <BeginStoryboard x:Name="PulseStoryboard">
+                        <Storyboard x:Name="PulseAnimation" RepeatBehavior="3x">
+                            <DoubleAnimation Storyboard.TargetName="PulseIndicator"
+                                             Storyboard.TargetProperty="Opacity"
+                                             From="1" To="0"
+                                             Duration="0:0:1"/>
+                            <DoubleAnimation Storyboard.TargetName="PulseIndicator"
+                                             Storyboard.TargetProperty="(Border.RenderTransform).(ScaleTransform.ScaleX)"
+                                             From="1" To="1.3"
+                                             Duration="0:0:1"/>
+                            <DoubleAnimation Storyboard.TargetName="PulseIndicator"
+                                             Storyboard.TargetProperty="(Border.RenderTransform).(ScaleTransform.ScaleY)"
+                                             From="1" To="1.3"
+                                             Duration="0:0:1"/>
+                        </Storyboard>
+                    </BeginStoryboard>
+                </EventTrigger>
+            </Border.Triggers>
+            <Border.RenderTransform>
+                <ScaleTransform CenterX="22" CenterY="22"/>
+            </Border.RenderTransform>
+        </Border>
+
+        <!-- Popup -->
+        <Popup x:Name="NotificationPopup"
+               PlacementTarget="{Binding ElementName=BtnNotification}"
+               Placement="Bottom"
+               HorizontalOffset="-320"
+               VerticalOffset="8"
+               StaysOpen="False"
+               AllowsTransparency="True"
+               PopupAnimation="Fade">
+            <Border Background="Transparent" Padding="10">
+                <!-- NotificationPopup will be added here dynamically -->
+                <ContentControl x:Name="PopupContent"/>
+            </Border>
+        </Popup>
+    </Grid>
+</UserControl>
