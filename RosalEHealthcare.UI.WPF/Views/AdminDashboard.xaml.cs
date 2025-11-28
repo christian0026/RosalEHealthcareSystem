@@ -476,6 +476,14 @@ namespace RosalEHealthcare.UI.WPF.Views
 
         protected override void OnClosing(System.ComponentModel.CancelEventArgs e)
         {
+            // Check if we're already in the process of closing via logout
+            if (Application.Current.MainWindow != this)
+            {
+                // Allow close without prompting (logout animation is handling it)
+                e.Cancel = false;
+                return;
+            }
+
             // Cancel the default close
             e.Cancel = true;
 

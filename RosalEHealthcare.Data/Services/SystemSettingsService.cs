@@ -117,6 +117,24 @@ namespace RosalEHealthcare.Data.Services
             return setting?.GetDateTime();
         }
 
+        /// <summary>
+        /// Gets the lockout duration in minutes
+        /// </summary>
+        /// <summary>
+        /// Gets the lockout duration in minutes
+        /// </summary>
+        public int GetLockoutDurationMinutes()
+        {
+            return GetInt("LockoutDurationMinutes", 5);
+        }
+
+        /// <summary>
+        /// Sets the lockout duration in minutes
+        /// </summary>
+        public void SetLockoutDurationMinutes(int minutes, string modifiedBy)
+        {
+            SetInt("LockoutDurationMinutes", minutes, modifiedBy);
+        }
         #endregion
 
         #region Set Settings

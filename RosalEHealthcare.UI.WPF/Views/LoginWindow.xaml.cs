@@ -12,10 +12,17 @@ namespace RosalEHealthcare.UI.WPF.Views
 {
     public partial class LoginWindow : MetroWindow
     {
-        // Login attempt tracking
+        // Services
+        private RosalEHealthcareDbContext _db;
+        private UserService _userService;
+        private LoginHistoryService _loginHistoryService;
+        private SystemSettingsService _settingsService;
+        private ActivityLogService _activityLogService;
+
+        // Login attempt tracking (now uses database settings)
         private int _failedAttempts = 0;
-        private const int MAX_ATTEMPTS = 3;
-        private const int LOCKOUT_SECONDS = 60;
+        private int _maxAttempts = 3;
+        private int _lockoutSeconds = 60;
         private DateTime _lockoutEndTime;
         private DispatcherTimer _lockoutTimer;
         private bool _isPasswordVisible = false;
@@ -23,10 +30,57 @@ namespace RosalEHealthcare.UI.WPF.Views
         public LoginWindow()
         {
             InitializeComponent();
+            InitializeServices();
+            LoadSecuritySettings();
             txtUsername.Focus();
             UpdatePasswordPlaceholder();
             InitializeLockoutTimer();
         }
+
+        #region Initialization
+
+        private void InitializeServices()
+        {
+            try
+            {
+                _db = new RosalEHealthcareDbContext();
+                _userService = new UserService(_db);
+                _loginHistoryService = new LoginHistoryService(_db);
+                _settingsService = new SystemSettingsService(_db);
+                _activityLogService = new ActivityLogService(_db);
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Error initializing services: {ex.Message}");
+                // Use defaults if database is unavailable
+                _maxAttempts = 3;
+                _lockoutSeconds = 60;
+            }
+        }
+
+        private void LoadSecuritySettings()
+        {
+            try
+            {
+                if (_settingsService != null)
+                {
+                    _maxAttempts = _settingsService.GetMaxFailedLoginAttempts();
+                    _lockoutSeconds = _settingsService.GetLockoutDurationMinutes() * 60; // Convert to seconds
+
+                    // If settings return 0 or -1, use defaults
+                    if (_maxAttempts <= 0) _maxAttempts = 3;
+                    if (_lockoutSeconds <= 0) _lockoutSeconds = 60;
+                }
+            }
+            catch
+            {
+                // Use defaults
+                _maxAttempts = 3;
+                _lockoutSeconds = 60;
+            }
+        }
+
+        #endregion
 
         #region Password Visibility Toggle
 
@@ -133,9 +187,9 @@ namespace RosalEHealthcare.UI.WPF.Views
             }
         }
 
-        private void StartLockout()
+        private void StartLockout(string username)
         {
-            _lockoutEndTime = DateTime.Now.AddSeconds(LOCKOUT_SECONDS);
+            _lockoutEndTime = DateTime.Now.AddSeconds(_lockoutSeconds);
             lockoutPanel.Visibility = Visibility.Visible;
             warningPanel.Visibility = Visibility.Collapsed;
             btnSignIn.IsEnabled = false;
@@ -148,20 +202,34 @@ namespace RosalEHealthcare.UI.WPF.Views
             btnTogglePassword.IsEnabled = false;
             _lockoutTimer.Start();
 
-            txtLockout.Text = $"Too many failed login attempts. Please wait {LOCKOUT_SECONDS} seconds before trying again.";
+            txtLockout.Text = $"Too many failed login attempts. Please wait {_lockoutSeconds} seconds before trying again.";
+
+            // Record lockout in database
+            try
+            {
+                _loginHistoryService?.RecordAccountLocked(username);
+            }
+            catch { /* Ignore logging errors */ }
         }
 
-        private void UpdateFailedAttempts()
+        private void UpdateFailedAttempts(string username, string reason)
         {
             _failedAttempts++;
 
-            if (_failedAttempts >= MAX_ATTEMPTS)
+            // Record failed attempt in database
+            try
             {
-                StartLockout();
+                _loginHistoryService?.RecordFailedLogin(username, reason);
+            }
+            catch { /* Ignore logging errors */ }
+
+            if (_failedAttempts >= _maxAttempts)
+            {
+                StartLockout(username);
             }
             else
             {
-                int remaining = MAX_ATTEMPTS - _failedAttempts;
+                int remaining = _maxAttempts - _failedAttempts;
                 warningPanel.Visibility = Visibility.Visible;
                 txtWarning.Text = remaining == 1
                     ? "Warning: Last attempt remaining before account lockout!"
@@ -234,19 +302,77 @@ namespace RosalEHealthcare.UI.WPF.Views
 
             try
             {
+                // Reinitialize db context to ensure fresh connection
                 using (var db = new RosalEHealthcareDbContext())
                 {
                     var userService = new UserService(db);
+                    var loginHistoryService = new LoginHistoryService(db);
+                    var activityLogService = new ActivityLogService(db);
+
                     var user = userService.GetByUsername(username);
 
                     if (user != null && user.Role == role && userService.ValidateUserByUsername(username, password))
                     {
+                        // Check if user is active
+                        if (!user.IsActive)
+                        {
+                            UpdateFailedAttempts(username, "Account is inactive");
+                            MessageBox.Show(
+                                "Your account has been deactivated.\n\nPlease contact an administrator.",
+                                "Account Inactive",
+                                MessageBoxButton.OK,
+                                MessageBoxImage.Warning);
+                            return;
+                        }
+
+                        // Check if user is deleted
+                        if (user.IsDeleted)
+                        {
+                            UpdateFailedAttempts(username, "Account is deleted");
+                            MessageBox.Show(
+                                "This account no longer exists.",
+                                "Account Not Found",
+                                MessageBoxButton.OK,
+                                MessageBoxImage.Warning);
+                            return;
+                        }
+
                         // Successful login - reset failed attempts
                         _failedAttempts = 0;
                         warningPanel.Visibility = Visibility.Collapsed;
 
-                        // SET SESSION MANAGER
-                        SessionManager.StartSession(user);
+                        // Record successful login in database
+                        int? loginHistoryId = null;
+                        try
+                        {
+                            var loginRecord = loginHistoryService.RecordLogin(
+                                userId: user.Id,
+                                username: user.Username,
+                                fullName: user.FullName,
+                                role: user.Role
+                            );
+                            loginHistoryId = loginRecord?.Id;
+                        }
+                        catch (Exception ex)
+                        {
+                            System.Diagnostics.Debug.WriteLine($"Error recording login: {ex.Message}");
+                        }
+
+                        // SET SESSION MANAGER with login history ID
+                        SessionManager.StartSession(user, loginHistoryId);
+
+                        // Log activity
+                        try
+                        {
+                            activityLogService.LogActivity(
+                                activityType: "Login",
+                                description: "User logged in successfully",
+                                module: "Authentication",
+                                performedBy: user.FullName,
+                                performedByRole: user.Role
+                            );
+                        }
+                        catch { /* Ignore logging errors */ }
 
                         // Update last login
                         user.LastLogin = DateTime.Now;
@@ -273,10 +399,24 @@ namespace RosalEHealthcare.UI.WPF.Views
                     }
                     else
                     {
-                        // Failed login
-                        UpdateFailedAttempts();
+                        // Failed login - determine reason
+                        string failureReason;
+                        if (user == null)
+                        {
+                            failureReason = "Invalid username";
+                        }
+                        else if (user.Role != role)
+                        {
+                            failureReason = "Invalid role selected";
+                        }
+                        else
+                        {
+                            failureReason = "Invalid password";
+                        }
 
-                        string message = _failedAttempts >= MAX_ATTEMPTS
+                        UpdateFailedAttempts(username, failureReason);
+
+                        string message = _failedAttempts >= _maxAttempts
                             ? "Too many failed attempts. Your account has been temporarily locked."
                             : "Invalid username, password, or role.\n\nPlease check your credentials and try again.";
 
@@ -344,6 +484,18 @@ namespace RosalEHealthcare.UI.WPF.Views
             {
                 Application.Current.Shutdown();
             }
+        }
+
+        protected override void OnClosed(EventArgs e)
+        {
+            base.OnClosed(e);
+
+            // Dispose database context
+            try
+            {
+                _db?.Dispose();
+            }
+            catch { }
         }
 
         #endregion

@@ -57,6 +57,8 @@ namespace RosalEHealthcare.Core.Models
 
         [StringLength(200)]
         public string ModifiedBy { get; set; }
+        public bool IsActive { get; set; } = true;
+        public bool IsDeleted { get; set; } = false;
 
         // Computed Properties
         [NotMapped]

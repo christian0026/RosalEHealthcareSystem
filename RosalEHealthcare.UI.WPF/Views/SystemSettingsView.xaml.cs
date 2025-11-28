@@ -144,9 +144,13 @@ namespace RosalEHealthcare.UI.WPF.Views
                         SetActiveTab(BtnSystemLogs);
 
                         if (_systemLogsTab == null)
+                        {
                             _systemLogsTab = new SystemLogsTab();
+                            // Load data AFTER the control is added to visual tree
+                            _systemLogsTab.Loaded += (s, args) => _systemLogsTab.LoadSettings();
+                        }
                         TabContent.Content = _systemLogsTab;
-                        _systemLogsTab.LoadSettings();
+                        // Don't call LoadSettings() here - let the Loaded event handle it
                         break;
 
                     case "Application":

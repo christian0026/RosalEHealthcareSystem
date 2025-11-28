@@ -2,7 +2,6 @@
 using RosalEHealthcare.Data.Contexts;
 using System;
 using System.Collections.Generic;
-using System.Data.Entity;
 using System.Linq;
 
 namespace RosalEHealthcare.Data.Services
@@ -16,151 +15,125 @@ namespace RosalEHealthcare.Data.Services
             _db = db;
         }
 
-        #region Record Login
+        #region Core Methods
 
         /// <summary>
-        /// Record a successful login
+        /// Records a successful login
         /// </summary>
-        public LoginHistory RecordLogin(User user, string sessionId)
+        public LoginHistory RecordLogin(int userId, string username, string fullName, string role,
+            string machineName = null, string ipAddress = null)
         {
-            var loginRecord = new LoginHistory
+            var loginHistory = new LoginHistory
             {
-                UserId = user.Id,
-                Username = user.Username,
-                FullName = user.FullName,
-                Role = user.Role,
+                UserId = userId,
+                Username = username,
+                FullName = fullName,
+                Role = role,
                 LoginTime = DateTime.Now,
+                MachineName = machineName ?? Environment.MachineName,
+                IpAddress = ipAddress ?? GetLocalIpAddress(),
                 Status = "Success",
-                IsActive = true,
-                SessionId = sessionId,
-                MachineName = Environment.MachineName,
-                IpAddress = GetLocalIpAddress()
+                IsActive = true
             };
 
-            _db.LoginHistories.Add(loginRecord);
+            _db.LoginHistories.Add(loginHistory);
             _db.SaveChanges();
 
-            return loginRecord;
+            return loginHistory;
         }
 
         /// <summary>
-        /// Record a failed login attempt
+        /// Records a failed login attempt
         /// </summary>
-        public LoginHistory RecordFailedLogin(string username, string failureReason)
+        public void RecordFailedLogin(string username, string reason, string machineName = null, string ipAddress = null)
         {
-            var loginRecord = new LoginHistory
+            var loginHistory = new LoginHistory
             {
+                UserId = null,
                 Username = username,
+                FullName = "Unknown",
+                Role = "Unknown",
                 LoginTime = DateTime.Now,
+                MachineName = machineName ?? Environment.MachineName,
+                IpAddress = ipAddress ?? GetLocalIpAddress(),
                 Status = "Failed",
-                FailureReason = failureReason,
-                IsActive = false,
-                MachineName = Environment.MachineName,
-                IpAddress = GetLocalIpAddress()
+                FailureReason = reason,
+                IsActive = false
             };
 
-            _db.LoginHistories.Add(loginRecord);
+            _db.LoginHistories.Add(loginHistory);
             _db.SaveChanges();
-
-            return loginRecord;
         }
 
         /// <summary>
-        /// Record a locked account login attempt
+        /// Records when an account is locked
         /// </summary>
-        public LoginHistory RecordLockedLogin(string username)
+        public void RecordAccountLocked(string username, string machineName = null, string ipAddress = null)
         {
-            var loginRecord = new LoginHistory
+            var loginHistory = new LoginHistory
             {
+                UserId = null,
                 Username = username,
+                FullName = "Unknown",
+                Role = "Unknown",
                 LoginTime = DateTime.Now,
+                MachineName = machineName ?? Environment.MachineName,
+                IpAddress = ipAddress ?? GetLocalIpAddress(),
                 Status = "Locked",
-                FailureReason = "Account is locked due to multiple failed login attempts",
-                IsActive = false,
-                MachineName = Environment.MachineName,
-                IpAddress = GetLocalIpAddress()
+                FailureReason = "Account locked due to too many failed attempts",
+                IsActive = false
             };
 
-            _db.LoginHistories.Add(loginRecord);
+            _db.LoginHistories.Add(loginHistory);
             _db.SaveChanges();
-
-            return loginRecord;
         }
 
-        #endregion
-
-        #region Record Logout
-
         /// <summary>
-        /// Record logout for a session
+        /// Records a logout
         /// </summary>
-        public void RecordLogout(string sessionId)
+        public void RecordLogout(int loginHistoryId)
         {
-            var session = _db.LoginHistories
-                .FirstOrDefault(l => l.SessionId == sessionId && l.IsActive);
-
-            if (session != null)
+            var record = _db.LoginHistories.Find(loginHistoryId);
+            if (record != null)
             {
-                session.LogoutTime = DateTime.Now;
-                session.IsActive = false;
-                session.SessionDuration = (int)(DateTime.Now - session.LoginTime).TotalMinutes;
+                record.LogoutTime = DateTime.Now;
+                record.IsActive = false;
                 _db.SaveChanges();
             }
         }
 
         /// <summary>
-        /// Record logout by user ID
+        /// Records logout by user ID (logs out all active sessions)
         /// </summary>
         public void RecordLogoutByUserId(int userId)
         {
-            var sessions = _db.LoginHistories
+            var activeSessions = _db.LoginHistories
                 .Where(l => l.UserId == userId && l.IsActive)
                 .ToList();
 
-            foreach (var session in sessions)
+            foreach (var session in activeSessions)
             {
                 session.LogoutTime = DateTime.Now;
                 session.IsActive = false;
-                session.SessionDuration = (int)(DateTime.Now - session.LoginTime).TotalMinutes;
             }
 
             _db.SaveChanges();
         }
 
-        /// <summary>
-        /// Mark session as expired
-        /// </summary>
-        public void MarkSessionExpired(string sessionId)
-        {
-            var session = _db.LoginHistories
-                .FirstOrDefault(l => l.SessionId == sessionId && l.IsActive);
-
-            if (session != null)
-            {
-                session.LogoutTime = DateTime.Now;
-                session.IsActive = false;
-                session.Status = "Expired";
-                session.SessionDuration = (int)(DateTime.Now - session.LoginTime).TotalMinutes;
-                _db.SaveChanges();
-            }
-        }
-
         #endregion
 
-        #region Query History
+        #region Query Methods
 
         /// <summary>
-        /// Get all login history
+        /// Gets all login history records
         /// </summary>
         public IEnumerable<LoginHistory> GetAll()
         {
-            return _db.LoginHistories
-                .OrderByDescending(l => l.LoginTime)
-                .ToList();
+            return _db.LoginHistories.OrderByDescending(l => l.LoginTime).ToList();
         }
 
         /// <summary>
-        /// Get login history with pagination
+        /// Gets login history with pagination
         /// </summary>
         public IEnumerable<LoginHistory> GetPaged(int pageNumber, int pageSize)
         {
@@ -172,222 +145,107 @@ namespace RosalEHealthcare.Data.Services
         }
 
         /// <summary>
-        /// Get total count
+        /// Searches login history with filters
         /// </summary>
-        public int GetTotalCount()
+        public IEnumerable<LoginHistory> Search(string query = null, string status = null,
+            DateTime? startDate = null, DateTime? endDate = null, int pageNumber = 1, int pageSize = 20)
         {
-            return _db.LoginHistories.Count();
-        }
+            var queryable = _db.LoginHistories.AsQueryable();
 
-        /// <summary>
-        /// Get login history for a specific user
-        /// </summary>
-        public IEnumerable<LoginHistory> GetByUserId(int userId, int count = 50)
-        {
-            return _db.LoginHistories
-                .Where(l => l.UserId == userId)
-                .OrderByDescending(l => l.LoginTime)
-                .Take(count)
-                .ToList();
-        }
-
-        /// <summary>
-        /// Get login history by username
-        /// </summary>
-        public IEnumerable<LoginHistory> GetByUsername(string username, int count = 50)
-        {
-            return _db.LoginHistories
-                .Where(l => l.Username.ToLower() == username.ToLower())
-                .OrderByDescending(l => l.LoginTime)
-                .Take(count)
-                .ToList();
-        }
-
-        /// <summary>
-        /// Get login history by date range
-        /// </summary>
-        public IEnumerable<LoginHistory> GetByDateRange(DateTime startDate, DateTime endDate)
-        {
-            return _db.LoginHistories
-                .Where(l => l.LoginTime >= startDate && l.LoginTime <= endDate)
-                .OrderByDescending(l => l.LoginTime)
-                .ToList();
-        }
-
-        /// <summary>
-        /// Get failed login attempts
-        /// </summary>
-        public IEnumerable<LoginHistory> GetFailedLogins(int count = 50)
-        {
-            return _db.LoginHistories
-                .Where(l => l.Status == "Failed" || l.Status == "Locked")
-                .OrderByDescending(l => l.LoginTime)
-                .Take(count)
-                .ToList();
-        }
-
-        /// <summary>
-        /// Search login history
-        /// </summary>
-        public IEnumerable<LoginHistory> Search(string query, string status, DateTime? startDate, DateTime? endDate, int pageNumber, int pageSize)
-        {
-            var q = _db.LoginHistories.AsQueryable();
-
-            if (!string.IsNullOrWhiteSpace(query))
+            if (!string.IsNullOrEmpty(query))
             {
-                query = query.ToLower();
-                q = q.Where(l => l.Username.ToLower().Contains(query) ||
-                                 (l.FullName != null && l.FullName.ToLower().Contains(query)));
+                queryable = queryable.Where(l => l.Username.Contains(query) ||
+                                                 l.FullName.Contains(query) ||
+                                                 l.MachineName.Contains(query));
             }
 
-            if (!string.IsNullOrWhiteSpace(status) && status != "All")
+            if (!string.IsNullOrEmpty(status))
             {
-                q = q.Where(l => l.Status == status);
+                queryable = queryable.Where(l => l.Status == status);
             }
 
             if (startDate.HasValue)
             {
-                q = q.Where(l => l.LoginTime >= startDate.Value);
+                queryable = queryable.Where(l => l.LoginTime >= startDate.Value);
             }
 
             if (endDate.HasValue)
             {
-                var endDatePlusOne = endDate.Value.AddDays(1);
-                q = q.Where(l => l.LoginTime < endDatePlusOne);
+                queryable = queryable.Where(l => l.LoginTime <= endDate.Value);
             }
 
-            return q.OrderByDescending(l => l.LoginTime)
-                    .Skip((pageNumber - 1) * pageSize)
-                    .Take(pageSize)
-                    .ToList();
+            return queryable.OrderByDescending(l => l.LoginTime)
+                           .Skip((pageNumber - 1) * pageSize)
+                           .Take(pageSize)
+                           .ToList();
         }
 
         /// <summary>
-        /// Get search count
+        /// Gets count for search results
         /// </summary>
-        public int GetSearchCount(string query, string status, DateTime? startDate, DateTime? endDate)
+        public int GetSearchCount(string query = null, string status = null,
+            DateTime? startDate = null, DateTime? endDate = null)
         {
-            var q = _db.LoginHistories.AsQueryable();
+            var queryable = _db.LoginHistories.AsQueryable();
 
-            if (!string.IsNullOrWhiteSpace(query))
+            if (!string.IsNullOrEmpty(query))
             {
-                query = query.ToLower();
-                q = q.Where(l => l.Username.ToLower().Contains(query) ||
-                                 (l.FullName != null && l.FullName.ToLower().Contains(query)));
+                queryable = queryable.Where(l => l.Username.Contains(query) ||
+                                                 l.FullName.Contains(query) ||
+                                                 l.MachineName.Contains(query));
             }
 
-            if (!string.IsNullOrWhiteSpace(status) && status != "All")
+            if (!string.IsNullOrEmpty(status))
             {
-                q = q.Where(l => l.Status == status);
+                queryable = queryable.Where(l => l.Status == status);
             }
 
             if (startDate.HasValue)
             {
-                q = q.Where(l => l.LoginTime >= startDate.Value);
+                queryable = queryable.Where(l => l.LoginTime >= startDate.Value);
             }
 
             if (endDate.HasValue)
             {
-                var endDatePlusOne = endDate.Value.AddDays(1);
-                q = q.Where(l => l.LoginTime < endDatePlusOne);
+                queryable = queryable.Where(l => l.LoginTime <= endDate.Value);
             }
 
-            return q.Count();
+            return queryable.Count();
         }
 
-        #endregion
-
-        #region Active Sessions
-
         /// <summary>
-        /// Get all active sessions
+        /// Gets active sessions
         /// </summary>
         public IEnumerable<LoginHistory> GetActiveSessions()
         {
             return _db.LoginHistories
-                .Where(l => l.IsActive)
+                .Where(l => l.IsActive && l.Status == "Success")
                 .OrderByDescending(l => l.LoginTime)
                 .ToList();
         }
 
         /// <summary>
-        /// Get active session count
+        /// Gets login history for a specific user
         /// </summary>
-        public int GetActiveSessionCount()
+        public IEnumerable<LoginHistory> GetByUserId(int userId, int limit = 50)
         {
-            return _db.LoginHistories.Count(l => l.IsActive);
-        }
-
-        /// <summary>
-        /// Force logout a session
-        /// </summary>
-        public bool ForceLogout(int loginHistoryId, string forcedBy)
-        {
-            var session = _db.LoginHistories.Find(loginHistoryId);
-            if (session == null || !session.IsActive) return false;
-
-            session.LogoutTime = DateTime.Now;
-            session.IsActive = false;
-            session.Status = "Expired";
-            session.FailureReason = $"Forced logout by {forcedBy}";
-            session.SessionDuration = (int)(DateTime.Now - session.LoginTime).TotalMinutes;
-
-            _db.SaveChanges();
-            return true;
-        }
-
-        /// <summary>
-        /// Force logout all sessions for a user
-        /// </summary>
-        public int ForceLogoutUser(int userId, string forcedBy, string excludeSessionId = null)
-        {
-            var sessions = _db.LoginHistories
-                .Where(l => l.UserId == userId && l.IsActive)
+            return _db.LoginHistories
+                .Where(l => l.UserId == userId)
+                .OrderByDescending(l => l.LoginTime)
+                .Take(limit)
                 .ToList();
-
-            if (!string.IsNullOrEmpty(excludeSessionId))
-            {
-                sessions = sessions.Where(l => l.SessionId != excludeSessionId).ToList();
-            }
-
-            foreach (var session in sessions)
-            {
-                session.LogoutTime = DateTime.Now;
-                session.IsActive = false;
-                session.Status = "Expired";
-                session.FailureReason = $"Forced logout by {forcedBy}";
-                session.SessionDuration = (int)(DateTime.Now - session.LoginTime).TotalMinutes;
-            }
-
-            _db.SaveChanges();
-            return sessions.Count;
         }
 
         /// <summary>
-        /// Force logout all sessions
+        /// Gets failed login attempts for a username in the last X minutes
         /// </summary>
-        public int ForceLogoutAll(string forcedBy, string excludeSessionId = null)
+        public int GetRecentFailedAttempts(string username, int minutes = 30)
         {
-            var sessions = _db.LoginHistories
-                .Where(l => l.IsActive)
-                .ToList();
-
-            if (!string.IsNullOrEmpty(excludeSessionId))
-            {
-                sessions = sessions.Where(l => l.SessionId != excludeSessionId).ToList();
-            }
-
-            foreach (var session in sessions)
-            {
-                session.LogoutTime = DateTime.Now;
-                session.IsActive = false;
-                session.Status = "Expired";
-                session.FailureReason = $"Forced logout by {forcedBy}";
-                session.SessionDuration = (int)(DateTime.Now - session.LoginTime).TotalMinutes;
-            }
-
-            _db.SaveChanges();
-            return sessions.Count;
+            var cutoff = DateTime.Now.AddMinutes(-minutes);
+            return _db.LoginHistories
+                .Count(l => l.Username == username &&
+                           l.Status == "Failed" &&
+                           l.LoginTime >= cutoff);
         }
 
         #endregion
@@ -395,54 +253,69 @@ namespace RosalEHealthcare.Data.Services
         #region Statistics
 
         /// <summary>
-        /// Get login statistics for today
+        /// Gets today's login statistics
         /// </summary>
         public LoginStatistics GetTodayStatistics()
         {
             var today = DateTime.Today;
+            var todayLogins = _db.LoginHistories.Where(l => l.LoginTime >= today).ToList();
+
+            int total = todayLogins.Count;
+            int successful = todayLogins.Count(l => l.Status == "Success");
+            int failed = todayLogins.Count(l => l.Status == "Failed");
 
             return new LoginStatistics
             {
-                TotalLogins = _db.LoginHistories.Count(l => DbFunctions.TruncateTime(l.LoginTime) == today),
-                SuccessfulLogins = _db.LoginHistories.Count(l => DbFunctions.TruncateTime(l.LoginTime) == today && l.Status == "Success"),
-                FailedLogins = _db.LoginHistories.Count(l => DbFunctions.TruncateTime(l.LoginTime) == today && l.Status == "Failed"),
-                LockedLogins = _db.LoginHistories.Count(l => DbFunctions.TruncateTime(l.LoginTime) == today && l.Status == "Locked"),
-                ActiveSessions = _db.LoginHistories.Count(l => l.IsActive)
+                TotalLogins = total,
+                SuccessfulLogins = successful,
+                FailedLogins = failed,
+                SuccessRate = total > 0 ? (double)successful / total * 100 : 0
             };
-        }
-
-        /// <summary>
-        /// Get recent failed login attempts count (last hour)
-        /// </summary>
-        public int GetRecentFailedAttempts(string username, int withinMinutes = 60)
-        {
-            var since = DateTime.Now.AddMinutes(-withinMinutes);
-            return _db.LoginHistories.Count(l =>
-                l.Username.ToLower() == username.ToLower() &&
-                l.Status == "Failed" &&
-                l.LoginTime >= since);
         }
 
         #endregion
 
-        #region Cleanup
+        #region Force Logout
 
         /// <summary>
-        /// Delete old login history records
+        /// Force logout a specific session
         /// </summary>
-        public int CleanupOldRecords(int daysToKeep)
+        public void ForceLogout(int loginHistoryId, string forcedBy)
         {
-            var cutoffDate = DateTime.Now.AddDays(-daysToKeep);
+            var record = _db.LoginHistories.Find(loginHistoryId);
+            if (record != null)
+            {
+                record.LogoutTime = DateTime.Now;
+                record.IsActive = false;
+                record.FailureReason = $"Force logged out by {forcedBy}";
+                _db.SaveChanges();
+            }
+        }
 
-            var oldRecords = _db.LoginHistories
-                .Where(l => l.LoginTime < cutoffDate && !l.IsActive)
+        /// <summary>
+        /// Force logout all sessions except the specified one
+        /// </summary>
+        public void ForceLogoutAll(string forcedBy, string exceptSessionId = null)
+        {
+            var activeSessions = _db.LoginHistories
+                .Where(l => l.IsActive && l.Status == "Success")
                 .ToList();
 
-            int count = oldRecords.Count;
-            _db.LoginHistories.RemoveRange(oldRecords);
-            _db.SaveChanges();
+            foreach (var session in activeSessions)
+            {
+                // Skip the current session if specified
+                if (!string.IsNullOrEmpty(exceptSessionId) &&
+                    session.Id.ToString() == exceptSessionId)
+                {
+                    continue;
+                }
 
-            return count;
+                session.LogoutTime = DateTime.Now;
+                session.IsActive = false;
+                session.FailureReason = $"Force logged out by {forcedBy}";
+            }
+
+            _db.SaveChanges();
         }
 
         #endregion
@@ -470,16 +343,13 @@ namespace RosalEHealthcare.Data.Services
     }
 
     /// <summary>
-    /// Login statistics class
+    /// Login statistics model
     /// </summary>
     public class LoginStatistics
     {
         public int TotalLogins { get; set; }
         public int SuccessfulLogins { get; set; }
         public int FailedLogins { get; set; }
-        public int LockedLogins { get; set; }
-        public int ActiveSessions { get; set; }
-
-        public double SuccessRate => TotalLogins > 0 ? Math.Round((double)SuccessfulLogins / TotalLogins * 100, 1) : 0;
+        public double SuccessRate { get; set; }
     }
 }

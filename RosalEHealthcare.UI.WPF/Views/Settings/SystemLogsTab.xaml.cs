@@ -46,16 +46,59 @@ namespace RosalEHealthcare.UI.WPF.Views.Settings
 
             try
             {
-                LoadActivityLogs();
+                // CRITICAL: Check if UI elements are initialized
+                if (TxtTodayActivities == null || TxtWeekActivities == null ||
+                    TxtMonthActivities == null || TxtTotalActivities == null)
+                {
+                    System.Diagnostics.Debug.WriteLine("UI elements not initialized yet - deferring load");
+                    // Defer loading until UI is ready
+                    this.Loaded += (s, e) =>
+                    {
+                        this.Loaded -= (s, e) => { }; // Unsubscribe to prevent multiple calls
+                        LoadSettings();
+                    };
+                    return;
+                }
+
+                // Verify services are initialized
+                if (_activityLogService == null)
+                {
+                    MessageBox.Show("Activity Log Service is not initialized. Please restart the application.",
+                        "Service Error", MessageBoxButton.OK, MessageBoxImage.Warning);
+                    return;
+                }
+
+                if (_loginHistoryService == null)
+                {
+                    MessageBox.Show("Login History Service is not initialized. Please restart the application.",
+                        "Service Error", MessageBoxButton.OK, MessageBoxImage.Warning);
+                    return;
+                }
+
+                // Test database connection first
+                try
+                {
+                    var testQuery = _db.ActivityLogs.Take(1).ToList();
+                }
+                catch (Exception dbEx)
+                {
+                    MessageBox.Show($"Database connection error:\n\n{dbEx.Message}\n\nPlease check your database connection.",
+                        "Database Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                    return;
+                }
+
                 LoadActivityStats();
-                LoadLoginHistory();
+                LoadActivityLogs();
                 LoadLoginStats();
+                LoadLoginHistory();
                 LoadActiveSessions();
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"Error loading logs: {ex.Message}",
+                MessageBox.Show($"Error loading logs:\n\n{ex.Message}\n\nInner Exception:\n{ex.InnerException?.Message}",
                     "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+
+                System.Diagnostics.Debug.WriteLine($"Full error: {ex}");
             }
             finally
             {
@@ -118,26 +161,60 @@ namespace RosalEHealthcare.UI.WPF.Views.Settings
         {
             try
             {
+                System.Diagnostics.Debug.WriteLine("=== LoadActivityStats START ===");
+
                 if (_activityLogService == null)
                 {
-                    System.Diagnostics.Debug.WriteLine("ActivityLogService is not initialized yet");
+                    System.Diagnostics.Debug.WriteLine("ERROR: ActivityLogService is NULL");
                     return;
                 }
+
+                System.Diagnostics.Debug.WriteLine("ActivityLogService is OK");
+
+                // Check each UI element individually
+                if (TxtTodayActivities == null)
+                {
+                    System.Diagnostics.Debug.WriteLine("ERROR: TxtTodayActivities is NULL");
+                    return;
+                }
+                if (TxtWeekActivities == null)
+                {
+                    System.Diagnostics.Debug.WriteLine("ERROR: TxtWeekActivities is NULL");
+                    return;
+                }
+                if (TxtMonthActivities == null)
+                {
+                    System.Diagnostics.Debug.WriteLine("ERROR: TxtMonthActivities is NULL");
+                    return;
+                }
+                if (TxtTotalActivities == null)
+                {
+                    System.Diagnostics.Debug.WriteLine("ERROR: TxtTotalActivities is NULL");
+                    return;
+                }
+
+                System.Diagnostics.Debug.WriteLine("All UI elements are OK");
 
                 var today = DateTime.Today;
                 var weekStart = today.AddDays(-(int)today.DayOfWeek);
                 var monthStart = new DateTime(today.Year, today.Month, 1);
 
+                System.Diagnostics.Debug.WriteLine("Getting activities from database...");
                 var allLogs = _activityLogService.GetRecentActivities(10000).ToList();
+                System.Diagnostics.Debug.WriteLine($"Got {allLogs.Count} activities");
 
                 TxtTodayActivities.Text = allLogs.Count(l => l.PerformedAt.Date == today).ToString();
                 TxtWeekActivities.Text = allLogs.Count(l => l.PerformedAt >= weekStart).ToString();
                 TxtMonthActivities.Text = allLogs.Count(l => l.PerformedAt >= monthStart).ToString();
                 TxtTotalActivities.Text = allLogs.Count.ToString();
+
+                System.Diagnostics.Debug.WriteLine("=== LoadActivityStats END - SUCCESS ===");
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine($"Error loading activity stats: {ex.Message}");
+                System.Diagnostics.Debug.WriteLine($"ERROR in LoadActivityStats: {ex.Message}");
+                System.Diagnostics.Debug.WriteLine($"Stack trace: {ex.StackTrace}");
+                MessageBox.Show($"Error in LoadActivityStats: {ex.Message}", "Debug Error", MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
 
@@ -290,13 +367,12 @@ namespace RosalEHealthcare.UI.WPF.Views.Settings
         {
             try
             {
-                if (_loginHistoryService == null) return;
                 string searchText = TxtLoginSearch?.Text?.Trim() ?? "";
                 string status = GetSelectedTag(CmbLoginStatus);
 
-                // Use the Search method from LoginHistoryService
+                // Use the Search method from LoginHistoryService - use "query" not "searchQuery"
                 var logs = _loginHistoryService.Search(
-                    query: searchText,
+                    query: searchText,  // Changed from searchQuery to query
                     status: status,
                     startDate: null,
                     endDate: null,
