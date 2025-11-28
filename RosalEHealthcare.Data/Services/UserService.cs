@@ -246,6 +246,11 @@ namespace RosalEHealthcare.Data.Services
             return true;
         }
 
+        public bool ChangePassword(int userId, string newPassword)
+        {
+            return ChangePassword(userId, newPassword, null);
+        }
+
         public string ResetPassword(int userId, string resetBy)
         {
             var user = GetById(userId);

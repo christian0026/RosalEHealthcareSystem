@@ -1,0 +1,570 @@
+﻿<UserControl x:Class="RosalEHealthcare.UI.WPF.Views.UserSettings.UserSecurityTab"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:iconPacks="http://metro.mahapps.com/winfx/xaml/iconpacks"
+             mc:Ignorable="d" 
+             d:DesignHeight="800" d:DesignWidth="900"
+             Background="Transparent">
+
+    <UserControl.Resources>
+        <!-- Section Card Style -->
+        <Style x:Key="SectionCard" TargetType="Border">
+            <Setter Property="Background" Value="White"/>
+            <Setter Property="BorderBrush" Value="#E8E8E8"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="CornerRadius" Value="12"/>
+            <Setter Property="Padding" Value="24"/>
+            <Setter Property="Margin" Value="0,0,0,20"/>
+            <Setter Property="Effect">
+                <Setter.Value>
+                    <DropShadowEffect Color="#000000" BlurRadius="8" ShadowDepth="1" Opacity="0.06"/>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <!-- Section Title Style -->
+        <Style x:Key="SectionTitle" TargetType="TextBlock">
+            <Setter Property="FontSize" Value="16"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="Foreground" Value="#333333"/>
+        </Style>
+
+        <!-- Field Label Style -->
+        <Style x:Key="FieldLabel" TargetType="TextBlock">
+            <Setter Property="FontSize" Value="13"/>
+            <Setter Property="FontWeight" Value="Medium"/>
+            <Setter Property="Foreground" Value="#555555"/>
+            <Setter Property="Margin" Value="0,0,0,8"/>
+        </Style>
+
+        <!-- Password Input Style -->
+        <Style x:Key="PasswordInput" TargetType="PasswordBox">
+            <Setter Property="Height" Value="44"/>
+            <Setter Property="Padding" Value="14,10"/>
+            <Setter Property="FontSize" Value="14"/>
+            <Setter Property="Background" Value="White"/>
+            <Setter Property="BorderBrush" Value="#E0E0E0"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="PasswordBox">
+                        <Border Background="{TemplateBinding Background}"
+                                BorderBrush="{TemplateBinding BorderBrush}"
+                                BorderThickness="{TemplateBinding BorderThickness}"
+                                CornerRadius="8">
+                            <ScrollViewer x:Name="PART_ContentHost" 
+                                          Padding="{TemplateBinding Padding}"
+                                          VerticalAlignment="Center"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsFocused" Value="True">
+                                <Setter Property="BorderBrush" Value="#2E7D32"/>
+                                <Setter Property="BorderThickness" Value="2"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <!-- Primary Button Style -->
+        <Style x:Key="PrimaryButton" TargetType="Button">
+            <Setter Property="Background" Value="#2E7D32"/>
+            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="Padding" Value="24,12"/>
+            <Setter Property="FontSize" Value="14"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border x:Name="border"
+                                Background="{TemplateBinding Background}"
+                                Padding="{TemplateBinding Padding}"
+                                CornerRadius="8">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="border" Property="Background" Value="#388E3C"/>
+                            </Trigger>
+                            <Trigger Property="IsPressed" Value="True">
+                                <Setter TargetName="border" Property="Background" Value="#1B5E20"/>
+                            </Trigger>
+                            <Trigger Property="IsEnabled" Value="False">
+                                <Setter TargetName="border" Property="Background" Value="#BDBDBD"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <!-- Secondary Button Style -->
+        <Style x:Key="SecondaryButton" TargetType="Button">
+            <Setter Property="Background" Value="White"/>
+            <Setter Property="Foreground" Value="#666666"/>
+            <Setter Property="Padding" Value="24,12"/>
+            <Setter Property="FontSize" Value="14"/>
+            <Setter Property="FontWeight" Value="Medium"/>
+            <Setter Property="BorderBrush" Value="#D0D0D0"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border x:Name="border"
+                                Background="{TemplateBinding Background}"
+                                BorderBrush="{TemplateBinding BorderBrush}"
+                                BorderThickness="{TemplateBinding BorderThickness}"
+                                Padding="{TemplateBinding Padding}"
+                                CornerRadius="8">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="border" Property="Background" Value="#F5F5F5"/>
+                            </Trigger>
+                            <Trigger Property="IsPressed" Value="True">
+                                <Setter TargetName="border" Property="Background" Value="#EEEEEE"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <!-- Warning Card Style -->
+        <Style x:Key="WarningCard" TargetType="Border">
+            <Setter Property="Background" Value="#FFF8E1"/>
+            <Setter Property="BorderBrush" Value="#FFE082"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="CornerRadius" Value="8"/>
+            <Setter Property="Padding" Value="16,12"/>
+        </Style>
+
+        <!-- Success Card Style -->
+        <Style x:Key="SuccessCard" TargetType="Border">
+            <Setter Property="Background" Value="#E8F5E9"/>
+            <Setter Property="BorderBrush" Value="#A5D6A7"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="CornerRadius" Value="8"/>
+            <Setter Property="Padding" Value="16,12"/>
+        </Style>
+
+        <!-- Password Strength Indicator Colors -->
+        <SolidColorBrush x:Key="StrengthWeak" Color="#F44336"/>
+        <SolidColorBrush x:Key="StrengthFair" Color="#FF9800"/>
+        <SolidColorBrush x:Key="StrengthGood" Color="#FFC107"/>
+        <SolidColorBrush x:Key="StrengthStrong" Color="#4CAF50"/>
+    </UserControl.Resources>
+
+    <ScrollViewer VerticalScrollBarVisibility="Auto" 
+                  HorizontalScrollBarVisibility="Disabled"
+                  Padding="32,24">
+        <StackPanel MaxWidth="800">
+
+            <!-- CHANGE PASSWORD Section -->
+            <Border Style="{StaticResource SectionCard}">
+                <StackPanel>
+                    <StackPanel Orientation="Horizontal" Margin="0,0,0,20">
+                        <iconPacks:PackIconMaterial Kind="KeyVariant" 
+                                                    Width="22" Height="22" 
+                                                    Foreground="#2E7D32"
+                                                    VerticalAlignment="Center"/>
+                        <TextBlock Text="Change Password" 
+                                   Style="{StaticResource SectionTitle}"
+                                   Margin="12,0,0,0"/>
+                    </StackPanel>
+
+                    <!-- Info Banner -->
+                    <Border Style="{StaticResource WarningCard}" Margin="0,0,0,20">
+                        <StackPanel Orientation="Horizontal">
+                            <iconPacks:PackIconMaterial Kind="InformationOutline" 
+                                                        Width="18" Height="18" 
+                                                        Foreground="#F57C00"
+                                                        VerticalAlignment="Top"
+                                                        Margin="0,2,0,0"/>
+                            <TextBlock Margin="12,0,0,0" 
+                                       Foreground="#795548"
+                                       FontSize="13"
+                                       TextWrapping="Wrap">
+                                <Run FontWeight="SemiBold">Password Requirements:</Run>
+                                <LineBreak/>
+                                <Run>• Minimum 8 characters</Run>
+                                <LineBreak/>
+                                <Run>• At least one uppercase letter</Run>
+                                <LineBreak/>
+                                <Run>• At least one lowercase letter</Run>
+                                <LineBreak/>
+                                <Run>• At least one number</Run>
+                            </TextBlock>
+                        </StackPanel>
+                    </Border>
+
+                    <!-- Current Password -->
+                    <StackPanel Margin="0,0,0,16">
+                        <TextBlock Text="Current Password" Style="{StaticResource FieldLabel}"/>
+                        <Grid>
+                            <PasswordBox x:Name="TxtCurrentPassword" 
+                                         Style="{StaticResource PasswordInput}"
+                                         PasswordChanged="Password_Changed"/>
+                            <Button x:Name="BtnToggleCurrent"
+                                    Click="BtnTogglePassword_Click"
+                                    Tag="Current"
+                                    HorizontalAlignment="Right"
+                                    VerticalAlignment="Center"
+                                    Margin="0,0,8,0"
+                                    Background="Transparent"
+                                    BorderThickness="0"
+                                    Cursor="Hand"
+                                    Width="32" Height="32">
+                                <iconPacks:PackIconMaterial x:Name="IconToggleCurrent"
+                                                            Kind="Eye" 
+                                                            Width="18" Height="18" 
+                                                            Foreground="#888"/>
+                            </Button>
+                        </Grid>
+                    </StackPanel>
+
+                    <!-- New Password -->
+                    <StackPanel Margin="0,0,0,16">
+                        <TextBlock Text="New Password" Style="{StaticResource FieldLabel}"/>
+                        <Grid>
+                            <PasswordBox x:Name="TxtNewPassword" 
+                                         Style="{StaticResource PasswordInput}"
+                                         PasswordChanged="NewPassword_Changed"/>
+                            <Button x:Name="BtnToggleNew"
+                                    Click="BtnTogglePassword_Click"
+                                    Tag="New"
+                                    HorizontalAlignment="Right"
+                                    VerticalAlignment="Center"
+                                    Margin="0,0,8,0"
+                                    Background="Transparent"
+                                    BorderThickness="0"
+                                    Cursor="Hand"
+                                    Width="32" Height="32">
+                                <iconPacks:PackIconMaterial x:Name="IconToggleNew"
+                                                            Kind="Eye" 
+                                                            Width="18" Height="18" 
+                                                            Foreground="#888"/>
+                            </Button>
+                        </Grid>
+
+                        <!-- Password Strength Indicator -->
+                        <Grid Margin="0,10,0,0">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+                            <Border x:Name="StrengthBar1" Grid.Column="0" Height="4" CornerRadius="2" Background="#E0E0E0" Margin="0,0,4,0"/>
+                            <Border x:Name="StrengthBar2" Grid.Column="1" Height="4" CornerRadius="2" Background="#E0E0E0" Margin="2,0"/>
+                            <Border x:Name="StrengthBar3" Grid.Column="2" Height="4" CornerRadius="2" Background="#E0E0E0" Margin="2,0"/>
+                            <Border x:Name="StrengthBar4" Grid.Column="3" Height="4" CornerRadius="2" Background="#E0E0E0" Margin="4,0,0,0"/>
+                        </Grid>
+                        <TextBlock x:Name="TxtPasswordStrength"
+                                   Text=""
+                                   FontSize="12"
+                                   Margin="0,6,0,0"/>
+                    </StackPanel>
+
+                    <!-- Confirm New Password -->
+                    <StackPanel Margin="0,0,0,20">
+                        <TextBlock Text="Confirm New Password" Style="{StaticResource FieldLabel}"/>
+                        <Grid>
+                            <PasswordBox x:Name="TxtConfirmPassword" 
+                                         Style="{StaticResource PasswordInput}"
+                                         PasswordChanged="ConfirmPassword_Changed"/>
+                            <Button x:Name="BtnToggleConfirm"
+                                    Click="BtnTogglePassword_Click"
+                                    Tag="Confirm"
+                                    HorizontalAlignment="Right"
+                                    VerticalAlignment="Center"
+                                    Margin="0,0,8,0"
+                                    Background="Transparent"
+                                    BorderThickness="0"
+                                    Cursor="Hand"
+                                    Width="32" Height="32">
+                                <iconPacks:PackIconMaterial x:Name="IconToggleConfirm"
+                                                            Kind="Eye" 
+                                                            Width="18" Height="18" 
+                                                            Foreground="#888"/>
+                            </Button>
+                        </Grid>
+                        <!-- Password Match Indicator -->
+                        <StackPanel x:Name="PasswordMatchPanel" 
+                                    Orientation="Horizontal" 
+                                    Margin="0,8,0,0"
+                                    Visibility="Collapsed">
+                            <iconPacks:PackIconMaterial x:Name="IconPasswordMatch"
+                                                        Kind="CheckCircle" 
+                                                        Width="16" Height="16"
+                                                        VerticalAlignment="Center"/>
+                            <TextBlock x:Name="TxtPasswordMatch"
+                                       Text="Passwords match"
+                                       FontSize="12"
+                                       Margin="6,0,0,0"
+                                       VerticalAlignment="Center"/>
+                        </StackPanel>
+                    </StackPanel>
+
+                    <!-- Change Password Button -->
+                    <Button x:Name="BtnChangePassword"
+                            Style="{StaticResource PrimaryButton}"
+                            HorizontalAlignment="Left"
+                            Click="BtnChangePassword_Click">
+                        <StackPanel Orientation="Horizontal">
+                            <iconPacks:PackIconMaterial Kind="LockReset" Width="18" Height="18"/>
+                            <TextBlock Text="Change Password" Margin="10,0,0,0"/>
+                        </StackPanel>
+                    </Button>
+                </StackPanel>
+            </Border>
+
+            <!-- PASSWORD LAST CHANGED Section -->
+            <Border Style="{StaticResource SectionCard}">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto"/>
+                        <ColumnDefinition Width="*"/>
+                    </Grid.ColumnDefinitions>
+
+                    <Border Grid.Column="0" 
+                            Width="56" Height="56" 
+                            CornerRadius="28" 
+                            Background="#E8F5E9"
+                            Margin="0,0,20,0">
+                        <iconPacks:PackIconMaterial Kind="ShieldCheck" 
+                                                    Width="26" Height="26" 
+                                                    Foreground="#2E7D32"
+                                                    HorizontalAlignment="Center"
+                                                    VerticalAlignment="Center"/>
+                    </Border>
+
+                    <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                        <TextBlock Text="Password Security Status" 
+                                   FontSize="15"
+                                   FontWeight="SemiBold"
+                                   Foreground="#333"/>
+                        <TextBlock x:Name="TxtLastPasswordChange"
+                                   Text="Last changed: Never"
+                                   FontSize="13"
+                                   Foreground="#666"
+                                   Margin="0,4,0,0"/>
+                        <TextBlock x:Name="TxtPasswordAge"
+                                   Text=""
+                                   FontSize="12"
+                                   Foreground="#888"
+                                   Margin="0,2,0,0"/>
+                    </StackPanel>
+                </Grid>
+            </Border>
+
+            <!-- LOGIN HISTORY Section -->
+            <Border Style="{StaticResource SectionCard}">
+                <StackPanel>
+                    <Grid Margin="0,0,0,20">
+                        <StackPanel Orientation="Horizontal">
+                            <iconPacks:PackIconMaterial Kind="History" 
+                                                        Width="22" Height="22" 
+                                                        Foreground="#1976D2"
+                                                        VerticalAlignment="Center"/>
+                            <TextBlock Text="Recent Login Activity" 
+                                       Style="{StaticResource SectionTitle}"
+                                       Margin="12,0,0,0"/>
+                        </StackPanel>
+
+                        <Button x:Name="BtnRefreshHistory"
+                                Style="{StaticResource SecondaryButton}"
+                                Padding="12,8"
+                                HorizontalAlignment="Right"
+                                Click="BtnRefreshHistory_Click">
+                            <StackPanel Orientation="Horizontal">
+                                <iconPacks:PackIconMaterial Kind="Refresh" Width="16" Height="16"/>
+                                <TextBlock Text="Refresh" Margin="6,0,0,0"/>
+                            </StackPanel>
+                        </Button>
+                    </Grid>
+
+                    <!-- Current Session Info -->
+                    <Border Style="{StaticResource SuccessCard}" Margin="0,0,0,16">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto"/>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
+
+                            <Border Grid.Column="0" 
+                                    Width="10" Height="10" 
+                                    CornerRadius="5" 
+                                    Background="#4CAF50"
+                                    VerticalAlignment="Center"
+                                    Margin="0,0,12,0"/>
+
+                            <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                                <TextBlock Text="Current Session" 
+                                           FontSize="13"
+                                           FontWeight="SemiBold"
+                                           Foreground="#2E7D32"/>
+                                <TextBlock x:Name="TxtCurrentSessionInfo"
+                                           Text="Started: Today at 9:30 AM"
+                                           FontSize="12"
+                                           Foreground="#558B2F"/>
+                            </StackPanel>
+
+                            <TextBlock Grid.Column="2"
+                                       x:Name="TxtSessionDuration"
+                                       Text="Duration: 2h 15m"
+                                       FontSize="12"
+                                       Foreground="#689F38"
+                                       VerticalAlignment="Center"/>
+                        </Grid>
+                    </Border>
+
+                    <!-- Login History List -->
+                    <Border BorderBrush="#E8E8E8" BorderThickness="1" CornerRadius="8">
+                        <!-- Header -->
+                        <StackPanel>
+                            <Border Background="#FAFAFA" 
+                                    BorderBrush="#E8E8E8" 
+                                    BorderThickness="0,0,0,1"
+                                    Padding="16,12"
+                                    CornerRadius="8,8,0,0">
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="40"/>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="150"/>
+                                        <ColumnDefinition Width="100"/>
+                                    </Grid.ColumnDefinitions>
+                                    <TextBlock Grid.Column="0" Text="" FontSize="12" FontWeight="SemiBold" Foreground="#888"/>
+                                    <TextBlock Grid.Column="1" Text="Date &amp; Time" FontSize="12" FontWeight="SemiBold" Foreground="#888"/>
+                                    <TextBlock Grid.Column="2" Text="Machine" FontSize="12" FontWeight="SemiBold" Foreground="#888"/>
+                                    <TextBlock Grid.Column="3" Text="Status" FontSize="12" FontWeight="SemiBold" Foreground="#888"/>
+                                </Grid>
+                            </Border>
+
+                            <!-- Login History Items -->
+                            <ItemsControl x:Name="LoginHistoryList" MaxHeight="300">
+                                <ItemsControl.ItemsPanel>
+                                    <ItemsPanelTemplate>
+                                        <StackPanel/>
+                                    </ItemsPanelTemplate>
+                                </ItemsControl.ItemsPanel>
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate>
+                                        <Border BorderBrush="#F0F0F0" 
+                                                BorderThickness="0,0,0,1"
+                                                Padding="16,12">
+                                            <Grid>
+                                                <Grid.ColumnDefinitions>
+                                                    <ColumnDefinition Width="40"/>
+                                                    <ColumnDefinition Width="*"/>
+                                                    <ColumnDefinition Width="150"/>
+                                                    <ColumnDefinition Width="100"/>
+                                                </Grid.ColumnDefinitions>
+
+                                                <!-- Status Icon -->
+                                                <Border Grid.Column="0"
+                                                        Width="28" Height="28"
+                                                        CornerRadius="14"
+                                                        Background="{Binding StatusBackground}">
+                                                    <TextBlock Text="{Binding StatusIcon}"
+                                                               FontSize="12"
+                                                               HorizontalAlignment="Center"
+                                                               VerticalAlignment="Center"/>
+                                                </Border>
+
+                                                <!-- Date Time -->
+                                                <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                                                    <TextBlock Text="{Binding LoginTimeFormatted}"
+                                                               FontSize="13"
+                                                               Foreground="#333"/>
+                                                    <TextBlock Text="{Binding IpAddress}"
+                                                               FontSize="11"
+                                                               Foreground="#888"/>
+                                                </StackPanel>
+
+                                                <!-- Machine -->
+                                                <TextBlock Grid.Column="2" 
+                                                           Text="{Binding MachineName}"
+                                                           FontSize="13"
+                                                           Foreground="#555"
+                                                           VerticalAlignment="Center"
+                                                           TextTrimming="CharacterEllipsis"/>
+
+                                                <!-- Status Badge -->
+                                                <Border Grid.Column="3"
+                                                        Background="{Binding StatusBadgeBackground}"
+                                                        CornerRadius="4"
+                                                        Padding="8,4"
+                                                        HorizontalAlignment="Left"
+                                                        VerticalAlignment="Center">
+                                                    <TextBlock Text="{Binding Status}"
+                                                               FontSize="11"
+                                                               FontWeight="SemiBold"
+                                                               Foreground="{Binding StatusBadgeForeground}"/>
+                                                </Border>
+                                            </Grid>
+                                        </Border>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+
+                            <!-- Empty State -->
+                            <Border x:Name="EmptyHistoryPanel" 
+                                    Padding="40" 
+                                    Visibility="Collapsed">
+                                <StackPanel HorizontalAlignment="Center">
+                                    <iconPacks:PackIconMaterial Kind="History"
+                                                                Width="40" Height="40" 
+                                                                Foreground="#BDBDBD"
+                                                                HorizontalAlignment="Center"/>
+                                    <TextBlock Text="No login history found"
+                                               FontSize="14"
+                                               Foreground="#888"
+                                               Margin="0,12,0,0"/>
+                                </StackPanel>
+                            </Border>
+                        </StackPanel>
+                    </Border>
+
+                    <!-- Pagination -->
+                    <StackPanel Orientation="Horizontal" 
+                                HorizontalAlignment="Center"
+                                Margin="0,16,0,0">
+                        <Button x:Name="BtnPrevPage"
+                                Style="{StaticResource SecondaryButton}"
+                                Padding="12,8"
+                                Margin="0,0,8,0"
+                                Click="BtnPrevPage_Click"
+                                IsEnabled="False">
+                            <iconPacks:PackIconMaterial Kind="ChevronLeft" Width="16" Height="16"/>
+                        </Button>
+                        <TextBlock x:Name="TxtPageInfo"
+                                   Text="Page 1 of 1"
+                                   FontSize="13"
+                                   Foreground="#666"
+                                   VerticalAlignment="Center"
+                                   Margin="8,0"/>
+                        <Button x:Name="BtnNextPage"
+                                Style="{StaticResource SecondaryButton}"
+                                Padding="12,8"
+                                Margin="8,0,0,0"
+                                Click="BtnNextPage_Click"
+                                IsEnabled="False">
+                            <iconPacks:PackIconMaterial Kind="ChevronRight" Width="16" Height="16"/>
+                        </Button>
+                    </StackPanel>
+                </StackPanel>
+            </Border>
+
+        </StackPanel>
+    </ScrollViewer>
+</UserControl>

@@ -409,6 +409,24 @@
     <Compile Include="Views\UserManagementView.xaml.cs">
       <DependentUpon>UserManagementView.xaml</DependentUpon>
     </Compile>
+    <Compile Include="Views\UserSettings\UserAboutTab.xaml.cs">
+      <DependentUpon>UserAboutTab.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="Views\UserSettings\UserNotificationsTab.xaml.cs">
+      <DependentUpon>UserNotificationsTab.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="Views\UserSettings\UserPreferencesTab.xaml.cs">
+      <DependentUpon>UserPreferencesTab.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="Views\UserSettings\UserProfileTab.xaml.cs">
+      <DependentUpon>UserProfileTab.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="Views\UserSettings\UserSecurityTab.xaml.cs">
+      <DependentUpon>UserSecurityTab.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="Views\UserSettings\UserSystemSettingsView.xaml.cs">
+      <DependentUpon>UserSystemSettingsView.xaml</DependentUpon>
+    </Compile>
     <Compile Include="Views\ViewMedicineDialog.xaml.cs">
       <DependentUpon>ViewMedicineDialog.xaml</DependentUpon>
     </Compile>
@@ -569,6 +587,30 @@
       <Generator>MSBuild:Compile</Generator>
     </Page>
     <Page Include="Views\UserManagementView.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="Views\UserSettings\UserAboutTab.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="Views\UserSettings\UserNotificationsTab.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="Views\UserSettings\UserPreferencesTab.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="Views\UserSettings\UserProfileTab.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="Views\UserSettings\UserSecurityTab.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="Views\UserSettings\UserSystemSettingsView.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>

@@ -18,6 +18,9 @@ namespace RosalEHealthcare.Core.Models
         [Required, MaxLength(50)]
         public string SettingType { get; set; } = "String"; // String, Int, Bool, DateTime, Json
 
+        [MaxLength(50)]
+        public string DataType { get; set; } = "String"; // Add this property
+
         [Required, MaxLength(50)]
         public string Category { get; set; } // General, Security, Backup, Notification, Database, Application
 
@@ -28,6 +31,11 @@ namespace RosalEHealthcare.Core.Models
 
         [MaxLength(200)]
         public string ModifiedBy { get; set; }
+
+        // Add these new properties
+        public DateTime CreatedAt { get; set; } = DateTime.Now;
+
+        public DateTime ModifiedAt { get; set; } = DateTime.Now;
 
         #region Helper Methods
 

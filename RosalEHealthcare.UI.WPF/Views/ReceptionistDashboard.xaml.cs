@@ -13,6 +13,7 @@ using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
+using RosalEHealthcare.UI.WPF.Views.UserSettings;
 
 namespace RosalEHealthcare.UI.WPF.Views
 {
@@ -317,7 +318,7 @@ namespace RosalEHealthcare.UI.WPF.Views
         {
             txtPageTitle.Text = "System Settings";
             HideAllContent();
-            // MainContent.Content = new SettingsView();
+            MainContent.Content = new UserSystemSettingsView();
             MainContent.Visibility = Visibility.Visible;
             SetActiveButton(BtnSettings);
         }

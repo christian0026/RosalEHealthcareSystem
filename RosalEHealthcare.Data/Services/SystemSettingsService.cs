@@ -210,6 +210,64 @@ namespace RosalEHealthcare.Data.Services
 
         #endregion
 
+        #region User-Specific Settings
+
+        /// <summary>
+        /// Gets a user-specific setting
+        /// </summary>
+        public string GetUserSetting(string userId, string key, string defaultValue = "")
+        {
+            string category = $"User_{userId}";
+            var setting = _db.SystemSettings.FirstOrDefault(s => s.Category == category && s.SettingKey == key);
+            return setting?.SettingValue ?? defaultValue;
+        }
+
+        /// <summary>
+        /// Saves a user-specific setting
+        /// </summary>
+        public void SaveUserSetting(string userId, string key, string value, string modifiedBy)
+        {
+            string category = $"User_{userId}";
+            var setting = _db.SystemSettings.FirstOrDefault(s => s.Category == category && s.SettingKey == key);
+
+            if (setting == null)
+            {
+                setting = new SystemSetting
+                {
+                    Category = category,
+                    SettingKey = key,
+                    SettingValue = value,
+                    DataType = "String",
+                    CreatedAt = DateTime.Now,
+                    ModifiedAt = DateTime.Now,
+                    ModifiedBy = modifiedBy
+                };
+                _db.SystemSettings.Add(setting);
+            }
+            else
+            {
+                setting.SettingValue = value;
+                setting.ModifiedAt = DateTime.Now;
+                setting.ModifiedBy = modifiedBy;
+            }
+
+            _db.SaveChanges();
+            ClearCache();
+        }
+
+        /// <summary>
+        /// Gets the last modified date for any setting
+        /// </summary>
+        public DateTime? GetLastModifiedDate()
+        {
+            return _db.SystemSettings
+                .OrderByDescending(s => s.ModifiedAt)
+                .Select(s => s.ModifiedAt)
+                .FirstOrDefault();
+        }
+
+        #endregion
+
         #region Specific Settings Helpers
 
         // ===== GENERAL SETTINGS =====

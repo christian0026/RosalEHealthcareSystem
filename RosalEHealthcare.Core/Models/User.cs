@@ -42,7 +42,22 @@ namespace RosalEHealthcare.Core.Models
         [Column("DateCreated")]
         public DateTime DateCreated { get; set; } = DateTime.Now;
 
+        // Add this alias property for compatibility
+        [NotMapped]
+        public DateTime CreatedAt
+        {
+            get => DateCreated;
+            set => DateCreated = value;
+        }
+
         public string ProfileImagePath { get; set; }
+
+        // Add these contact properties
+        [StringLength(100)]
+        public string Contact { get; set; }
+
+        [StringLength(500)]
+        public string Address { get; set; }
 
         // Security Properties
         public int FailedLoginAttempts { get; set; } = 0;
@@ -57,6 +72,7 @@ namespace RosalEHealthcare.Core.Models
 
         [StringLength(200)]
         public string ModifiedBy { get; set; }
+
         public bool IsActive { get; set; } = true;
         public bool IsDeleted { get; set; } = false;
 
