@@ -4,7 +4,6 @@
                       xmlns:controls="http://metro.mahapps.com/winfx/xaml/controls"
                       xmlns:lvc="clr-namespace:LiveCharts.Wpf;assembly=LiveCharts.Wpf"
                       xmlns:local="clr-namespace:RosalEHealthcare.UI.WPF.Controls"
-                      xmlns:local="clr-namespace:RosalEHealthcare.UI.WPF.Controls"
                       Title=""
                       ShowTitleBar="False"
                       WindowStartupLocation="CenterScreen"

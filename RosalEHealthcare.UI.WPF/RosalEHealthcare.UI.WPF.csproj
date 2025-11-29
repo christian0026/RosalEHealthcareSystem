@@ -18,6 +18,21 @@
     <Deterministic>true</Deterministic>
     <NuGetPackageImportStamp>
     </NuGetPackageImportStamp>
+    <PublishUrl>C:\Users\Admin\Desktop\</PublishUrl>
+    <Install>true</Install>
+    <InstallFrom>Disk</InstallFrom>
+    <UpdateEnabled>false</UpdateEnabled>
+    <UpdateMode>Foreground</UpdateMode>
+    <UpdateInterval>7</UpdateInterval>
+    <UpdateIntervalUnits>Days</UpdateIntervalUnits>
+    <UpdatePeriodically>false</UpdatePeriodically>
+    <UpdateRequired>false</UpdateRequired>
+    <MapFileExtensions>true</MapFileExtensions>
+    <ApplicationRevision>0</ApplicationRevision>
+    <ApplicationVersion>1.0.0.%2a</ApplicationVersion>
+    <IsWebBootstrapper>false</IsWebBootstrapper>
+    <UseApplicationTrust>false</UseApplicationTrust>
+    <BootstrapperEnabled>true</BootstrapperEnabled>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <PlatformTarget>AnyCPU</PlatformTarget>
@@ -290,6 +305,12 @@
     <Compile Include="Controls\AppointmentCard.xaml.cs">
       <DependentUpon>AppointmentCard.xaml</DependentUpon>
     </Compile>
+    <Compile Include="Controls\NotificationBellButton.xaml.cs">
+      <DependentUpon>NotificationBellButton.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="Controls\NotificationPopup.xaml.cs">
+      <DependentUpon>NotificationPopup.xaml</DependentUpon>
+    </Compile>
     <Compile Include="Controls\NotificationToast.xaml.cs">
       <DependentUpon>NotificationToast.xaml</DependentUpon>
     </Compile>
@@ -298,13 +319,20 @@
     </Compile>
     <Compile Include="Converters\BooleanToVisibilityConverter.cs" />
     <Compile Include="Converters\BoolToIndexConverter.cs" />
+    <Compile Include="Converters\ColorToLightBackgroundConverte.cs" />
     <Compile Include="Converters\FollowUpStatusToColorConverter.cs" />
+    <Compile Include="Converters\InverseBoolToVisibilityConverter.cs" />
     <Compile Include="Converters\NameInitialsConverter.cs" />
     <Compile Include="Converters\NullToVisibilityConverter.cs" />
+    <Compile Include="Converters\ReadToFontWeightConverter.cs" />
     <Compile Include="Converters\StatusToBackgroundConverter.cs" />
     <Compile Include="Converters\StatusToColorConverter.cs" />
     <Compile Include="Converters\StringNullOrEmptyToVisibilityConverter.cs" />
     <Compile Include="Helpers\LogoutHelper.cs" />
+    <Compile Include="Helpers\NotificationManager.cs" />
+    <Compile Include="Helpers\NotificationPollingService.cs" />
+    <Compile Include="Helpers\NotificationSoundPlayer.cs" />
+    <Compile Include="Helpers\NotificationTestHelper.cs" />
     <Compile Include="Helpers\PdfExportService.cs" />
     <Compile Include="Helpers\SessionManager.cs" />
     <Compile Include="ViewModels\AdminReportsViewModel.cs" />
@@ -435,6 +463,14 @@
     </Compile>
     <Compile Include="Views\ViewVisitDialog.cs" />
     <Page Include="Controls\AppointmentCard.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="Controls\NotificationBellButton.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="Controls\NotificationPopup.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
@@ -661,7 +697,12 @@
       <Name>RosalEHealthcare.Data</Name>
     </ProjectReference>
   </ItemGroup>
-  <ItemGroup />
+  <ItemGroup>
+    <Content Include="Resources\Notification Sounds\new-notification-010-352755.mp3" />
+    <Content Include="Resources\Notification Sounds\new-notification-021-370045.mp3" />
+    <Content Include="Resources\Notification Sounds\new-notification-022-370046.mp3" />
+    <Content Include="Resources\Notification Sounds\new-notification-024-370048.mp3" />
+  </ItemGroup>
   <ItemGroup>
     <Resource Include="Resources\logo.jpg" />
   </ItemGroup>
@@ -670,6 +711,18 @@
   </ItemGroup>
   <ItemGroup>
     <Resource Include="Resources\rosal_logo.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <BootstrapperPackage Include=".NETFramework,Version=v4.8">
+      <Visible>False</Visible>
+      <ProductName>Microsoft .NET Framework 4.8 %28x86 and x64%29</ProductName>
+      <Install>true</Install>
+    </BootstrapperPackage>
+    <BootstrapperPackage Include="Microsoft.Net.Framework.3.5.SP1">
+      <Visible>False</Visible>
+      <ProductName>.NET Framework 3.5 SP1</ProductName>
+      <Install>false</Install>
+    </BootstrapperPackage>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <Target Name="EnsureNuGetPackageBuildImports" BeforeTargets="PrepareForBuild">

@@ -4,6 +4,7 @@
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
+             xmlns:iconPacks="http://metro.mahapps.com/winfx/xaml/iconpacks"
              mc:Ignorable="d" 
              d:DesignHeight="50" d:DesignWidth="50">
 
@@ -23,8 +24,8 @@
                             CornerRadius="22">
                         <Grid>
                             <!-- Bell Icon -->
-                            <materialDesign:PackIcon x:Name="BellIcon"
-                                                     Kind="Bell"
+                            <iconPacks:PackIconMaterial x:Name="BellIcon"
+                            Kind="Bell"
                                                      Width="24" Height="24"
                                                      Foreground="#FF9800"
                                                      HorizontalAlignment="Center"

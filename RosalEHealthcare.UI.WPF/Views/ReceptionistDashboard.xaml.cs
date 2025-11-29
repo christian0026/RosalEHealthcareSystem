@@ -39,6 +39,7 @@ namespace RosalEHealthcare.UI.WPF.Views
 
             // Initialize notification container - CORRECTED
             InitializeNotificationContainer();
+            InitializeNotifications();
         }
 
         public ReceptionistDashboard(User user) : this()
@@ -287,6 +288,19 @@ namespace RosalEHealthcare.UI.WPF.Views
             {
                 System.Diagnostics.Debug.WriteLine($"Error initializing notifications: {ex.Message}");
             }
+        }
+        #endregion
+
+        // ADD these missing navigation methods in the Navigation region:
+
+        private void PatientManagement_Click(object sender, RoutedEventArgs e)
+        {
+            PatientRegistration_Click(sender, e);
+        }
+
+        private void Appointments_Click(object sender, RoutedEventArgs e)
+        {
+            AppointmentManagement_Click(sender, e);
         }
 
         /// <summary>

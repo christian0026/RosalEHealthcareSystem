@@ -2,7 +2,6 @@
 using Newtonsoft.Json;
 using RosalEHealthcare.Core.Models;
 using RosalEHealthcare.Data.Contexts;
-using RosalEHealthcare.Data.Services;
 using System;
 using System.Collections.Generic;
 using System.Data.Entity;
@@ -13,10 +12,10 @@ namespace RosalEHealthcare.Data.Services
     public class UserService
     {
         private readonly RosalEHealthcareDbContext _db;
+        private readonly NotificationService _notificationService;
         private const int MAX_LOGIN_ATTEMPTS = 3;
         private const int LOCKOUT_DURATION_MINUTES = 5;
         private const int PASSWORD_HISTORY_COUNT = 5;
-        private readonly NotificationService _notificationService;
 
         public UserService(RosalEHealthcareDbContext db)
         {
@@ -46,12 +45,29 @@ namespace RosalEHealthcare.Data.Services
             return _db.Users.FirstOrDefault(u => u.UserCode == userCode);
         }
 
-        public User AddUser(User user)
+        /// <summary>
+        /// Add a new user and notify admin
+        /// </summary>
+        /// <param name="user">User to add</param>
+        /// <param name="createdBy">Name of user who created the account (optional)</param>
+        /// <returns>Added user</returns>
+        public User AddUser(User user, string createdBy = null)
         {
             if (user == null) throw new ArgumentNullException(nameof(user));
 
+            // Generate UserCode if not provided
+            if (string.IsNullOrEmpty(user.UserCode))
+            {
+                user.UserCode = GenerateUserCode();
+            }
+
+            // Set defaults
+            user.DateCreated = DateTime.Now;
             user.CreatedAt = DateTime.Now;
+            user.Status = user.Status ?? "Active";
             user.IsActive = true;
+            user.FailedLoginAttempts = 0;
+            user.PasswordChangedAt = DateTime.Now;
 
             _db.Users.Add(user);
             _db.SaveChanges();
@@ -70,32 +86,21 @@ namespace RosalEHealthcare.Data.Services
             }
 
             return user;
-
-            // Generate UserCode if not provided
-            if (string.IsNullOrEmpty(user.UserCode))
-            {
-                user.UserCode = GenerateUserCode();
-            }
-
-            // Set defaults
-            user.DateCreated = DateTime.Now;
-            user.Status = user.Status ?? "Active";
-            user.FailedLoginAttempts = 0;
-            user.PasswordChangedAt = DateTime.Now;
-
-            _db.Users.Add(user);
-            _db.SaveChanges();
-            return user;
         }
 
+        // Overload for backward compatibility
+        public User AddUser(User user)
+        {
+            return AddUser(user, null);
+        }
 
         /// <summary>
         /// Update user and optionally notify admin
         /// </summary>
-         <param name="user">User to update</param>
-        <param name="modifiedBy">Name of user who modified</param>
-        <param name="changes">Description of changes made</param>
-        public void UpdateUser(User user)
+        /// <param name="user">User to update</param>
+        /// <param name="modifiedBy">Name of user who modified (optional)</param>
+        /// <param name="changes">Description of changes made (optional)</param>
+        public void UpdateUser(User user, string modifiedBy = null, string changes = null)
         {
             if (user == null) throw new ArgumentNullException(nameof(user));
 
@@ -109,6 +114,7 @@ namespace RosalEHealthcare.Data.Services
             entry.State = EntityState.Modified;
             _db.SaveChanges();
 
+            // Notify admin if changes description provided
             try
             {
                 if (!string.IsNullOrEmpty(modifiedBy) && !string.IsNullOrEmpty(changes))
@@ -120,6 +126,12 @@ namespace RosalEHealthcare.Data.Services
             {
                 System.Diagnostics.Debug.WriteLine($"Failed to send notification: {ex.Message}");
             }
+        }
+
+        // Overload for backward compatibility
+        public void UpdateUser(User user)
+        {
+            UpdateUser(user, null, null);
         }
 
         public void DeleteUser(int id)
@@ -220,13 +232,10 @@ namespace RosalEHealthcare.Data.Services
             return false;
         }
 
-
         /// <summary>
-        /// Handle failed login attempt and notify admin if threshold reached
+        /// Record a failed login attempt
         /// </summary>
-        /// <param name="username">Username that failed login</param>
-        /// <param name="attemptCount">Number of failed attempts</param>
-        /// <param name="ipAddress">IP address of attempt</param>
+        /// <param name="user">User who failed login</param>
         public void RecordFailedLogin(User user)
         {
             user.FailedLoginAttempts++;
@@ -235,9 +244,47 @@ namespace RosalEHealthcare.Data.Services
             {
                 user.Status = "Locked";
                 user.LockoutEndTime = DateTime.Now.AddMinutes(LOCKOUT_DURATION_MINUTES);
+
+                // Notify admin
+                try
+                {
+                    _notificationService.NotifyAccountLocked(user.Username, "Multiple failed login attempts");
+                }
+                catch { }
+            }
+            else if (user.FailedLoginAttempts >= 3)
+            {
+                // Notify admin of failed attempts
+                try
+                {
+                    _notificationService.NotifyLoginFailedAttempts(user.Username, user.FailedLoginAttempts, null);
+                }
+                catch { }
             }
 
             UpdateUser(user);
+        }
+
+        /// <summary>
+        /// Record failed login by username (for notification purposes)
+        /// </summary>
+        /// <param name="username">Username that failed</param>
+        /// <param name="attemptCount">Number of attempts</param>
+        /// <param name="ipAddress">IP address (optional)</param>
+        public void RecordFailedLoginAttempt(string username, int attemptCount, string ipAddress = null)
+        {
+            // Notify admin after 3 failed attempts
+            if (attemptCount >= 3)
+            {
+                try
+                {
+                    _notificationService.NotifyLoginFailedAttempts(username, attemptCount, ipAddress);
+                }
+                catch (Exception ex)
+                {
+                    System.Diagnostics.Debug.WriteLine($"Failed to send notification: {ex.Message}");
+                }
+            }
         }
 
         public void UnlockAccount(int userId)
@@ -252,7 +299,12 @@ namespace RosalEHealthcare.Data.Services
             }
         }
 
-        public void LockAccount(int userId)
+        /// <summary>
+        /// Lock a user account and notify admin
+        /// </summary>
+        /// <param name="userId">User ID to lock</param>
+        /// <param name="reason">Reason for locking (optional)</param>
+        public void LockAccount(int userId, string reason = null)
         {
             var user = GetById(userId);
             if (user != null)
@@ -260,7 +312,23 @@ namespace RosalEHealthcare.Data.Services
                 user.Status = "Locked";
                 user.LockoutEndTime = DateTime.Now.AddYears(100); // Permanent lock until manual unlock
                 UpdateUser(user);
+
+                // Notify admin
+                try
+                {
+                    _notificationService.NotifyAccountLocked(user.Username, reason ?? "Manual lock");
+                }
+                catch (Exception ex)
+                {
+                    System.Diagnostics.Debug.WriteLine($"Failed to send notification: {ex.Message}");
+                }
             }
+        }
+
+        // Overload for backward compatibility
+        public void LockAccount(int userId)
+        {
+            LockAccount(userId, null);
         }
 
         #endregion

@@ -25,9 +25,9 @@
             <converters:StringNullOrEmptyToVisibilityConverter x:Key="StringNullOrEmptyToVisibilityConverter"/>
 
             <!-- Notification Converters -->
-            <controls:ColorToLightBackgroundConverter x:Key="ColorToLightBackgroundConverter"/>
-            <controls:ReadToFontWeightConverter x:Key="ReadToFontWeightConverter"/>
-            <controls:InverseBoolToVisibilityConverter x:Key="InverseBoolToVisibilityConverter"/>
+            <converters:ColorToLightBackgroundConverter x:Key="ColorToLightBackgroundConverter"/>
+            <converters:ReadToFontWeightConverter x:Key="ReadToFontWeightConverter"/>
+            <converters:InverseBoolToVisibilityConverter x:Key="InverseBoolToVisibilityConverter"/>
         </ResourceDictionary>
     </Application.Resources>
 </Application>

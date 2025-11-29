@@ -149,7 +149,6 @@ namespace RosalEHealthcare.UI.WPF.Views
                         LoadIllnessChart();
                         LoadAppointmentStatusChart();
                         LoadConsultations();
-                        LoadNotificationCount();
                     });
                 });
             }
@@ -313,22 +312,6 @@ namespace RosalEHealthcare.UI.WPF.Views
             catch (Exception ex)
             {
                 System.Diagnostics.Debug.WriteLine($"Error loading consultations: {ex.Message}");
-            }
-        }
-
-        private void LoadNotificationCount()
-        {
-            try
-            {
-                var count = _notificationService.GetUnreadCount(_currentUser?.Email ?? "All", "Doctor");
-                TxtNotificationCount.Text = count > 99 ? "99+" : count.ToString();
-                NotificationBadge.Visibility = count > 0 ? Visibility.Visible : Visibility.Collapsed;
-            }
-            catch (Exception ex)
-            {
-                System.Diagnostics.Debug.WriteLine($"Error loading notifications: {ex.Message}");
-                TxtNotificationCount.Text = "0";
-                NotificationBadge.Visibility = Visibility.Collapsed;
             }
         }
 
@@ -613,6 +596,25 @@ namespace RosalEHealthcare.UI.WPF.Views
             {
                 System.Diagnostics.Debug.WriteLine($"Error initializing notifications: {ex.Message}");
             }
+        }
+
+        // ADD these missing navigation methods:
+
+        private void PatientManagement_Click(object sender, RoutedEventArgs e)
+        {
+            PatientRecords_Click(sender, e);
+        }
+
+        private void Appointments_Click(object sender, RoutedEventArgs e)
+        {
+            AppointmentLists_Click(sender, e);
+        }
+
+        private void MedicineInventory_Click(object sender, RoutedEventArgs e)
+        {
+            // If doctor has medicine inventory view, navigate to it
+            // Otherwise show a message or do nothing
+            MessageBox.Show("Medicine Inventory view.", "Info", MessageBoxButton.OK, MessageBoxImage.Information);
         }
 
         /// <summary>

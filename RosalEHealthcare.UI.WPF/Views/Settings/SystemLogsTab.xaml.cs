@@ -371,7 +371,7 @@ namespace RosalEHealthcare.UI.WPF.Views.Settings
                 string status = GetSelectedTag(CmbLoginStatus);
 
                 // Use the Search method from LoginHistoryService - use "query" not "searchQuery"
-                var logs = _loginHistoryService.Search(
+                 var logs = _loginHistoryService.Search(
                     query: searchText,  // Changed from searchQuery to query
                     status: status,
                     startDate: null,

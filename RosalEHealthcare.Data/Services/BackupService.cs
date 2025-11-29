@@ -137,6 +137,13 @@ namespace RosalEHealthcare.Data.Services
                 // Clean up old backups
                 CleanupOldBackups();
 
+                // Send notification
+                try
+                {
+                    _notificationService.NotifyBackupCompleted(true, finalFilePath);
+                }
+                catch { }
+
                 progressCallback?.Invoke(100, "Backup completed successfully!");
 
                 result.Success = true;
@@ -159,45 +166,16 @@ namespace RosalEHealthcare.Data.Services
                     backupRecord.CompletedAt = DateTime.Now;
                     _db.SaveChanges();
                 }
-            }
 
-            return result;
-        }
-
-        /// <summary>
-        /// Restore database with notification
-        /// </summary>
-        public bool RestoreDatabaseWithNotification(string backupFilePath, out string errorMessage)
-        {
-            errorMessage = null;
-            bool success = false;
-
-            try
-            {
-                // Your existing restore logic here
-                success = RestoreDatabase(backupFilePath);
-
-                // Send notification
-                if (success)
-                {
-                    _notificationService.NotifyRestoreCompleted(true, backupFilePath);
-                }
-                else
-                {
-                    _notificationService.NotifyRestoreCompleted(false, backupFilePath, "Restore operation failed");
-                }
-            }
-            catch (Exception ex)
-            {
-                errorMessage = ex.Message;
+                // Send failure notification
                 try
                 {
-                    _notificationService.NotifyRestoreCompleted(false, backupFilePath, ex.Message);
+                    _notificationService.NotifyBackupCompleted(false, null, ex.Message);
                 }
                 catch { }
             }
 
-            return success;
+            return result;
         }
 
         /// <summary>
@@ -291,6 +269,13 @@ namespace RosalEHealthcare.Data.Services
                     }
                 }
 
+                // Send success notification
+                try
+                {
+                    _notificationService.NotifyRestoreCompleted(true, backupFilePath);
+                }
+                catch { }
+
                 progressCallback?.Invoke(100, "Restore completed successfully!");
 
                 result.Success = true;
@@ -302,17 +287,25 @@ namespace RosalEHealthcare.Data.Services
                 result.Message = $"Restore failed: {ex.Message}";
                 result.ErrorDetails = ex.ToString();
 
+                // Send failure notification
+                try
+                {
+                    _notificationService.NotifyRestoreCompleted(false, backupFilePath, ex.Message);
+                }
+                catch { }
+
                 // Try to set database back to multi-user if possible
                 try
                 {
                     var connectionString = _db.Database.Connection.ConnectionString;
                     var builder = new SqlConnectionStringBuilder(connectionString);
+                    string databaseName = builder.InitialCatalog;
                     builder.InitialCatalog = "master";
 
                     using (var connection = new SqlConnection(builder.ConnectionString))
                     {
                         connection.Open();
-                        string setMultiUser = $"ALTER DATABASE [{builder.InitialCatalog}] SET MULTI_USER;";
+                        string setMultiUser = $"ALTER DATABASE [{databaseName}] SET MULTI_USER;";
                         using (var cmd = new SqlCommand(setMultiUser, connection))
                         {
                             cmd.ExecuteNonQuery();
@@ -323,39 +316,6 @@ namespace RosalEHealthcare.Data.Services
             }
 
             return result;
-        }
-
-        public bool CreateBackupWithNotification(string backupPath, out string errorMessage)
-        {
-            errorMessage = null;
-            bool success = false;
-
-            try
-            {
-                // Your existing backup logic here
-                success = CreateBackup(backupPath);
-
-                // Send notification
-                if (success)
-                {
-                    _notificationService.NotifyBackupCompleted(true, backupPath);
-                }
-                else
-                {
-                    _notificationService.NotifyBackupCompleted(false, null, "Backup operation failed");
-                }
-            }
-            catch (Exception ex)
-            {
-                errorMessage = ex.Message;
-                try
-                {
-                    _notificationService.NotifyBackupCompleted(false, null, ex.Message);
-                }
-                catch { }
-            }
-
-            return success;
         }
 
         #endregion

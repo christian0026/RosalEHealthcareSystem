@@ -182,9 +182,10 @@ namespace RosalEHealthcare.Data.Services
         /// </summary>
         private void CheckExpiryAlerts(Medicine medicine)
         {
-            if (medicine.ExpiryDate.HasValue)
+            // Check if ExpiryDate is set (not default)
+            if (medicine.ExpiryDate != default(DateTime) && medicine.ExpiryDate > DateTime.MinValue)
             {
-                var daysUntilExpiry = (medicine.ExpiryDate.Value - DateTime.Today).Days;
+                var daysUntilExpiry = (medicine.ExpiryDate - DateTime.Today).Days;
 
                 // Alert if expiring within warning period
                 if (daysUntilExpiry >= 0 && daysUntilExpiry <= EXPIRY_WARNING_DAYS)
@@ -192,12 +193,15 @@ namespace RosalEHealthcare.Data.Services
                     _notificationService.NotifyExpiringMedicine(
                         medicine.Name,
                         medicine.MedicineId,
-                        medicine.ExpiryDate.Value
+                        medicine.ExpiryDate
                     );
                 }
             }
         }
 
+        /// <summary>
+        /// Run daily check for expiring medicines (call from scheduled task or on dashboard load)
+        /// </summary>
         /// <summary>
         /// Run daily check for expiring medicines (call from scheduled task or on dashboard load)
         /// </summary>
@@ -207,9 +211,8 @@ namespace RosalEHealthcare.Data.Services
             {
                 var warningDate = DateTime.Today.AddDays(EXPIRY_WARNING_DAYS);
                 var expiringMedicines = _db.Medicines
-                    .Where(m => m.ExpiryDate.HasValue &&
-                               m.ExpiryDate.Value >= DateTime.Today &&
-                               m.ExpiryDate.Value <= warningDate &&
+                    .Where(m => m.ExpiryDate >= DateTime.Today &&
+                               m.ExpiryDate <= warningDate &&
                                m.Stock > 0)
                     .ToList();
 
@@ -227,7 +230,7 @@ namespace RosalEHealthcare.Data.Services
                         _notificationService.NotifyExpiringMedicine(
                             medicine.Name,
                             medicine.MedicineId,
-                            medicine.ExpiryDate.Value
+                            medicine.ExpiryDate
                         );
                     }
                 }
@@ -432,7 +435,8 @@ namespace RosalEHealthcare.Data.Services
             if (medicine.Stock <= LOW_STOCK_THRESHOLD)
                 return "Low Stock";
 
-            if (medicine.ExpiryDate.HasValue)
+            // Check if ExpiryDate is set (not default)
+            if (medicine.ExpiryDate != default(DateTime) && medicine.ExpiryDate > DateTime.MinValue)
             {
                 var warningDate = DateTime.Now.AddDays(EXPIRY_WARNING_DAYS);
                 if (medicine.ExpiryDate <= warningDate && medicine.ExpiryDate >= DateTime.Now)

@@ -110,14 +110,6 @@ namespace RosalEHealthcare.UI.WPF.Views
             // Expiring Medicines
             var expiringCount = _dashboardService.GetExpiringMedicines(30);
             CardExpiringMedicines.Value = expiringCount.ToString("N0");
-
-            // Notification Badge
-            var totalNotifications = lowStockCount + expiringCount;
-            if (totalNotifications > 0)
-            {
-                NotificationBadge.Visibility = Visibility.Visible;
-                NotificationCount.Text = totalNotifications > 99 ? "99+" : totalNotifications.ToString();
-            }
         }
 
         #endregion

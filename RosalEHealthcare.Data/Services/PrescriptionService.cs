@@ -10,10 +10,12 @@ namespace RosalEHealthcare.Data.Services
     public class PrescriptionService
     {
         private readonly RosalEHealthcareDbContext _db;
+        private readonly NotificationService _notificationService;
 
         public PrescriptionService(RosalEHealthcareDbContext db)
         {
             _db = db;
+            _notificationService = new NotificationService(db);
         }
 
         #region CRUD Operations
@@ -23,6 +25,20 @@ namespace RosalEHealthcare.Data.Services
             return _db.Prescriptions
                 .OrderByDescending(p => p.CreatedAt)
                 .ToList();
+        }
+
+        public Prescription GetById(int id)
+        {
+            return _db.Prescriptions
+                .Include(p => p.Medicines)
+                .FirstOrDefault(p => p.Id == id);
+        }
+
+        public Prescription GetByPrescriptionId(string prescriptionId)
+        {
+            return _db.Prescriptions
+                .Include(p => p.Medicines)
+                .FirstOrDefault(p => p.PrescriptionId == prescriptionId);
         }
 
         public IEnumerable<Prescription> GetPrescriptionsByPatientId(int patientId)
@@ -73,48 +89,10 @@ namespace RosalEHealthcare.Data.Services
             return prescription;
         }
 
-        public void UpdatePrescription(Prescription prescription)
-        {
-            if (prescription == null) throw new ArgumentNullException(nameof(prescription));
-
-            var existing = _db.Prescriptions.Find(prescription.Id);
-            if (existing == null) return;
-
-            // Update properties
-            existing.PatientName = prescription.PatientName;
-            existing.Diagnosis = prescription.Diagnosis;
-            existing.Medications = prescription.Medications;
-            existing.Instructions = prescription.Instructions;
-            existing.Notes = prescription.Notes;
-
-            _db.SaveChanges();
-        }
-
-        public void DeletePrescription(int id)
-        {
-            var prescription = GetById(id);
-            if (prescription != null)
-            {
-                _db.Prescriptions.Remove(prescription);
-                _db.SaveChanges();
-            }
-        }
-
-        public Prescription GetById(int id)
-        {
-            return _db.Prescriptions
-                .Include(p => p.Medicines)
-                .FirstOrDefault(p => p.Id == id);
-        }
-
-        public Prescription GetByPrescriptionId(string prescriptionId)
-        {
-            return _db.Prescriptions
-                .Include(p => p.Medicines)
-                .FirstOrDefault(p => p.PrescriptionId == prescriptionId);
-        }
-
-        public Prescription SavePrescription(Prescription p)
+        /// <summary>
+        /// Save prescription with medicines
+        /// </summary>
+        public Prescription SavePrescription(Prescription p, string doctorName = null)
         {
             if (p == null) throw new ArgumentNullException(nameof(p));
 
@@ -140,6 +118,23 @@ namespace RosalEHealthcare.Data.Services
             }
 
             _db.SaveChanges();
+
+            // Notify receptionist
+            try
+            {
+                if (!string.IsNullOrEmpty(doctorName))
+                {
+                    _notificationService.NotifyPrescriptionReady(
+                        p.PatientName,
+                        p.PrescriptionId,
+                        doctorName
+                    );
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Failed to send notification: {ex.Message}");
+            }
 
             return p;
         }
@@ -200,9 +195,6 @@ namespace RosalEHealthcare.Data.Services
         }
 
         #endregion
-
-        #region Notifications
-
 
         #region Helper Methods
 
