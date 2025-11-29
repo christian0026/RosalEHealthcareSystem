@@ -2,627 +2,455 @@
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:controls="clr-namespace:RosalEHealthcare.UI.WPF.Controls"
-             Background="#F5F5F5"
+             xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
+             xmlns:local="clr-namespace:RosalEHealthcare.UI.WPF.Views"
+             Background="#F0F2F5"
+             TextElement.Foreground="{DynamicResource MaterialDesignBody}"
+             TextElement.FontWeight="Regular"
+             TextElement.FontSize="13"
+             TextOptions.TextFormattingMode="Ideal"
+             TextOptions.TextRenderingMode="Auto"
+             FontFamily="{DynamicResource MaterialDesignFont}"
              Loaded="UserControl_Loaded">
 
     <UserControl.Resources>
         <BooleanToVisibilityConverter x:Key="BoolToVis"/>
-
-        <!-- Status Badge Style -->
-        <Style x:Key="StatusBadgeStyle" TargetType="Border">
-            <Setter Property="CornerRadius" Value="12"/>
-            <Setter Property="Padding" Value="12,4"/>
-            <Setter Property="HorizontalAlignment" Value="Center"/>
-        </Style>
+        <local:BoolToArchiveStatusConverter x:Key="BoolToArchiveText"/>
+        <Style TargetType="ScrollBar" BasedOn="{StaticResource MaterialDesignScrollBarMinimal}"/>
     </UserControl.Resources>
 
     <Grid>
-        <!-- Loading Overlay -->
         <Border x:Name="LoadingOverlay" 
-                Background="#80000000" 
+                Background="#99FFFFFF" 
                 Visibility="Collapsed"
                 Panel.ZIndex="999">
             <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center">
-                <TextBlock Text="⏳" FontSize="48" HorizontalAlignment="Center" Margin="0,0,0,16"/>
-                <TextBlock Text="Loading medicines..." 
-                           Foreground="White" 
+                <ProgressBar Style="{StaticResource MaterialDesignCircularProgressBar}"
+                             IsIndeterminate="True"
+                             Value="0"
+                             Width="50"
+                             Height="50"
+                             Margin="0,0,0,16"
+                             Foreground="{StaticResource PrimaryHueMidBrush}"/>
+                <TextBlock Text="Loading Inventory..." 
+                           Foreground="{StaticResource PrimaryHueMidBrush}" 
                            FontSize="16" 
-                           FontWeight="SemiBold"/>
+                           FontWeight="Medium"/>
             </StackPanel>
         </Border>
 
-        <ScrollViewer VerticalScrollBarVisibility="Auto">
-            <StackPanel Margin="24">
+        <Grid Margin="24">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="*"/>
+                <RowDefinition Height="Auto"/>
+            </Grid.RowDefinitions>
 
-                <!-- SUMMARY CARDS -->
-                <UniformGrid Columns="4" Margin="0,0,0,24">
-                    <controls:SummaryCard x:Name="cardTotalMedicines"
-                                        Title="Total Medicines"
-                                        Value="0"
-                                        Icon="💊"
-                                        TopColor="#4CAF50"
-                                        IconBackground="#E8F5E9"
-                                        TrendText="+8% from last month"
-                                        TrendColor="#4CAF50"
-                                        TrendIcon="▲"
-                                        Margin="6"/>
+            <UniformGrid Grid.Row="0" Columns="4" Margin="0,0,0,24">
+                <controls:SummaryCard x:Name="cardTotalMedicines"
+                                    Title="Total Medicines"
+                                    Value="0"
+                                    Icon="💊"
+                                    TopColor="#4CAF50"
+                                    IconBackground="#E8F5E9"
+                                    TrendText="Inventory Count"
+                                    TrendColor="#4CAF50"
+                                    Margin="0,0,16,0"/>
 
-                    <controls:SummaryCard x:Name="cardLowStock"
-                                        Title="Low Stock Medicines"
-                                        Value="0"
-                                        Icon="⚠️"
-                                        TopColor="#FF9800"
-                                        IconBackground="#FFF3E0"
-                                        TrendText="Requires Attention"
-                                        TrendColor="#FF9800"
-                                        TrendIcon="⚠"
-                                        Margin="6"/>
+                <controls:SummaryCard x:Name="cardLowStock"
+                                    Title="Low Stock"
+                                    Value="0"
+                                    Icon="⚠️"
+                                    TopColor="#FF9800"
+                                    IconBackground="#FFF3E0"
+                                    TrendText="Requires Restock"
+                                    TrendColor="#FF9800"
+                                    TrendIcon="⚠"
+                                    Margin="0,0,16,0"/>
 
-                    <controls:SummaryCard x:Name="cardExpiring"
-                                        Title="Expiring Soon"
-                                        Value="0"
-                                        Icon="📅"
-                                        TopColor="#F44336"
-                                        IconBackground="#FFEBEE"
-                                        TrendText="Within 3 months"
-                                        TrendColor="#F44336"
-                                        TrendIcon="⚠"
-                                        Margin="6"/>
+                <controls:SummaryCard x:Name="cardExpiring"
+                                    Title="Expiring Soon"
+                                    Value="0"
+                                    Icon="📅"
+                                    TopColor="#F44336"
+                                    IconBackground="#FFEBEE"
+                                    TrendText="Next 90 Days"
+                                    TrendColor="#F44336"
+                                    TrendIcon="⚠"
+                                    Margin="0,0,16,0"/>
 
-                    <controls:SummaryCard x:Name="cardOutOfStock"
-                                        Title="Out of Stock"
-                                        Value="0"
-                                        Icon="❌"
-                                        TopColor="#D32F2F"
-                                        IconBackground="#FFCDD2"
-                                        TrendText="Immediate Restock Needed"
-                                        TrendColor="#D32F2F"
-                                        TrendIcon="⚠"
-                                        Margin="6"/>
-                </UniformGrid>
+                <controls:SummaryCard x:Name="cardOutOfStock"
+                                    Title="Out of Stock"
+                                    Value="0"
+                                    Icon="❌"
+                                    TopColor="#D32F2F"
+                                    IconBackground="#FFCDD2"
+                                    TrendText="Critical Alert"
+                                    TrendColor="#D32F2F"
+                                    TrendIcon="⚠"
+                                    Margin="0"/>
+            </UniformGrid>
 
-                <!-- MEDICINE RECORDS HEADER -->
-                <DockPanel Margin="0,0,0,16">
-                    <TextBlock Text="Medicine Records" 
-                               FontSize="18" 
-                               FontWeight="Bold"
-                               DockPanel.Dock="Left" 
-                               VerticalAlignment="Center"/>
+            <Grid Grid.Row="1" Margin="0,0,0,16">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+
+                <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                    <materialDesign:ColorZone Mode="Standard" 
+                                            Padding="8,4" 
+                                            CornerRadius="8" 
+                                            Panel.ZIndex="1"
+                                            Margin="0,0,16,0"
+                                            materialDesign:ShadowAssist.ShadowDepth="Depth1">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+                            <materialDesign:PackIcon Kind="Magnify" Opacity=".56" VerticalAlignment="Center" Margin="8,0"/>
+                            <TextBox x:Name="txtSearch" 
+                                     Grid.Column="1" 
+                                     Margin="8,0,0,0"
+                                     materialDesign:HintAssist.Hint="Search medicines..." 
+                                     materialDesign:TextFieldAssist.DecorationVisibility="Hidden" 
+                                     BorderThickness="0" 
+                                     MinWidth="250" 
+                                     VerticalAlignment="Center"
+                                     TextChanged="TxtSearch_TextChanged"/>
+                        </Grid>
+                    </materialDesign:ColorZone>
+
+                    <ComboBox x:Name="cbCategory"
+                              materialDesign:HintAssist.Hint="Category"
+                              materialDesign:TextFieldAssist.HasClearButton="True"
+                              Style="{StaticResource MaterialDesignOutlinedComboBox}"
+                              Padding="12,10"
+                              MinWidth="180"
+                              Margin="0,0,16,0"
+                              SelectionChanged="FilterChanged">
+                        <ComboBoxItem Content="All Categories" IsSelected="True"/>
+                    </ComboBox>
+
+                    <ComboBox x:Name="cbStatus"
+                              materialDesign:HintAssist.Hint="Status"
+                              materialDesign:TextFieldAssist.HasClearButton="True"
+                              Style="{StaticResource MaterialDesignOutlinedComboBox}"
+                              Padding="12,10"
+                              MinWidth="150"
+                              Margin="0,0,8,0"
+                              SelectionChanged="FilterChanged">
+                        <ComboBoxItem Content="All Status" IsSelected="True"/>
+                        <ComboBoxItem Content="Available"/>
+                        <ComboBoxItem Content="Low Stock"/>
+                        <ComboBoxItem Content="Out of Stock"/>
+                        <ComboBoxItem Content="Expiring Soon"/>
+                    </ComboBox>
+
+                    <Button Style="{StaticResource MaterialDesignIconButton}"
+                            ToolTip="Clear Filters"
+                            Click="BtnClearFilters_Click">
+                        <materialDesign:PackIcon Kind="FilterOff" Opacity="0.6"/>
+                    </Button>
+                </StackPanel>
+
+                <StackPanel Grid.Column="1" Orientation="Horizontal">
+
+                    <CheckBox x:Name="chkShowArchived"
+                              Content="Show Archived"
+                              VerticalAlignment="Center"
+                              Margin="0,0,16,0"
+                              Checked="ChkShowArchived_Changed"
+                              Unchecked="ChkShowArchived_Changed"/>
+
+                    <materialDesign:PopupBox x:Name="btnExport" 
+                                             ToolTip="Import / Export Tools"
+                                             Margin="0,0,12,0"
+                                             PlacementMode="BottomAndAlignRightEdges">
+                        <materialDesign:PopupBox.ToggleContent>
+                            <Border BorderThickness="1" 
+                                    BorderBrush="{DynamicResource MaterialDesignDivider}" 
+                                    CornerRadius="4" 
+                                    Padding="12,8"
+                                    Background="Transparent">
+                                <StackPanel Orientation="Horizontal">
+                                    <materialDesign:PackIcon Kind="Tools" Margin="0,0,8,0" VerticalAlignment="Center" Opacity="0.7"/>
+                                    <TextBlock Text="Tools" VerticalAlignment="Center" FontWeight="Medium"/>
+                                </StackPanel>
+                            </Border>
+                        </materialDesign:PopupBox.ToggleContent>
+                        <StackPanel>
+                            <Button Click="BtnExportExcel_Click" ToolTip="Export to Excel">
+                                <StackPanel Orientation="Horizontal">
+                                    <materialDesign:PackIcon Kind="FileExcel" Margin="0,0,8,0" />
+                                    <TextBlock Text="Export to Excel"/>
+                                </StackPanel>
+                            </Button>
+                            <Button Click="BtnExportPdf_Click" ToolTip="Export to PDF">
+                                <StackPanel Orientation="Horizontal">
+                                    <materialDesign:PackIcon Kind="FilePdfBox" Margin="0,0,8,0"/>
+                                    <TextBlock Text="Export to PDF"/>
+                                </StackPanel>
+                            </Button>
+                            <Separator/>
+                            <Button Click="BtnImport_Click" ToolTip="Import Data">
+                                <StackPanel Orientation="Horizontal">
+                                    <materialDesign:PackIcon Kind="Upload" Margin="0,0,8,0"/>
+                                    <TextBlock Text="Import Data"/>
+                                </StackPanel>
+                            </Button>
+                            <Button Click="BtnDownloadTemplate_Click" ToolTip="Get Excel Template">
+                                <StackPanel Orientation="Horizontal">
+                                    <materialDesign:PackIcon Kind="FileDownload" Margin="0,0,8,0"/>
+                                    <TextBlock Text="Download Template"/>
+                                </StackPanel>
+                            </Button>
+                        </StackPanel>
+                    </materialDesign:PopupBox>
+
                     <Button x:Name="btnAddMedicine"
-                            Content="➕ Add New Medicine"
-                            Background="#2E7D32" 
-                            Foreground="White" 
-                            Padding="16,10"
-                            BorderThickness="0"
-                            FontWeight="SemiBold"
-                            Cursor="Hand"
-                            HorizontalAlignment="Right" 
-                            DockPanel.Dock="Right"
-                            Click="BtnAddMedicine_Click">
-                        <Button.Style>
-                            <Style TargetType="Button">
+                            Click="BtnAddMedicine_Click"
+                            Style="{StaticResource MaterialDesignRaisedButton}"
+                            materialDesign:ButtonAssist.CornerRadius="8"
+                            ToolTip="Add New Medicine">
+                        <StackPanel Orientation="Horizontal">
+                            <materialDesign:PackIcon Kind="Plus" Margin="0,0,8,0"/>
+                            <TextBlock Text="Add Medicine" FontWeight="SemiBold"/>
+                        </StackPanel>
+                    </Button>
+                </StackPanel>
+            </Grid>
+
+            <materialDesign:Card Grid.Row="2" 
+                                 Background="White" 
+                                 UniformCornerRadius="8" 
+                                 materialDesign:ShadowAssist.ShadowDepth="Depth1">
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="*"/>
+                    </Grid.RowDefinitions>
+
+                    <Border BorderBrush="{DynamicResource MaterialDesignDivider}" BorderThickness="0,0,0,1" Padding="16">
+                        <Grid>
+                            <StackPanel Orientation="Horizontal">
+                                <materialDesign:PackIcon Kind="Pill" VerticalAlignment="Center" Margin="0,0,8,0" Opacity="0.7"/>
+                                <TextBlock Text="Inventory List" FontWeight="Bold" FontSize="14" VerticalAlignment="Center"/>
+                            </StackPanel>
+                            <TextBlock x:Name="txtResultCount"
+                                       Text="Showing 0 medicines"
+                                       HorizontalAlignment="Right"
+                                       FontSize="12"
+                                       Opacity="0.6"
+                                       VerticalAlignment="Center"/>
+                        </Grid>
+                    </Border>
+
+                    <DataGrid x:Name="dgMedicines"
+                              Grid.Row="1"
+                              AutoGenerateColumns="False"
+                              CanUserAddRows="False"
+                              CanUserSortColumns="True"
+                              IsReadOnly="True"
+                              HeadersVisibility="Column"
+                              SelectionMode="Single"
+                              SelectionUnit="FullRow"
+                              GridLinesVisibility="Horizontal"
+                              HorizontalGridLinesBrush="#F0F0F0"
+                              RowHeight="55"
+                              Background="Transparent"
+                              BorderThickness="0">
+
+                        <DataGrid.ColumnHeaderStyle>
+                            <Style TargetType="DataGridColumnHeader" BasedOn="{StaticResource MaterialDesignDataGridColumnHeader}">
+                                <Setter Property="FontWeight" Value="SemiBold"/>
+                                <Setter Property="Padding" Value="16,12"/>
+                            </Style>
+                        </DataGrid.ColumnHeaderStyle>
+
+                        <DataGrid.CellStyle>
+                            <Style TargetType="DataGridCell">
+                                <Setter Property="Padding" Value="16,8"/>
+                                <Setter Property="BorderThickness" Value="0"/>
+                                <Setter Property="FocusVisualStyle" Value="{x:Null}"/>
                                 <Setter Property="Template">
                                     <Setter.Value>
-                                        <ControlTemplate TargetType="Button">
-                                            <Border Background="{TemplateBinding Background}"
-                                                    CornerRadius="6"
-                                                    Padding="{TemplateBinding Padding}">
-                                                <ContentPresenter HorizontalAlignment="Center" 
-                                                                VerticalAlignment="Center"/>
+                                        <ControlTemplate TargetType="DataGridCell">
+                                            <Border Padding="{TemplateBinding Padding}" Background="{TemplateBinding Background}">
+                                                <ContentPresenter VerticalAlignment="Center" />
                                             </Border>
                                         </ControlTemplate>
                                     </Setter.Value>
                                 </Setter>
-                                <Style.Triggers>
-                                    <Trigger Property="IsMouseOver" Value="True">
-                                        <Setter Property="Background" Value="#388E3C"/>
-                                    </Trigger>
-                                </Style.Triggers>
                             </Style>
-                        </Button.Style>
-                    </Button>
-                </DockPanel>
+                        </DataGrid.CellStyle>
 
-                <!-- SEARCH & FILTER -->
-                <Border Background="White" 
-                        CornerRadius="8" 
-                        Padding="20" 
-                        Margin="0,0,0,20">
-                    <Border.Effect>
-                        <DropShadowEffect Color="#000000" BlurRadius="10" ShadowDepth="2" Opacity="0.08"/>
-                    </Border.Effect>
-
-                    <Grid>
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="2*"/>
-                            <ColumnDefinition Width="*"/>
-                            <ColumnDefinition Width="*"/>
-                            <ColumnDefinition Width="Auto"/>
-                        </Grid.ColumnDefinitions>
-
-                        <!-- Search Box -->
-                        <Grid Grid.Column="0" Margin="0,0,12,0">
-                            <TextBox x:Name="txtSearch"
-                                     Height="40"
-                                     Padding="12,10"
-                                     FontSize="14"
-                                     VerticalContentAlignment="Center"
-                                     BorderBrush="#E0E0E0"
-                                     BorderThickness="1"
-                                     TextChanged="TxtSearch_TextChanged">
-                                <TextBox.Style>
-                                    <Style TargetType="TextBox">
-                                        <Setter Property="Template">
-                                            <Setter.Value>
-                                                <ControlTemplate TargetType="TextBox">
-                                                    <Border Background="{TemplateBinding Background}"
-                                                            BorderBrush="{TemplateBinding BorderBrush}"
-                                                            BorderThickness="{TemplateBinding BorderThickness}"
-                                                            CornerRadius="6">
-                                                        <ScrollViewer x:Name="PART_ContentHost" 
-                                                                    Margin="10,0"/>
+                        <DataGrid.Columns>
+                            <DataGridTemplateColumn Header="Medicine Name" Width="2.5*">
+                                <DataGridTemplateColumn.CellTemplate>
+                                    <DataTemplate>
+                                        <StackPanel Orientation="Horizontal">
+                                            <materialDesign:ColorZone Mode="PrimaryLight" Width="40" Height="40" CornerRadius="20" Margin="0,0,12,0">
+                                                <TextBlock Text="{Binding Initials}" 
+                                                           HorizontalAlignment="Center" 
+                                                           VerticalAlignment="Center" 
+                                                           FontWeight="Bold" 
+                                                           Foreground="{DynamicResource PrimaryHueMidBrush}"/>
+                                            </materialDesign:ColorZone>
+                                            <StackPanel VerticalAlignment="Center">
+                                                <TextBlock Text="{Binding Name}" FontWeight="SemiBold" FontSize="14" TextTrimming="CharacterEllipsis"/>
+                                                <StackPanel Orientation="Horizontal">
+                                                    <TextBlock Text="{Binding GenericName}" FontSize="12" Opacity="0.6" Margin="0,0,8,0"/>
+                                                    <Border Background="#EEE" CornerRadius="4" Padding="4,0" VerticalAlignment="Center"
+                                                            Visibility="{Binding Brand, Converter={StaticResource BoolToVis}}">
+                                                        <TextBlock Text="{Binding Brand}" FontSize="10" Opacity="0.8"/>
                                                     </Border>
-                                                </ControlTemplate>
-                                            </Setter.Value>
-                                        </Setter>
-                                    </Style>
-                                </TextBox.Style>
-                            </TextBox>
-                            <TextBlock Text="🔍 Search by Name or Medicine ID"
-                                       Foreground="#999999"
-                                       VerticalAlignment="Center"
-                                       Margin="16,0,0,0"
-                                       IsHitTestVisible="False"
-                                       FontSize="14">
-                                <TextBlock.Visibility>
-                                    <Binding ElementName="txtSearch" Path="Text.IsEmpty">
-                                        <Binding.Converter>
-                                            <BooleanToVisibilityConverter/>
-                                        </Binding.Converter>
-                                    </Binding>
-                                </TextBlock.Visibility>
-                            </TextBlock>
-                        </Grid>
-
-                        <!-- Category Filter -->
-                        <ComboBox x:Name="cbCategory" 
-                                  Grid.Column="1"
-                                  Height="40" 
-                                  Margin="0,0,12,0"
-                                  Padding="12,0"
-                                  FontSize="14"
-                                  VerticalContentAlignment="Center"
-                                  BorderBrush="#E0E0E0"
-                                  SelectionChanged="FilterChanged">
-                            <ComboBoxItem Content="All Categories" IsSelected="True"/>
-                        </ComboBox>
-
-                        <!-- Status Filter -->
-                        <ComboBox x:Name="cbStatus" 
-                                  Grid.Column="2"
-                                  Height="40" 
-                                  Margin="0,0,12,0"
-                                  Padding="12,0"
-                                  FontSize="14"
-                                  VerticalContentAlignment="Center"
-                                  BorderBrush="#E0E0E0"
-                                  SelectionChanged="FilterChanged">
-                            <ComboBoxItem Content="All Status" IsSelected="True"/>
-                            <ComboBoxItem Content="Available"/>
-                            <ComboBoxItem Content="Low Stock"/>
-                            <ComboBoxItem Content="Out of Stock"/>
-                            <ComboBoxItem Content="Expiring Soon"/>
-                        </ComboBox>
-
-                        <!-- Search Button -->
-                        <Button Grid.Column="3"
-                                Content="Search" 
-                                Background="#009688" 
-                                Foreground="White" 
-                                Padding="20,10"
-                                BorderThickness="0"
-                                Width="100"
-                                Height="40"
-                                FontWeight="SemiBold"
-                                Cursor="Hand"
-                                Click="BtnSearch_Click">
-                            <Button.Style>
-                                <Style TargetType="Button">
-                                    <Setter Property="Template">
-                                        <Setter.Value>
-                                            <ControlTemplate TargetType="Button">
-                                                <Border Background="{TemplateBinding Background}"
-                                                        CornerRadius="6">
-                                                    <ContentPresenter HorizontalAlignment="Center" 
-                                                                    VerticalAlignment="Center"/>
-                                                </Border>
-                                            </ControlTemplate>
-                                        </Setter.Value>
-                                    </Setter>
-                                    <Style.Triggers>
-                                        <Trigger Property="IsMouseOver" Value="True">
-                                            <Setter Property="Background" Value="#00796B"/>
-                                        </Trigger>
-                                    </Style.Triggers>
-                                </Style>
-                            </Button.Style>
-                        </Button>
-                    </Grid>
-                </Border>
-
-                <!-- MEDICINE LIST -->
-                <Border Background="White" 
-                        CornerRadius="8" 
-                        Padding="20">
-                    <Border.Effect>
-                        <DropShadowEffect Color="#000000" BlurRadius="10" ShadowDepth="2" Opacity="0.08"/>
-                    </Border.Effect>
-
-                    <StackPanel>
-                        <DockPanel Margin="0,0,0,16">
-                            <TextBlock Text="Medicine List" 
-                                       FontSize="16" 
-                                       FontWeight="Bold"
-                                       DockPanel.Dock="Left"/>
-                            <TextBlock x:Name="txtResultCount"
-                                       Text="Showing 0 medicines"
-                                       Foreground="#666666"
-                                       FontSize="13"
-                                       VerticalAlignment="Center"
-                                       HorizontalAlignment="Right"
-                                       DockPanel.Dock="Right"/>
-                        </DockPanel>
-
-                        <DataGrid x:Name="dgMedicines"
-                                  AutoGenerateColumns="False"
-                                  HeadersVisibility="Column"
-                                  CanUserAddRows="False"
-                                  IsReadOnly="True"
-                                  RowHeight="60"
-                                  GridLinesVisibility="None"
-                                  BorderThickness="0"
-                                  Background="Transparent"
-                                  SelectionMode="Single"
-                                  AlternatingRowBackground="#FAFAFA"
-                                  FontSize="13">
-
-                            <DataGrid.ColumnHeaderStyle>
-                                <Style TargetType="DataGridColumnHeader">
-                                    <Setter Property="Background" Value="#F5F5F5"/>
-                                    <Setter Property="Foreground" Value="#666666"/>
-                                    <Setter Property="FontWeight" Value="SemiBold"/>
-                                    <Setter Property="FontSize" Value="12"/>
-                                    <Setter Property="Padding" Value="12,10"/>
-                                    <Setter Property="BorderThickness" Value="0,0,0,1"/>
-                                    <Setter Property="BorderBrush" Value="#E0E0E0"/>
-                                </Style>
-                            </DataGrid.ColumnHeaderStyle>
-
-                            <DataGrid.CellStyle>
-                                <Style TargetType="DataGridCell">
-                                    <Setter Property="BorderThickness" Value="0"/>
-                                    <Setter Property="Padding" Value="12,8"/>
-                                    <Setter Property="Template">
-                                        <Setter.Value>
-                                            <ControlTemplate TargetType="DataGridCell">
-                                                <Border Padding="{TemplateBinding Padding}" 
-                                                        Background="{TemplateBinding Background}">
-                                                    <ContentPresenter VerticalAlignment="Center"/>
-                                                </Border>
-                                            </ControlTemplate>
-                                        </Setter.Value>
-                                    </Setter>
-                                </Style>
-                            </DataGrid.CellStyle>
-
-                            <DataGrid.Columns>
-                                <!-- Medicine Info with Avatar -->
-                                <DataGridTemplateColumn Header="Medicine Info" Width="260">
-                                    <DataGridTemplateColumn.CellTemplate>
-                                        <DataTemplate>
-                                            <StackPanel Orientation="Horizontal">
-                                                <Border Width="40" Height="40" 
-                                                        Background="#E3F2FD" 
-                                                        CornerRadius="20"
-                                                        Margin="0,0,12,0">
-                                                    <TextBlock Text="{Binding Initials}" 
-                                                               Foreground="#1976D2" 
-                                                               FontWeight="Bold"
-                                                               FontSize="14"
-                                                               HorizontalAlignment="Center" 
-                                                               VerticalAlignment="Center"/>
-                                                </Border>
-                                                <StackPanel VerticalAlignment="Center">
-                                                    <TextBlock Text="{Binding Name}" 
-                                                               FontWeight="SemiBold"
-                                                               FontSize="13"/>
-                                                    <TextBlock Text="{Binding GenericName}" 
-                                                               Foreground="#999999"
-                                                               FontSize="11"/>
                                                 </StackPanel>
                                             </StackPanel>
-                                        </DataTemplate>
-                                    </DataGridTemplateColumn.CellTemplate>
-                                </DataGridTemplateColumn>
+                                        </StackPanel>
+                                    </DataTemplate>
+                                </DataGridTemplateColumn.CellTemplate>
+                            </DataGridTemplateColumn>
 
-                                <!-- Medicine ID -->
-                                <DataGridTextColumn Header="Medicine ID" 
-                                                    Binding="{Binding MedicineId}" 
-                                                    Width="110"/>
+                            <DataGridTextColumn Header="ID" Binding="{Binding MedicineId}" Width="Auto" Foreground="#888"/>
 
-                                <!-- Category -->
-                                <DataGridTextColumn Header="Category" 
-                                                    Binding="{Binding Category}" 
-                                                    Width="130"/>
+                            <DataGridTextColumn Header="Category" Binding="{Binding Category}" Width="1.5*"/>
 
-                                <!-- Stock Level with Color -->
-                                <DataGridTemplateColumn Header="Stock Level" Width="100">
-                                    <DataGridTemplateColumn.CellTemplate>
-                                        <DataTemplate>
-                                            <TextBlock Text="{Binding Stock}" 
-                                                       FontWeight="SemiBold">
+                            <DataGridTemplateColumn Header="Stock" Width="100">
+                                <DataGridTemplateColumn.CellTemplate>
+                                    <DataTemplate>
+                                        <TextBlock Text="{Binding Stock}" HorizontalAlignment="Right" FontWeight="Bold">
+                                            <TextBlock.Style>
+                                                <Style TargetType="TextBlock">
+                                                    <Style.Triggers>
+                                                        <DataTrigger Binding="{Binding StockStatus}" Value="Critical">
+                                                            <Setter Property="Foreground" Value="#D32F2F"/>
+                                                        </DataTrigger>
+                                                        <DataTrigger Binding="{Binding StockStatus}" Value="Low">
+                                                            <Setter Property="Foreground" Value="#FF9800"/>
+                                                        </DataTrigger>
+                                                        <DataTrigger Binding="{Binding StockStatus}" Value="Good">
+                                                            <Setter Property="Foreground" Value="#4CAF50"/>
+                                                        </DataTrigger>
+                                                    </Style.Triggers>
+                                                </Style>
+                                            </TextBlock.Style>
+                                        </TextBlock>
+                                    </DataTemplate>
+                                </DataGridTemplateColumn.CellTemplate>
+                            </DataGridTemplateColumn>
+
+                            <DataGridTextColumn Header="Price" Binding="{Binding PriceFormatted}" Width="100">
+                                <DataGridTextColumn.ElementStyle>
+                                    <Style TargetType="TextBlock">
+                                        <Setter Property="HorizontalAlignment" Value="Right"/>
+                                    </Style>
+                                </DataGridTextColumn.ElementStyle>
+                            </DataGridTextColumn>
+
+                            <DataGridTemplateColumn Header="Status" Width="140">
+                                <DataGridTemplateColumn.CellTemplate>
+                                    <DataTemplate>
+                                        <Border CornerRadius="12" Padding="12,4" HorizontalAlignment="Center" MinWidth="90">
+                                            <Border.Style>
+                                                <Style TargetType="Border">
+                                                    <Style.Triggers>
+                                                        <DataTrigger Binding="{Binding Status}" Value="Available">
+                                                            <Setter Property="Background" Value="#E8F5E9"/>
+                                                        </DataTrigger>
+                                                        <DataTrigger Binding="{Binding Status}" Value="Low Stock">
+                                                            <Setter Property="Background" Value="#FFF3E0"/>
+                                                        </DataTrigger>
+                                                        <DataTrigger Binding="{Binding Status}" Value="Out of Stock">
+                                                            <Setter Property="Background" Value="#FFEBEE"/>
+                                                        </DataTrigger>
+                                                        <DataTrigger Binding="{Binding Status}" Value="Expiring Soon">
+                                                            <Setter Property="Background" Value="#FFF3E0"/>
+                                                        </DataTrigger>
+                                                    </Style.Triggers>
+                                                </Style>
+                                            </Border.Style>
+                                            <TextBlock Text="{Binding Status}" HorizontalAlignment="Center" FontSize="12" FontWeight="SemiBold">
                                                 <TextBlock.Style>
                                                     <Style TargetType="TextBlock">
-                                                        <Style.Triggers>
-                                                            <DataTrigger Binding="{Binding StockStatus}" Value="Critical">
-                                                                <Setter Property="Foreground" Value="#D32F2F"/>
-                                                            </DataTrigger>
-                                                            <DataTrigger Binding="{Binding StockStatus}" Value="Low">
-                                                                <Setter Property="Foreground" Value="#FF9800"/>
-                                                            </DataTrigger>
-                                                            <DataTrigger Binding="{Binding StockStatus}" Value="Good">
-                                                                <Setter Property="Foreground" Value="#4CAF50"/>
-                                                            </DataTrigger>
-                                                        </Style.Triggers>
-                                                    </Style>
-                                                </TextBlock.Style>
-                                            </TextBlock>
-                                        </DataTemplate>
-                                    </DataGridTemplateColumn.CellTemplate>
-                                </DataGridTemplateColumn>
-
-                                <!-- Unit Price -->
-                                <DataGridTextColumn Header="Unit Price" 
-                                                    Binding="{Binding PriceFormatted}" 
-                                                    Width="100"/>
-
-                                <!-- Expiry Date with Color -->
-                                <DataGridTemplateColumn Header="Expiry Date" Width="110">
-                                    <DataGridTemplateColumn.CellTemplate>
-                                        <DataTemplate>
-                                            <TextBlock Text="{Binding ExpiryDateFormatted}">
-                                                <TextBlock.Style>
-                                                    <Style TargetType="TextBlock">
-                                                        <Style.Triggers>
-                                                            <DataTrigger Binding="{Binding IsExpiring}" Value="True">
-                                                                <Setter Property="Foreground" Value="#FF9800"/>
-                                                                <Setter Property="FontWeight" Value="SemiBold"/>
-                                                            </DataTrigger>
-                                                            <DataTrigger Binding="{Binding IsExpired}" Value="True">
-                                                                <Setter Property="Foreground" Value="#D32F2F"/>
-                                                                <Setter Property="FontWeight" Value="Bold"/>
-                                                            </DataTrigger>
-                                                        </Style.Triggers>
-                                                    </Style>
-                                                </TextBlock.Style>
-                                            </TextBlock>
-                                        </DataTemplate>
-                                    </DataGridTemplateColumn.CellTemplate>
-                                </DataGridTemplateColumn>
-
-                                <!-- Status Badge -->
-                                <DataGridTemplateColumn Header="Status" Width="130">
-                                    <DataGridTemplateColumn.CellTemplate>
-                                        <DataTemplate>
-                                            <Border CornerRadius="12" Padding="12,4" HorizontalAlignment="Center">
-                                                <Border.Style>
-                                                    <Style TargetType="Border">
                                                         <Style.Triggers>
                                                             <DataTrigger Binding="{Binding Status}" Value="Available">
-                                                                <Setter Property="Background" Value="#E8F5E9"/>
+                                                                <Setter Property="Foreground" Value="#2E7D32"/>
                                                             </DataTrigger>
                                                             <DataTrigger Binding="{Binding Status}" Value="Low Stock">
-                                                                <Setter Property="Background" Value="#FFF3E0"/>
+                                                                <Setter Property="Foreground" Value="#EF6C00"/>
                                                             </DataTrigger>
                                                             <DataTrigger Binding="{Binding Status}" Value="Out of Stock">
-                                                                <Setter Property="Background" Value="#FFEBEE"/>
+                                                                <Setter Property="Foreground" Value="#C62828"/>
                                                             </DataTrigger>
                                                             <DataTrigger Binding="{Binding Status}" Value="Expiring Soon">
-                                                                <Setter Property="Background" Value="#FFF3E0"/>
-                                                            </DataTrigger>
-                                                            <DataTrigger Binding="{Binding Status}" Value="Expired">
-                                                                <Setter Property="Background" Value="#FFEBEE"/>
+                                                                <Setter Property="Foreground" Value="#EF6C00"/>
                                                             </DataTrigger>
                                                         </Style.Triggers>
                                                     </Style>
-                                                </Border.Style>
-                                                <TextBlock Text="{Binding Status}" 
-                                                           FontSize="11" 
-                                                           FontWeight="SemiBold">
-                                                    <TextBlock.Style>
-                                                        <Style TargetType="TextBlock">
-                                                            <Style.Triggers>
-                                                                <DataTrigger Binding="{Binding Status}" Value="Available">
-                                                                    <Setter Property="Foreground" Value="#2E7D32"/>
-                                                                </DataTrigger>
-                                                                <DataTrigger Binding="{Binding Status}" Value="Low Stock">
-                                                                    <Setter Property="Foreground" Value="#F57C00"/>
-                                                                </DataTrigger>
-                                                                <DataTrigger Binding="{Binding Status}" Value="Out of Stock">
-                                                                    <Setter Property="Foreground" Value="#C62828"/>
-                                                                </DataTrigger>
-                                                                <DataTrigger Binding="{Binding Status}" Value="Expiring Soon">
-                                                                    <Setter Property="Foreground" Value="#F57C00"/>
-                                                                </DataTrigger>
-                                                                <DataTrigger Binding="{Binding Status}" Value="Expired">
-                                                                    <Setter Property="Foreground" Value="#C62828"/>
-                                                                </DataTrigger>
-                                                            </Style.Triggers>
-                                                        </Style>
-                                                    </TextBlock.Style>
-                                                </TextBlock>
-                                            </Border>
-                                        </DataTemplate>
-                                    </DataGridTemplateColumn.CellTemplate>
-                                </DataGridTemplateColumn>
+                                                </TextBlock.Style>
+                                            </TextBlock>
+                                        </Border>
+                                    </DataTemplate>
+                                </DataGridTemplateColumn.CellTemplate>
+                            </DataGridTemplateColumn>
 
-                                <!-- Actions -->
-                                <DataGridTemplateColumn Header="Actions" Width="220">
-                                    <DataGridTemplateColumn.CellTemplate>
-                                        <DataTemplate>
-                                            <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
-                                                <Button Content="👁️ View" 
-                                                        Background="#0288D1" 
-                                                        Foreground="White" 
-                                                        Margin="3" 
-                                                        Padding="8,4"
-                                                        BorderThickness="0"
-                                                        FontSize="11"
-                                                        Cursor="Hand"
-                                                        Click="BtnView_Click"
-                                                        Tag="{Binding MedicineId}">
-                                                    <Button.Style>
-                                                        <Style TargetType="Button">
-                                                            <Setter Property="Template">
-                                                                <Setter.Value>
-                                                                    <ControlTemplate TargetType="Button">
-                                                                        <Border Background="{TemplateBinding Background}"
-                                                                                CornerRadius="4"
-                                                                                Padding="{TemplateBinding Padding}">
-                                                                            <ContentPresenter HorizontalAlignment="Center" 
-                                                                                            VerticalAlignment="Center"/>
-                                                                        </Border>
-                                                                    </ControlTemplate>
-                                                                </Setter.Value>
-                                                            </Setter>
-                                                            <Style.Triggers>
-                                                                <Trigger Property="IsMouseOver" Value="True">
-                                                                    <Setter Property="Background" Value="#0277BD"/>
-                                                                </Trigger>
-                                                            </Style.Triggers>
-                                                        </Style>
-                                                    </Button.Style>
-                                                </Button>
+                            <DataGridTemplateColumn Header="Expiry" Width="Auto">
+                                <DataGridTemplateColumn.CellTemplate>
+                                    <DataTemplate>
+                                        <TextBlock Text="{Binding ExpiryDateFormatted}" HorizontalAlignment="Center"/>
+                                    </DataTemplate>
+                                </DataGridTemplateColumn.CellTemplate>
+                            </DataGridTemplateColumn>
 
-                                                <Button Content="✏️ Edit" 
-                                                        Background="#FFA000" 
-                                                        Foreground="White" 
-                                                        Margin="3" 
-                                                        Padding="8,4"
-                                                        BorderThickness="0"
-                                                        FontSize="11"
-                                                        Cursor="Hand"
-                                                        Click="BtnEdit_Click"
-                                                        Tag="{Binding MedicineId}">
-                                                    <Button.Style>
-                                                        <Style TargetType="Button">
-                                                            <Setter Property="Template">
-                                                                <Setter.Value>
-                                                                    <ControlTemplate TargetType="Button">
-                                                                        <Border Background="{TemplateBinding Background}"
-                                                                                CornerRadius="4"
-                                                                                Padding="{TemplateBinding Padding}">
-                                                                            <ContentPresenter HorizontalAlignment="Center" 
-                                                                                            VerticalAlignment="Center"/>
-                                                                        </Border>
-                                                                    </ControlTemplate>
-                                                                </Setter.Value>
-                                                            </Setter>
-                                                            <Style.Triggers>
-                                                                <Trigger Property="IsMouseOver" Value="True">
-                                                                    <Setter Property="Background" Value="#FF8F00"/>
-                                                                </Trigger>
-                                                            </Style.Triggers>
-                                                        </Style>
-                                                    </Button.Style>
-                                                </Button>
+                            <DataGridTemplateColumn Header="Actions" Width="Auto">
+                                <DataGridTemplateColumn.CellTemplate>
+                                    <DataTemplate>
+                                        <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                                            <Button Style="{StaticResource MaterialDesignIconButton}"
+                                                    ToolTip="View Details"
+                                                    Width="30" Height="30"
+                                                    Click="BtnView_Click" Tag="{Binding Id}">
+                                                <materialDesign:PackIcon Kind="Eye" Width="16" Height="16" Foreground="#0288D1"/>
+                                            </Button>
+                                            <Button Style="{StaticResource MaterialDesignIconButton}"
+                                                    ToolTip="Edit"
+                                                    Width="30" Height="30"
+                                                    Click="BtnEdit_Click" Tag="{Binding Id}">
+                                                <materialDesign:PackIcon Kind="Pencil" Width="16" Height="16" Foreground="#FFA000"/>
+                                            </Button>
+                                            <Button Style="{StaticResource MaterialDesignIconButton}"
+                                                    ToolTip="{Binding IsActive, Converter={StaticResource BoolToArchiveText}}"
+                                                    Width="30" Height="30"
+                                                    Click="BtnDelete_Click" Tag="{Binding Id}">
+                                                <materialDesign:PackIcon Kind="Archive" Width="16" Height="16" Foreground="#D32F2F"/>
+                                            </Button>
+                                        </StackPanel>
+                                    </DataTemplate>
+                                </DataGridTemplateColumn.CellTemplate>
+                            </DataGridTemplateColumn>
+                        </DataGrid.Columns>
+                    </DataGrid>
+                </Grid>
+            </materialDesign:Card>
 
-                                                <Button Content="🗑️ Delete" 
-                                                        Background="#D32F2F" 
-                                                        Foreground="White" 
-                                                        Margin="3" 
-                                                        Padding="8,4"
-                                                        BorderThickness="0"
-                                                        FontSize="11"
-                                                        Cursor="Hand"
-                                                        Click="BtnDelete_Click"
-                                                        Tag="{Binding MedicineId}">
-                                                    <Button.Style>
-                                                        <Style TargetType="Button">
-                                                            <Setter Property="Template">
-                                                                <Setter.Value>
-                                                                    <ControlTemplate TargetType="Button">
-                                                                        <Border Background="{TemplateBinding Background}"
-                                                                                CornerRadius="4"
-                                                                                Padding="{TemplateBinding Padding}">
-                                                                            <ContentPresenter HorizontalAlignment="Center" 
-                                                                                            VerticalAlignment="Center"/>
-                                                                        </Border>
-                                                                    </ControlTemplate>
-                                                                </Setter.Value>
-                                                            </Setter>
-                                                            <Style.Triggers>
-                                                                <Trigger Property="IsMouseOver" Value="True">
-                                                                    <Setter Property="Background" Value="#C62828"/>
-                                                                </Trigger>
-                                                            </Style.Triggers>
-                                                        </Style>
-                                                    </Button.Style>
-                                                </Button>
-                                            </StackPanel>
-                                        </DataTemplate>
-                                    </DataGridTemplateColumn.CellTemplate>
-                                </DataGridTemplateColumn>
-                            </DataGrid.Columns>
-                        </DataGrid>
-
-                        <!-- PAGINATION -->
-                        <StackPanel Orientation="Horizontal" 
-                                    HorizontalAlignment="Center" 
-                                    Margin="0,20,0,0"
-                                    x:Name="paginationPanel">
-                            <Button x:Name="btnFirst" 
-                                    Content="⏮" 
-                                    Width="40" 
-                                    Height="40"
-                                    Margin="4"
-                                    Click="BtnFirst_Click"
-                                    IsEnabled="False"/>
-
-                            <Button x:Name="btnPrevious" 
-                                    Content="◀" 
-                                    Width="40" 
-                                    Height="40"
-                                    Margin="4"
-                                    Click="BtnPrevious_Click"
-                                    IsEnabled="False"/>
-
-                            <TextBlock x:Name="txtPageInfo" 
-                                       Text="Page 1 of 1" 
-                                       VerticalAlignment="Center"
-                                       Margin="12,0"
-                                       FontSize="13"
-                                       Foreground="#666666"/>
-
-                            <Button x:Name="btnNext" 
-                                    Content="▶" 
-                                    Width="40" 
-                                    Height="40"
-                                    Margin="4"
-                                    Click="BtnNext_Click"
-                                    IsEnabled="False"/>
-
-                            <Button x:Name="btnLast" 
-                                    Content="⏭" 
-                                    Width="40" 
-                                    Height="40"
-                                    Margin="4"
-                                    Click="BtnLast_Click"
-                                    IsEnabled="False"/>
-                        </StackPanel>
-                    </StackPanel>
-                </Border>
+            <StackPanel Grid.Row="3" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,16,0,0">
+                <TextBlock x:Name="txtPageInfo" Text="Page 1 of 1" VerticalAlignment="Center" Margin="0,0,16,0" Opacity="0.6"/>
+                <Button x:Name="btnFirst" Click="BtnFirst_Click" Style="{StaticResource MaterialDesignIconButton}" ToolTip="First Page">
+                    <materialDesign:PackIcon Kind="PageFirst"/>
+                </Button>
+                <Button x:Name="btnPrevious" Click="BtnPrevious_Click" Style="{StaticResource MaterialDesignIconButton}" ToolTip="Previous">
+                    <materialDesign:PackIcon Kind="ChevronLeft"/>
+                </Button>
+                <Button x:Name="btnNext" Click="BtnNext_Click" Style="{StaticResource MaterialDesignIconButton}" ToolTip="Next">
+                    <materialDesign:PackIcon Kind="ChevronRight"/>
+                </Button>
+                <Button x:Name="btnLast" Click="BtnLast_Click" Style="{StaticResource MaterialDesignIconButton}" ToolTip="Last Page">
+                    <materialDesign:PackIcon Kind="PageLast"/>
+                </Button>
             </StackPanel>
-        </ScrollViewer>
+        </Grid>
     </Grid>
 </UserControl>

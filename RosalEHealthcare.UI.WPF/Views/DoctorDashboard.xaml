@@ -5,6 +5,7 @@
                       xmlns:lvc="clr-namespace:LiveCharts.Wpf;assembly=LiveCharts.Wpf"
                       xmlns:local="clr-namespace:RosalEHealthcare.UI.WPF.Controls"
                       xmlns:converters="clr-namespace:RosalEHealthcare.UI.WPF.Converters"
+                      xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
                       xmlns:iconPacks="http://metro.mahapps.com/winfx/xaml/iconpacks"
                       Title=""
                       ShowTitleBar="False"
@@ -22,11 +23,9 @@
                       StateChanged="Window_StateChanged">
 
     <controls:MetroWindow.Resources>
-        <!-- Converters -->
         <converters:BooleanToVisibilityConverter x:Key="BoolToVis"/>
         <converters:FollowUpStatusToColorConverter x:Key="FollowUpColorConverter"/>
 
-        <!-- Sidebar button style -->
         <Style x:Key="SidebarButton" TargetType="Button">
             <Setter Property="Foreground" Value="White"/>
             <Setter Property="Background" Value="Transparent"/>
@@ -38,10 +37,7 @@
             <Setter Property="Template">
                 <Setter.Value>
                     <ControlTemplate TargetType="Button">
-                        <Border Background="{TemplateBinding Background}"
-                                Padding="{TemplateBinding Padding}"
-                                CornerRadius="8"
-                                Margin="4,2">
+                        <Border Background="{TemplateBinding Background}" Padding="{TemplateBinding Padding}" CornerRadius="8" Margin="4,2">
                             <ContentPresenter VerticalAlignment="Center"/>
                         </Border>
                         <ControlTemplate.Triggers>
@@ -57,12 +53,15 @@
             </Setter>
         </Style>
 
-        <!-- Active nav button style -->
         <Style x:Key="SidebarButtonActive" TargetType="Button" BasedOn="{StaticResource SidebarButton}">
             <Setter Property="Background" Value="#4CAF50"/>
+            <Setter Property="Effect">
+                <Setter.Value>
+                    <DropShadowEffect Color="Black" BlurRadius="10" ShadowDepth="2" Opacity="0.2"/>
+                </Setter.Value>
+            </Setter>
         </Style>
 
-        <!-- Window Control Button Style -->
         <Style x:Key="WindowControlButton" TargetType="Button">
             <Setter Property="Width" Value="46"/>
             <Setter Property="Height" Value="32"/>
@@ -87,7 +86,6 @@
             </Style.Triggers>
         </Style>
 
-        <!-- Close Button Style -->
         <Style x:Key="CloseButton" TargetType="Button" BasedOn="{StaticResource WindowControlButton}">
             <Style.Triggers>
                 <Trigger Property="IsMouseOver" Value="True">
@@ -97,7 +95,6 @@
             </Style.Triggers>
         </Style>
 
-        <!-- Pagination Button Style -->
         <Style x:Key="PaginationButton" TargetType="Button">
             <Setter Property="Width" Value="36"/>
             <Setter Property="Height" Value="36"/>
@@ -110,10 +107,7 @@
             <Setter Property="Template">
                 <Setter.Value>
                     <ControlTemplate TargetType="Button">
-                        <Border Background="{TemplateBinding Background}"
-                                BorderBrush="{TemplateBinding BorderBrush}"
-                                BorderThickness="{TemplateBinding BorderThickness}"
-                                CornerRadius="6">
+                        <Border Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="6">
                             <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
                         </Border>
                         <ControlTemplate.Triggers>
@@ -129,14 +123,12 @@
             </Setter>
         </Style>
 
-        <!-- Active Pagination Button -->
         <Style x:Key="PaginationButtonActive" TargetType="Button" BasedOn="{StaticResource PaginationButton}">
             <Setter Property="Background" Value="#2E7D32"/>
             <Setter Property="Foreground" Value="White"/>
             <Setter Property="BorderBrush" Value="#2E7D32"/>
         </Style>
 
-        <!-- View Record Button Style -->
         <Style x:Key="ViewRecordButton" TargetType="Button">
             <Setter Property="Background" Value="#E8F5E9"/>
             <Setter Property="Foreground" Value="#2E7D32"/>
@@ -148,9 +140,7 @@
             <Setter Property="Template">
                 <Setter.Value>
                     <ControlTemplate TargetType="Button">
-                        <Border Background="{TemplateBinding Background}"
-                                Padding="{TemplateBinding Padding}"
-                                CornerRadius="4">
+                        <Border Background="{TemplateBinding Background}" Padding="{TemplateBinding Padding}" CornerRadius="4">
                             <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
                         </Border>
                         <ControlTemplate.Triggers>
@@ -162,248 +152,104 @@
                 </Setter.Value>
             </Setter>
         </Style>
-
     </controls:MetroWindow.Resources>
 
     <Grid>
         <Grid.RowDefinitions>
-            <RowDefinition Height="40"/>
+            <RowDefinition Height="32"/>
             <RowDefinition Height="*"/>
         </Grid.RowDefinitions>
 
-        <!-- CUSTOM TITLE BAR -->
-        <Border Grid.Row="0" 
-                Background="White" 
-                BorderBrush="#E0E0E0"
-                BorderThickness="0,0,0,1"
-                MouseLeftButtonDown="TitleBar_MouseLeftButtonDown">
+        <Border Grid.Row="0" Background="White" BorderBrush="#E0E0E0" BorderThickness="0,0,0,1" MouseLeftButtonDown="TitleBar_MouseLeftButtonDown">
             <Grid>
-                <!-- Window Control Buttons -->
-                <StackPanel Orientation="Horizontal" 
-                            HorizontalAlignment="Right">
-                    <Button x:Name="btnMinimize" 
-                            Content="─" 
-                            Style="{StaticResource WindowControlButton}"
-                            Click="btnMinimize_Click"
-                            FontSize="16"/>
-                    <Button x:Name="btnMaximize" 
-                            Content="□" 
-                            Style="{StaticResource WindowControlButton}"
-                            Click="btnMaximize_Click"
-                            FontSize="14"/>
-                    <Button x:Name="btnClose" 
-                            Content="✕" 
-                            Style="{StaticResource CloseButton}"
-                            Click="btnClose_Click"
-                            FontSize="16"/>
+                <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                    <Button x:Name="btnMinimize" Content="─" Style="{StaticResource WindowControlButton}" Click="btnMinimize_Click"/>
+                    <Button x:Name="btnMaximize" Content="□" Style="{StaticResource WindowControlButton}" Click="btnMaximize_Click"/>
+                    <Button x:Name="btnClose" Content="✕" Style="{StaticResource CloseButton}" Click="btnClose_Click"/>
                 </StackPanel>
             </Grid>
         </Border>
 
-        <!-- MAIN CONTENT -->
         <Grid Grid.Row="1">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="260"/>
                 <ColumnDefinition Width="*"/>
             </Grid.ColumnDefinitions>
 
-            <!-- SIDEBAR -->
             <Border Grid.Column="0" Background="#2E7D32">
+                <Border.Effect>
+                    <DropShadowEffect Color="Black" BlurRadius="15" ShadowDepth="4" Opacity="0.2"/>
+                </Border.Effect>
                 <DockPanel>
-                    <StackPanel Margin="16,16,16,8" DockPanel.Dock="Top">
-                        <!-- Logo & Title -->
-                        <StackPanel Orientation="Horizontal" Margin="0,4,0,20">
-                            <Border Width="50" Height="50" CornerRadius="25" Background="White" Padding="2">
-                                <Image Source="/RosalEHealthcare.UI.WPF;component/Resources/rosal_logo.png"
-                                       Stretch="Uniform"/>
+                    <StackPanel Margin="16,24,16,8" DockPanel.Dock="Top">
+                        <StackPanel Orientation="Horizontal" Margin="0,4,0,30">
+                            <Border Width="40" Height="40" CornerRadius="20" Background="White" Padding="4">
+                                <Image Source="/RosalEHealthcare.UI.WPF;component/Resources/rosal_logo.png" Stretch="Uniform"/>
                             </Border>
                             <StackPanel VerticalAlignment="Center" Margin="12,0,0,0">
-                                <TextBlock Text="ROSAL eHEALTHCARE" 
-                                           Foreground="White" 
-                                           FontWeight="Bold"
-                                           FontSize="14"/>
-                                <TextBlock Text="Management System" 
-                                           Foreground="#C8E6C9" 
-                                           FontSize="11"/>
+                                <TextBlock Text="ROSAL eHEALTHCARE" Foreground="White" FontWeight="Bold" FontSize="14"/>
+                                <TextBlock Text="Management System" Foreground="#E0E0E0" FontSize="11"/>
                             </StackPanel>
                         </StackPanel>
 
-                        <!-- User Profile -->
-                        <StackPanel Margin="0,10,0,0">
-                            <Border Width="60" Height="60" CornerRadius="30" 
-                                    Background="#E8F5E9"
-                                    HorizontalAlignment="Center">
-                                <Grid>
-                                    <!-- Profile Image -->
-                                    <Ellipse x:Name="ProfileEllipse" Fill="Transparent"/>
-                                    <!-- Initials Fallback -->
-                                    <TextBlock x:Name="TxtUserInitials"
-                                               Text="DN"
-                                               FontSize="22"
-                                               FontWeight="Bold"
-                                               Foreground="#2E7D32"
-                                               HorizontalAlignment="Center"
-                                               VerticalAlignment="Center"/>
-                                </Grid>
-                            </Border>
-                            <TextBlock x:Name="TxtUserFullName" 
-                                       Text="Dr. Name" 
-                                       Foreground="White" 
-                                       FontSize="15" 
-                                       FontWeight="Bold" 
-                                       TextAlignment="Center"
-                                       Margin="0,10,0,2"/>
-                            <TextBlock x:Name="TxtUserRole" 
-                                       Text="Doctor" 
-                                       Foreground="#C8E6C9" 
-                                       FontSize="12"
-                                       TextAlignment="Center"/>
-                        </StackPanel>
-                    </StackPanel>
-
-                    <!-- Navigation Items -->
-                    <ScrollViewer VerticalScrollBarVisibility="Auto" 
-                                  DockPanel.Dock="Top"
-                                  Margin="8,20,8,0">
-                        <StackPanel>
-                            <Button x:Name="BtnDashboard" 
-                                    Style="{StaticResource SidebarButtonActive}" 
-                                    Margin="8,4" 
-                                    Click="Dashboard_Click">
-                                <StackPanel Orientation="Horizontal">
-                                    <iconPacks:PackIconMaterial Kind="ViewDashboard" Width="20" Height="20" VerticalAlignment="Center"/>
-                                    <TextBlock Text="Dashboard" Margin="12,0,0,0" VerticalAlignment="Center"/>
-                                </StackPanel>
-                            </Button>
-
-                            <Button x:Name="BtnPatientRecords" 
-                                    Style="{StaticResource SidebarButton}" 
-                                    Margin="8,4" 
-                                    Click="PatientRecords_Click">
-                                <StackPanel Orientation="Horizontal">
-                                    <iconPacks:PackIconMaterial Kind="AccountGroup" Width="20" Height="20" VerticalAlignment="Center"/>
-                                    <TextBlock Text="Patient Records" Margin="12,0,0,0" VerticalAlignment="Center"/>
-                                </StackPanel>
-                            </Button>
-
-                            <Button x:Name="BtnAppointmentLists" 
-                                    Style="{StaticResource SidebarButton}" 
-                                    Margin="8,4" 
-                                    Click="AppointmentLists_Click">
-                                <StackPanel Orientation="Horizontal">
-                                    <iconPacks:PackIconMaterial Kind="CalendarClock" Width="20" Height="20" VerticalAlignment="Center"/>
-                                    <TextBlock Text="Appointment Lists" Margin="12,0,0,0" VerticalAlignment="Center"/>
-                                </StackPanel>
-                            </Button>
-
-                            <Button x:Name="BtnPrescription" 
-                                    Style="{StaticResource SidebarButton}" 
-                                    Margin="8,4" 
-                                    Click="Prescription_Click">
-                                <StackPanel Orientation="Horizontal">
-                                    <iconPacks:PackIconMaterial Kind="Pill" Width="20" Height="20" VerticalAlignment="Center"/>
-                                    <TextBlock Text="Prescription Management" Margin="12,0,0,0" VerticalAlignment="Center"/>
-                                </StackPanel>
-                            </Button>
-
-                            <Button x:Name="BtnMedicalReports" 
-                                    Style="{StaticResource SidebarButton}" 
-                                    Margin="8,4" 
-                                    Click="MedicalReports_Click">
-                                <StackPanel Orientation="Horizontal">
-                                    <iconPacks:PackIconMaterial Kind="FileDocument" Width="20" Height="20" VerticalAlignment="Center"/>
-                                    <TextBlock Text="Medical Reports" Margin="12,0,0,0" VerticalAlignment="Center"/>
-                                </StackPanel>
-                            </Button>
-
-                            <Button x:Name="BtnSettings" 
-                                    Style="{StaticResource SidebarButton}" 
-                                    Margin="8,4" 
-                                    Click="Settings_Click">
-                                <StackPanel Orientation="Horizontal">
-                                    <iconPacks:PackIconMaterial Kind="Cog" Width="20" Height="20" VerticalAlignment="Center"/>
-                                    <TextBlock Text="System Settings" Margin="12,0,0,0" VerticalAlignment="Center"/>
-                                </StackPanel>
-                            </Button>
-                        </StackPanel>
-                    </ScrollViewer>
-
-                    <!-- Logout Button at Bottom -->
-                    <StackPanel DockPanel.Dock="Bottom" Margin="16,12">
-                        <Button Background="#D32F2F" 
-                                Foreground="White" 
-                                Padding="12"
-                                BorderThickness="0"
-                                Cursor="Hand"
-                                Click="Logout_Click">
-                            <Button.Style>
-                                <Style TargetType="Button">
-                                    <Setter Property="Template">
-                                        <Setter.Value>
-                                            <ControlTemplate TargetType="Button">
-                                                <Border Background="{TemplateBinding Background}"
-                                                        Padding="{TemplateBinding Padding}"
-                                                        CornerRadius="8">
-                                                    <ContentPresenter HorizontalAlignment="Center" 
-                                                                      VerticalAlignment="Center"/>
-                                                </Border>
-                                            </ControlTemplate>
-                                        </Setter.Value>
-                                    </Setter>
-                                    <Style.Triggers>
-                                        <Trigger Property="IsMouseOver" Value="True">
-                                            <Setter Property="Background" Value="#C62828"/>
-                                        </Trigger>
-                                    </Style.Triggers>
-                                </Style>
-                            </Button.Style>
-                            <StackPanel Orientation="Horizontal">
-                                <iconPacks:PackIconMaterial Kind="Logout" Width="18" Height="18" VerticalAlignment="Center"/>
-                                <TextBlock Text="Logout" Margin="8,0,0,0" VerticalAlignment="Center" FontWeight="SemiBold"/>
+                        <ScrollViewer VerticalScrollBarVisibility="Auto" Margin="0,0,0,0">
+                            <StackPanel>
+                                <Button x:Name="BtnDashboard" Content="📊 Dashboard" Style="{StaticResource SidebarButtonActive}" Margin="8,4" Click="Dashboard_Click"/>
+                                <Button x:Name="BtnPatientRecords" Content="👥 Patient Records" Style="{StaticResource SidebarButton}" Margin="8,4" Click="PatientRecords_Click"/>
+                                <Button x:Name="BtnAppointmentLists" Content="📅 Appointment Lists" Style="{StaticResource SidebarButton}" Margin="8,4" Click="AppointmentLists_Click"/>
+                                <Button x:Name="BtnPrescription" Content="💊 Prescriptions" Style="{StaticResource SidebarButton}" Margin="8,4" Click="Prescription_Click"/>
+                                <Button x:Name="BtnMedicalReports" Content="📄 Medical Reports" Style="{StaticResource SidebarButton}" Margin="8,4" Click="MedicalReports_Click"/>
+                                <Button x:Name="BtnSettings" Content="⚙️ System Settings" Style="{StaticResource SidebarButton}" Margin="8,4" Click="Settings_Click"/>
                             </StackPanel>
-                        </Button>
+                        </ScrollViewer>
                     </StackPanel>
+                    <TextBlock Text="Version 1.0" DockPanel.Dock="Bottom" Foreground="#80FFFFFF" FontSize="11" HorizontalAlignment="Center" Margin="0,0,0,20"/>
                 </DockPanel>
             </Border>
 
-            <!-- MAIN CONTENT AREA -->
             <DockPanel Grid.Column="1" Background="#F5F5F5">
-                <!-- Top Bar -->
-                <Border DockPanel.Dock="Top" 
-                        Height="70" 
-                        Background="White" 
-                        BorderBrush="#E0E0E0"
-                        BorderThickness="0,0,0,1"
-                        Padding="24,0">
+                <Border DockPanel.Dock="Top" Height="70" Background="White" BorderBrush="#E0E0E0" BorderThickness="0,0,0,1" Padding="20,0">
                     <Grid>
-                        <TextBlock x:Name="txtPageTitle" 
-                                   Text="Doctor Dashboard" 
-                                   FontSize="26" 
-                                   FontWeight="Bold"
-                                   Foreground="#2E7D32" 
-                                   VerticalAlignment="Center"/>
-                        <StackPanel Orientation="Horizontal" 
-                                    HorizontalAlignment="Right" 
-                                    VerticalAlignment="Center">
-                            <!-- Notification Bell -->
-                            <StackPanel Orientation="Horizontal" 
-                                        HorizontalAlignment="Right" 
-                                        VerticalAlignment="Center">
-                                <!-- Notification Bell Button -->
-                                <local:NotificationBellButton x:Name="NotificationBell"/>
-                            </StackPanel>
+                        <TextBlock x:Name="txtPageTitle" Text="Doctor Dashboard" FontSize="26" FontWeight="Bold" Foreground="#2E7D32" VerticalAlignment="Center"/>
+                        <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center">
+                            <local:NotificationBellButton x:Name="NotificationBell" Margin="0,0,20,0"/>
+                            <Border Width="1" Height="30" Background="#EEE" Margin="0,0,20,0"/>
+
+                            <materialDesign:PopupBox PlacementMode="BottomAndAlignRightEdges" StaysOpen="False">
+                                <materialDesign:PopupBox.ToggleContent>
+                                    <StackPanel Orientation="Horizontal" Cursor="Hand" Background="Transparent">
+                                        <Border Width="40" Height="40" CornerRadius="20" Background="#E8F5E9" BorderBrush="#2E7D32" BorderThickness="1">
+                                            <Grid>
+                                                <Ellipse x:Name="ProfileEllipse" Fill="Transparent"/>
+                                                <TextBlock x:Name="TxtUserInitials" Text="DR" HorizontalAlignment="Center" VerticalAlignment="Center" Foreground="#2E7D32" FontWeight="Bold"/>
+                                            </Grid>
+                                        </Border>
+                                        <StackPanel Margin="12,0,0,0" VerticalAlignment="Center">
+                                            <TextBlock x:Name="TxtUserFullName" Text="Dr. Name" FontWeight="SemiBold" FontSize="14"/>
+                                            <TextBlock x:Name="TxtUserRole" Text="Doctor" FontSize="11" Foreground="Gray"/>
+                                        </StackPanel>
+                                        <iconPacks:PackIconMaterial Kind="ChevronDown" VerticalAlignment="Center" Margin="8,0,0,0" Foreground="Gray"/>
+                                    </StackPanel>
+                                </materialDesign:PopupBox.ToggleContent>
+                                <StackPanel MinWidth="180" Margin="0,8">
+                                    <Button Content="My Profile" HorizontalContentAlignment="Left" Click="Settings_Click"/>
+                                    <Button Content="Account Settings" HorizontalContentAlignment="Left" Click="Settings_Click"/>
+                                    <Separator Opacity="0.5"/>
+                                    <Button x:Name="BtnLogout" Click="Logout_Click" Foreground="#D32F2F" HorizontalContentAlignment="Left">
+                                        <StackPanel Orientation="Horizontal">
+                                            <iconPacks:PackIconMaterial Kind="Logout" Margin="0,0,10,0"/>
+                                            <TextBlock Text="Logout"/>
+                                        </StackPanel>
+                                    </Button>
+                                </StackPanel>
+                            </materialDesign:PopupBox>
                         </StackPanel>
                     </Grid>
                 </Border>
 
-                <!-- MAIN CONTENT WRAPPER -->
-                <Grid Background="#F5F5F5">
-                    <!-- Default Dashboard Content -->
-                    <ScrollViewer x:Name="DashboardPanel" 
-                                  VerticalScrollBarVisibility="Auto"
-                                  HorizontalScrollBarVisibility="Disabled">
+                <Grid>
+                    <ScrollViewer x:Name="DashboardPanel" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
                         <StackPanel Margin="24">
-                            <!-- Summary Cards Row -->
                             <Grid Margin="0,0,0,24">
                                 <Grid.ColumnDefinitions>
                                     <ColumnDefinition Width="*"/>
@@ -411,202 +257,71 @@
                                     <ColumnDefinition Width="*"/>
                                     <ColumnDefinition Width="*"/>
                                 </Grid.ColumnDefinitions>
-
-                                <!-- Total Patients Card -->
-                                <local:SummaryCard x:Name="CardTotalPatients"
-                                                   Grid.Column="0"
-                                                   Margin="0,0,12,0"
-                                                   Title="Total Patients"
-                                                   Value="0"
-                                                   Icon="👥"
-                                                   TopColor="#4CAF50"
-                                                   IconBackground="#E8F5E9"
-                                                   TrendText="+0% from last month"
-                                                   TrendIcon="✓"
-                                                   TrendColor="#4CAF50"/>
-
-                                <!-- Today's Appointments Card -->
-                                <local:SummaryCard x:Name="CardTodayAppointments"
-                                                   Grid.Column="1"
-                                                   Margin="6,0"
-                                                   Title="Today's Appointments"
-                                                   Value="0"
-                                                   Icon="📅"
-                                                   TopColor="#2196F3"
-                                                   IconBackground="#E3F2FD"
-                                                   TrendText="+0% from yesterday"
-                                                   TrendIcon="✓"
-                                                   TrendColor="#2196F3"/>
-
-                                <!-- Low Stock Medicines Card -->
-                                <local:SummaryCard x:Name="CardLowStock"
-                                                   Grid.Column="2"
-                                                   Margin="6,0"
-                                                   Title="Low stock Medicines"
-                                                   Value="0"
-                                                   Icon="💊"
-                                                   TopColor="#FF9800"
-                                                   IconBackground="#FFF3E0"
-                                                   TrendText="Requires attention"
-                                                   TrendIcon="⚠"
-                                                   TrendColor="#FF9800"/>
-
-                                <!-- Expiring Medicines Card -->
-                                <local:SummaryCard x:Name="CardExpiringMedicines"
-                                                   Grid.Column="3"
-                                                   Margin="12,0,0,0"
-                                                   Title="Expiring Medicines"
-                                                   Value="0"
-                                                   Icon="⏰"
-                                                   TopColor="#F44336"
-                                                   IconBackground="#FFEBEE"
-                                                   TrendText="Expiring within 30 days"
-                                                   TrendIcon="⚠"
-                                                   TrendColor="#F44336"/>
+                                <local:SummaryCard x:Name="CardTotalPatients" Grid.Column="0" Margin="0,0,12,0" Title="Total Patients" Value="0" Icon="👥" TopColor="#4CAF50" IconBackground="#E8F5E9" TrendText="+0% from last month" TrendIcon="✓" TrendColor="#4CAF50"/>
+                                <local:SummaryCard x:Name="CardTodayAppointments" Grid.Column="1" Margin="6,0" Title="Today's Appointments" Value="0" Icon="📅" TopColor="#2196F3" IconBackground="#E3F2FD" TrendText="+0% from yesterday" TrendIcon="✓" TrendColor="#2196F3"/>
+                                <local:SummaryCard x:Name="CardLowStock" Grid.Column="2" Margin="6,0" Title="Low stock Medicines" Value="0" Icon="💊" TopColor="#FF9800" IconBackground="#FFF3E0" TrendText="Requires attention" TrendIcon="⚠" TrendColor="#FF9800"/>
+                                <local:SummaryCard x:Name="CardExpiringMedicines" Grid.Column="3" Margin="12,0,0,0" Title="Expiring Medicines" Value="0" Icon="⏰" TopColor="#F44336" IconBackground="#FFEBEE" TrendText="Expiring within 30 days" TrendIcon="⚠" TrendColor="#F44336"/>
                             </Grid>
 
-                            <!-- Charts Row -->
                             <Grid Margin="0,0,0,24">
                                 <Grid.ColumnDefinitions>
                                     <ColumnDefinition Width="*"/>
                                     <ColumnDefinition Width="*"/>
                                 </Grid.ColumnDefinitions>
-
-                                <!-- Common Illness Chart -->
-                                <Border Grid.Column="0" 
-                                        Background="White" 
-                                        CornerRadius="12" 
-                                        Padding="20"
-                                        Margin="0,0,12,0">
+                                <Border Grid.Column="0" Background="White" CornerRadius="12" Padding="20" Margin="0,0,12,0">
                                     <Border.Effect>
                                         <DropShadowEffect Color="#000000" BlurRadius="15" ShadowDepth="2" Opacity="0.08"/>
                                     </Border.Effect>
                                     <DockPanel>
                                         <StackPanel DockPanel.Dock="Top" Margin="0,0,0,15">
-                                            <TextBlock Text="Common Illness" 
-                                                       FontSize="18" 
-                                                       FontWeight="Bold" 
-                                                       Foreground="#333"/>
-                                            <TextBlock Text="Monthly Diagnosis Trends"
-                                                       Foreground="#757575" 
-                                                       FontSize="13" 
-                                                       Margin="0,4,0,0"/>
+                                            <TextBlock Text="Common Illness" FontSize="18" FontWeight="Bold" Foreground="#333"/>
+                                            <TextBlock Text="Monthly Diagnosis Trends" Foreground="#757575" FontSize="13" Margin="0,4,0,0"/>
                                         </StackPanel>
-                                        <TextBlock DockPanel.Dock="Bottom"
-                                                   Text="Line chart showing weekly patient visits with trend analysis"
-                                                   Foreground="#9E9E9E"
-                                                   FontSize="12"
-                                                   HorizontalAlignment="Center"
-                                                   Margin="0,10,0,0"/>
-                                        <!-- Line Chart -->
-                                        <lvc:CartesianChart x:Name="IllnessChart"
-                                                            MinHeight="220"
-                                                            Margin="0,10">
+                                        <lvc:CartesianChart x:Name="IllnessChart" MinHeight="220" Margin="0,10">
                                             <lvc:CartesianChart.AxisX>
-                                                <lvc:Axis x:Name="IllnessAxisX" 
-                                                          Labels="{Binding IllnessChartLabels}"
-                                                          Foreground="#757575"
-                                                          FontSize="11">
-                                                    <lvc:Axis.Separator>
-                                                        <lvc:Separator StrokeThickness="0"/>
-                                                    </lvc:Axis.Separator>
-                                                </lvc:Axis>
+                                                <lvc:Axis x:Name="IllnessAxisX" Labels="{Binding IllnessChartLabels}" Foreground="#757575" FontSize="11"/>
                                             </lvc:CartesianChart.AxisX>
                                             <lvc:CartesianChart.AxisY>
-                                                <lvc:Axis Foreground="#757575" 
-                                                          FontSize="11"
-                                                          MinValue="0">
-                                                    <lvc:Axis.Separator>
-                                                        <lvc:Separator StrokeThickness="1" 
-                                                                       Stroke="#F0F0F0"/>
-                                                    </lvc:Axis.Separator>
-                                                </lvc:Axis>
+                                                <lvc:Axis Foreground="#757575" FontSize="11" MinValue="0"/>
                                             </lvc:CartesianChart.AxisY>
                                         </lvc:CartesianChart>
                                     </DockPanel>
                                 </Border>
-
-                                <!-- Appointment Status Chart -->
-                                <Border Grid.Column="1" 
-                                        Background="White" 
-                                        CornerRadius="12" 
-                                        Padding="20"
-                                        Margin="12,0,0,0">
+                                <Border Grid.Column="1" Background="White" CornerRadius="12" Padding="20" Margin="12,0,0,0">
                                     <Border.Effect>
                                         <DropShadowEffect Color="#000000" BlurRadius="15" ShadowDepth="2" Opacity="0.08"/>
                                     </Border.Effect>
                                     <DockPanel>
                                         <StackPanel DockPanel.Dock="Top" Margin="0,0,0,15">
-                                            <TextBlock Text="Appointment Status" 
-                                                       FontSize="18" 
-                                                       FontWeight="Bold" 
-                                                       Foreground="#333"/>
-                                            <TextBlock Text="Current Month Overview"
-                                                       Foreground="#757575" 
-                                                       FontSize="13" 
-                                                       Margin="0,4,0,0"/>
+                                            <TextBlock Text="Appointment Status" FontSize="18" FontWeight="Bold" Foreground="#333"/>
+                                            <TextBlock Text="Current Month Overview" Foreground="#757575" FontSize="13" Margin="0,4,0,0"/>
                                         </StackPanel>
                                         <Grid>
                                             <Grid.ColumnDefinitions>
                                                 <ColumnDefinition Width="*"/>
                                                 <ColumnDefinition Width="Auto"/>
                                             </Grid.ColumnDefinitions>
-
-                                            <!-- Pie Chart -->
-                                            <lvc:PieChart x:Name="AppointmentStatusChart"
-                                                          Grid.Column="0"
-                                                          MinHeight="200"
-                                                          InnerRadius="50"
-                                                          Hoverable="True"
-                                                          DataClick="AppointmentStatusChart_DataClick">
+                                            <lvc:PieChart x:Name="AppointmentStatusChart" Grid.Column="0" MinHeight="200" InnerRadius="50" Hoverable="True" DataClick="AppointmentStatusChart_DataClick">
                                                 <lvc:PieChart.ChartLegend>
                                                     <lvc:DefaultLegend Visibility="Collapsed"/>
                                                 </lvc:PieChart.ChartLegend>
                                             </lvc:PieChart>
-
-                                            <!-- Custom Legend -->
-                                            <StackPanel Grid.Column="1" 
-                                                        VerticalAlignment="Center"
-                                                        Margin="20,0,0,0">
-                                                <!-- Confirmed -->
+                                            <StackPanel Grid.Column="1" VerticalAlignment="Center" Margin="20,0,0,0">
                                                 <StackPanel Orientation="Horizontal" Margin="0,6">
                                                     <Border Width="16" Height="16" CornerRadius="4" Background="#4CAF50"/>
-                                                    <TextBlock x:Name="TxtConfirmedPercent" 
-                                                               Text="Confirmed (35%)" 
-                                                               Foreground="#333" 
-                                                               FontSize="13"
-                                                               VerticalAlignment="Center"
-                                                               Margin="10,0,0,0"/>
+                                                    <TextBlock x:Name="TxtConfirmedPercent" Text="Confirmed (35%)" Foreground="#333" FontSize="13" Margin="10,0,0,0"/>
                                                 </StackPanel>
-                                                <!-- Pending -->
                                                 <StackPanel Orientation="Horizontal" Margin="0,6">
                                                     <Border Width="16" Height="16" CornerRadius="4" Background="#FFC107"/>
-                                                    <TextBlock x:Name="TxtPendingPercent" 
-                                                               Text="Pending (20%)" 
-                                                               Foreground="#333" 
-                                                               FontSize="13"
-                                                               VerticalAlignment="Center"
-                                                               Margin="10,0,0,0"/>
+                                                    <TextBlock x:Name="TxtPendingPercent" Text="Pending (20%)" Foreground="#333" FontSize="13" Margin="10,0,0,0"/>
                                                 </StackPanel>
-                                                <!-- Cancelled -->
                                                 <StackPanel Orientation="Horizontal" Margin="0,6">
                                                     <Border Width="16" Height="16" CornerRadius="4" Background="#F44336"/>
-                                                    <TextBlock x:Name="TxtCancelledPercent" 
-                                                               Text="Cancelled (20%)" 
-                                                               Foreground="#333" 
-                                                               FontSize="13"
-                                                               VerticalAlignment="Center"
-                                                               Margin="10,0,0,0"/>
+                                                    <TextBlock x:Name="TxtCancelledPercent" Text="Cancelled (20%)" Foreground="#333" FontSize="13" Margin="10,0,0,0"/>
                                                 </StackPanel>
-                                                <!-- Completed -->
                                                 <StackPanel Orientation="Horizontal" Margin="0,6">
                                                     <Border Width="16" Height="16" CornerRadius="4" Background="#2196F3"/>
-                                                    <TextBlock x:Name="TxtCompletedPercent" 
-                                                               Text="Completed (25%)" 
-                                                               Foreground="#333" 
-                                                               FontSize="13"
-                                                               VerticalAlignment="Center"
-                                                               Margin="10,0,0,0"/>
+                                                    <TextBlock x:Name="TxtCompletedPercent" Text="Completed (25%)" Foreground="#333" FontSize="13" Margin="10,0,0,0"/>
                                                 </StackPanel>
                                             </StackPanel>
                                         </Grid>
@@ -614,38 +329,21 @@
                                 </Border>
                             </Grid>
 
-                            <!-- Recent Patient Consultations -->
                             <Border Background="White" CornerRadius="12" Padding="24">
                                 <Border.Effect>
                                     <DropShadowEffect Color="#000000" BlurRadius="15" ShadowDepth="2" Opacity="0.08"/>
                                 </Border.Effect>
                                 <DockPanel>
-                                    <!-- Header -->
                                     <Grid DockPanel.Dock="Top" Margin="0,0,0,20">
                                         <StackPanel>
-                                            <TextBlock Text="Recent Patient Consultations" 
-                                                       FontSize="18" 
-                                                       FontWeight="Bold" 
-                                                       Foreground="#333"/>
+                                            <TextBlock Text="Recent Patient Consultations" FontSize="18" FontWeight="Bold" Foreground="#333"/>
                                             <StackPanel Orientation="Horizontal" Margin="0,4,0,0">
-                                                <TextBlock Text="Latest medical consultations and diagnoses"
-                                                           Foreground="#757575" 
-                                                           FontSize="13"/>
-                                                <TextBlock x:Name="TxtShowingInfo"
-                                                           Text="    Showing 1-5 of 1,245 patients"
-                                                           Foreground="#9E9E9E" 
-                                                           FontSize="13"/>
+                                                <TextBlock Text="Latest medical consultations and diagnoses" Foreground="#757575" FontSize="13"/>
+                                                <TextBlock x:Name="TxtShowingInfo" Text="   Showing 1-5 of 1,245 patients" Foreground="#9E9E9E" FontSize="13"/>
                                             </StackPanel>
                                         </StackPanel>
-
-                                        <!-- Pagination Controls -->
-                                        <StackPanel Orientation="Horizontal" 
-                                                    HorizontalAlignment="Right"
-                                                    VerticalAlignment="Center">
-                                            <Button x:Name="BtnPrevPage" 
-                                                    Style="{StaticResource PaginationButton}"
-                                                    Click="PrevPage_Click"
-                                                    Margin="0,0,8,0">
+                                        <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center">
+                                            <Button x:Name="BtnPrevPage" Style="{StaticResource PaginationButton}" Click="PrevPage_Click" Margin="0,0,8,0">
                                                 <StackPanel Orientation="Horizontal">
                                                     <TextBlock Text="«" FontSize="14" Margin="0,0,4,0"/>
                                                     <TextBlock Text="Previous" FontSize="12"/>
@@ -658,10 +356,7 @@
                                             <TextBlock Text="..." VerticalAlignment="Center" Margin="6,0" Foreground="#757575"/>
                                             <Button x:Name="BtnPageLast" Content="249" Style="{StaticResource PaginationButton}" Margin="2,0" Click="PageNumber_Click"/>
 
-                                            <Button x:Name="BtnNextPage" 
-                                                    Style="{StaticResource PaginationButton}"
-                                                    Click="NextPage_Click"
-                                                    Margin="8,0,0,0">
+                                            <Button x:Name="BtnNextPage" Style="{StaticResource PaginationButton}" Click="NextPage_Click" Margin="8,0,0,0">
                                                 <StackPanel Orientation="Horizontal">
                                                     <TextBlock Text="Next" FontSize="12"/>
                                                     <TextBlock Text="»" FontSize="14" Margin="4,0,0,0"/>
@@ -669,21 +364,7 @@
                                             </Button>
                                         </StackPanel>
                                     </Grid>
-
-                                    <!-- Data Grid -->
-                                    <DataGrid x:Name="ConsultationsDataGrid"
-                                              AutoGenerateColumns="False" 
-                                              HeadersVisibility="Column"
-                                              CanUserAddRows="False" 
-                                              IsReadOnly="True"
-                                              GridLinesVisibility="Horizontal"
-                                              BorderThickness="0"
-                                              Background="White"
-                                              RowBackground="White"
-                                              AlternatingRowBackground="#FAFAFA"
-                                              RowHeight="55"
-                                              SelectionMode="Single"
-                                              SelectionUnit="FullRow">
+                                    <DataGrid x:Name="ConsultationsDataGrid" AutoGenerateColumns="False" CanUserAddRows="False" IsReadOnly="True" GridLinesVisibility="Horizontal" BorderThickness="0" Background="White" RowBackground="White" AlternatingRowBackground="#FAFAFA" RowHeight="55" SelectionMode="Single" SelectionUnit="FullRow">
                                         <DataGrid.ColumnHeaderStyle>
                                             <Style TargetType="DataGridColumnHeader">
                                                 <Setter Property="Background" Value="#F5F5F5"/>
@@ -700,17 +381,6 @@
                                                 <Setter Property="Padding" Value="12,0"/>
                                                 <Setter Property="BorderThickness" Value="0"/>
                                                 <Setter Property="VerticalAlignment" Value="Center"/>
-                                                <Setter Property="Template">
-                                                    <Setter.Value>
-                                                        <ControlTemplate TargetType="DataGridCell">
-                                                            <Border Padding="{TemplateBinding Padding}" 
-                                                                    Background="{TemplateBinding Background}"
-                                                                    BorderThickness="0">
-                                                                <ContentPresenter VerticalAlignment="Center"/>
-                                                            </Border>
-                                                        </ControlTemplate>
-                                                    </Setter.Value>
-                                                </Setter>
                                                 <Style.Triggers>
                                                     <Trigger Property="IsSelected" Value="True">
                                                         <Setter Property="Background" Value="#E8F5E9"/>
@@ -719,63 +389,25 @@
                                                 </Style.Triggers>
                                             </Style>
                                         </DataGrid.CellStyle>
-                                        <DataGrid.RowStyle>
-                                            <Style TargetType="DataGridRow">
-                                                <Setter Property="BorderThickness" Value="0,0,0,1"/>
-                                                <Setter Property="BorderBrush" Value="#F0F0F0"/>
-                                                <Style.Triggers>
-                                                    <Trigger Property="IsMouseOver" Value="True">
-                                                        <Setter Property="Background" Value="#F5F5F5"/>
-                                                    </Trigger>
-                                                    <Trigger Property="IsSelected" Value="True">
-                                                        <Setter Property="Background" Value="#E8F5E9"/>
-                                                    </Trigger>
-                                                </Style.Triggers>
-                                            </Style>
-                                        </DataGrid.RowStyle>
                                         <DataGrid.Columns>
-                                            <DataGridTextColumn Header="Date" 
-                                                                Binding="{Binding DateFormatted}" 
-                                                                Width="120"/>
-                                            <DataGridTextColumn Header="Patient Name" 
-                                                                Binding="{Binding PatientName}" 
-                                                                Width="*" 
-                                                                MinWidth="150"/>
-                                            <DataGridTextColumn Header="Age" 
-                                                                Binding="{Binding Age}" 
-                                                                Width="70"/>
-                                            <DataGridTextColumn Header="Primary Diagnosis" 
-                                                                Binding="{Binding Diagnosis}" 
-                                                                Width="*" 
-                                                                MinWidth="160"/>
-                                            <DataGridTextColumn Header="Treatment" 
-                                                                Binding="{Binding Treatment}" 
-                                                                Width="*" 
-                                                                MinWidth="160"/>
-                                            <!-- Follow-up Column with Badge -->
+                                            <DataGridTextColumn Header="Date" Binding="{Binding DateFormatted}" Width="120"/>
+                                            <DataGridTextColumn Header="Patient Name" Binding="{Binding PatientName}" Width="*" MinWidth="150"/>
+                                            <DataGridTextColumn Header="Age" Binding="{Binding Age}" Width="70"/>
+                                            <DataGridTextColumn Header="Primary Diagnosis" Binding="{Binding Diagnosis}" Width="*" MinWidth="160"/>
+                                            <DataGridTextColumn Header="Treatment" Binding="{Binding Treatment}" Width="*" MinWidth="160"/>
                                             <DataGridTemplateColumn Header="Follow-up" Width="120">
                                                 <DataGridTemplateColumn.CellTemplate>
                                                     <DataTemplate>
-                                                        <Border Background="{Binding FollowUpBadgeColor}"
-                                                                CornerRadius="4"
-                                                                Padding="8,4"
-                                                                HorizontalAlignment="Center">
-                                                            <TextBlock Text="{Binding FollowUpStatus}"
-                                                                       Foreground="White"
-                                                                       FontSize="11"
-                                                                       FontWeight="SemiBold"/>
+                                                        <Border Background="{Binding FollowUpBadgeColor}" CornerRadius="4" Padding="8,4" HorizontalAlignment="Center">
+                                                            <TextBlock Text="{Binding FollowUpStatus}" Foreground="White" FontSize="11" FontWeight="SemiBold"/>
                                                         </Border>
                                                     </DataTemplate>
                                                 </DataGridTemplateColumn.CellTemplate>
                                             </DataGridTemplateColumn>
-                                            <!-- Action Column -->
                                             <DataGridTemplateColumn Header="Action" Width="110">
                                                 <DataGridTemplateColumn.CellTemplate>
                                                     <DataTemplate>
-                                                        <Button Content="View Record" 
-                                                                Style="{StaticResource ViewRecordButton}"
-                                                                Click="ViewRecord_Click"
-                                                                Tag="{Binding Id}"/>
+                                                        <Button Content="View Record" Style="{StaticResource ViewRecordButton}" Click="ViewRecord_Click" Tag="{Binding Id}"/>
                                                     </DataTemplate>
                                                 </DataGridTemplateColumn.CellTemplate>
                                             </DataGridTemplateColumn>
@@ -785,31 +417,16 @@
                             </Border>
                         </StackPanel>
                     </ScrollViewer>
-
-                    <!-- Swappable Subpages -->
                     <ContentControl x:Name="MainContent" Visibility="Collapsed"/>
-
-                    <!-- Loading Overlay -->
-                    <Border x:Name="LoadingOverlay" 
-                            Background="#80FFFFFF" 
-                            Visibility="Collapsed">
+                    <Border x:Name="LoadingOverlay" Background="#80FFFFFF" Visibility="Collapsed">
                         <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center">
                             <controls:ProgressRing IsActive="True" Width="60" Height="60"/>
-                            <TextBlock Text="Loading data..." 
-                                       Foreground="#333" 
-                                       FontSize="14" 
-                                       Margin="0,15,0,0"/>
+                            <TextBlock Text="Loading data..." Foreground="#333" FontSize="14" Margin="0,15,0,0"/>
                         </StackPanel>
                     </Border>
                 </Grid>
             </DockPanel>
         </Grid>
-        <!-- Notification Toast Container -->
-        <Canvas x:Name="ToastContainer" 
-                Grid.Row="1"
-                IsHitTestVisible="False"
-                HorizontalAlignment="Right"
-                VerticalAlignment="Bottom"
-                Margin="0,0,20,20"/>
+        <Canvas x:Name="ToastContainer" Grid.Row="1" IsHitTestVisible="False" HorizontalAlignment="Right" VerticalAlignment="Bottom" Margin="0,0,20,20" Panel.ZIndex="99"/>
     </Grid>
 </controls:MetroWindow>

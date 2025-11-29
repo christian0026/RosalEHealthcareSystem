@@ -1,69 +1,109 @@
 ﻿using RosalEHealthcare.Core.Models;
 using RosalEHealthcare.Data.Contexts;
 using RosalEHealthcare.Data.Services;
+using RosalEHealthcare.UI.WPF.Helpers;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
+using System.Diagnostics;
+using System.Globalization;
 using System.Linq;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Data;
 
 namespace RosalEHealthcare.UI.WPF.Views
 {
+    // 1. MAIN CONTROL
     public partial class MedicineInventory : UserControl
     {
-        private readonly MedicineService _medicineService;
-        private readonly RosalEHealthcareDbContext _db;
+        private MedicineService _medicineService;
+        private MedicineExportService _exportService;
+        private ActivityLogService _activityLogService;
+        private RosalEHealthcareDbContext _db;
 
+        private bool _isInitialized = false;
         private List<MedicineViewModel> _allMedicines;
         private List<MedicineViewModel> _filteredMedicines;
 
-        // Pagination
         private int _currentPage = 1;
         private int _pageSize = 10;
         private int _totalPages = 1;
+        private bool _showArchived = false;
+
+        // Static constructor to init PDF license once
+        static MedicineInventory()
+        {
+            try
+            {
+                QuestPDF.Settings.License = QuestPDF.Infrastructure.LicenseType.Community;
+            }
+            catch { }
+        }
 
         public MedicineInventory()
         {
             InitializeComponent();
+            InitializeServices();
+        }
 
+        private void InitializeServices()
+        {
             try
             {
                 _db = new RosalEHealthcareDbContext();
+                var conn = _db.Database.Connection; // Test connection
+
                 _medicineService = new MedicineService(_db);
+                _activityLogService = new ActivityLogService(_db);
+                _isInitialized = true;
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"Error initializing Medicine Inventory: {ex.Message}",
-                    "Initialization Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                _isInitialized = false;
+                MessageBox.Show($"Database Connection Failed:\n{ex.Message}", "Critical Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                return;
+            }
+
+            try
+            {
+                _exportService = new MedicineExportService();
+            }
+            catch
+            {
+                _exportService = null;
             }
         }
 
         private async void UserControl_Loaded(object sender, RoutedEventArgs e)
         {
-            await LoadDataAsync();
+            if (!_isInitialized) return;
+
+            if (_allMedicines == null)
+            {
+                await LoadDataAsync();
+            }
+
+            if (_exportService == null && btnExport != null)
+            {
+                btnExport.IsEnabled = false;
+                btnExport.ToolTip = "Export service unavailable (Install SkiaSharp.NativeAssets.Win32)";
+            }
         }
 
         private async Task LoadDataAsync()
         {
             ShowLoading(true);
-
             try
             {
-                // Load statistics
                 await LoadStatisticsAsync();
-
-                // Load categories for filter
                 await LoadCategoriesAsync();
-
-                // Load medicines
                 await LoadMedicinesAsync();
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"Error loading data: {ex.Message}\n\n{ex.InnerException?.Message}",
-                    "Load Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                MessageBox.Show($"Error loading data: {ex.Message}", "Load Error", MessageBoxButton.OK, MessageBoxImage.Error);
             }
             finally
             {
@@ -75,18 +115,23 @@ namespace RosalEHealthcare.UI.WPF.Views
         {
             await Task.Run(() =>
             {
-                var totalMedicines = _medicineService.GetTotalMedicines();
-                var lowStock = _medicineService.GetLowStockCount();
-                var expiringSoon = _medicineService.GetExpiringSoonCount();
-                var outOfStock = _medicineService.GetOutOfStockCount();
-
-                Dispatcher.Invoke(() =>
+                try
                 {
-                    cardTotalMedicines.Value = totalMedicines.ToString();
-                    cardLowStock.Value = lowStock.ToString();
-                    cardExpiring.Value = expiringSoon.ToString();
-                    cardOutOfStock.Value = outOfStock.ToString();
-                });
+                    if (_medicineService == null) return;
+                    var totalMedicines = _medicineService.GetTotalMedicines(_showArchived);
+                    var lowStock = _medicineService.GetLowStockCount();
+                    var expiringSoon = _medicineService.GetExpiringSoonCount();
+                    var outOfStock = _medicineService.GetOutOfStockCount();
+
+                    Dispatcher.Invoke(() =>
+                    {
+                        if (cardTotalMedicines != null) cardTotalMedicines.Value = totalMedicines.ToString();
+                        if (cardLowStock != null) cardLowStock.Value = lowStock.ToString();
+                        if (cardExpiring != null) cardExpiring.Value = expiringSoon.ToString();
+                        if (cardOutOfStock != null) cardOutOfStock.Value = outOfStock.ToString();
+                    });
+                }
+                catch { }
             });
         }
 
@@ -94,18 +139,26 @@ namespace RosalEHealthcare.UI.WPF.Views
         {
             await Task.Run(() =>
             {
-                var categories = _medicineService.GetAllCategories().ToList();
-
-                Dispatcher.Invoke(() =>
+                try
                 {
-                    cbCategory.Items.Clear();
-                    cbCategory.Items.Add(new ComboBoxItem { Content = "All Categories", IsSelected = true });
+                    if (_medicineService == null) return;
+                    var categories = _medicineService.GetAllCategories().ToList();
 
-                    foreach (var category in categories)
+                    Dispatcher.Invoke(() =>
                     {
-                        cbCategory.Items.Add(new ComboBoxItem { Content = category });
-                    }
-                });
+                        if (cbCategory == null) return;
+                        cbCategory.SelectionChanged -= FilterChanged;
+                        cbCategory.Items.Clear();
+                        cbCategory.Items.Add(new ComboBoxItem { Content = "All Categories", IsSelected = true });
+
+                        foreach (var category in categories)
+                        {
+                            cbCategory.Items.Add(new ComboBoxItem { Content = category });
+                        }
+                        cbCategory.SelectionChanged += FilterChanged;
+                    });
+                }
+                catch { }
             });
         }
 
@@ -113,55 +166,58 @@ namespace RosalEHealthcare.UI.WPF.Views
         {
             await Task.Run(() =>
             {
-                var medicines = _medicineService.GetAllMedicines().ToList();
-
-                _allMedicines = medicines.Select(m => new MedicineViewModel
+                try
                 {
-                    Id = m.Id,
-                    MedicineId = m.MedicineId ?? "N/A",
-                    Name = m.Name ?? "Unknown",
-                    GenericName = m.GenericName ?? "",
-                    Brand = m.Brand ?? "",
-                    Category = m.Category ?? "Uncategorized",
-                    Stock = m.Stock,
-                    Price = m.Price,
-                    ExpiryDate = m.ExpiryDate,
-                    Status = m.Status ?? "Unknown",
-                    Type = m.Type ?? "",
-                    Strength = m.Strength ?? "",
-                    Unit = m.Unit ?? ""
-                }).ToList();
+                    if (_medicineService == null) return;
+                    var medicines = _medicineService.GetAllMedicines(_showArchived).ToList();
 
-                _filteredMedicines = new List<MedicineViewModel>(_allMedicines);
+                    _allMedicines = medicines.Select(m => new MedicineViewModel
+                    {
+                        Id = m.Id,
+                        MedicineId = m.MedicineId ?? "N/A",
+                        Name = m.Name ?? "Unknown",
+                        GenericName = m.GenericName ?? "",
+                        Brand = m.Brand ?? "",
+                        Category = m.Category ?? "Uncategorized",
+                        Stock = m.Stock,
+                        Price = m.Price,
+                        ExpiryDate = m.ExpiryDate,
+                        Status = m.Status ?? "Unknown",
+                        Type = m.Type ?? "",
+                        Strength = m.Strength ?? "",
+                        Unit = m.Unit ?? "",
+                        MinimumStockLevel = m.MinimumStockLevel,
+                        IsActive = m.IsActive
+                    }).ToList();
 
-                Dispatcher.Invoke(() =>
-                {
-                    ApplyPagination();
-                });
+                    _filteredMedicines = new List<MedicineViewModel>(_allMedicines);
+
+                    Dispatcher.Invoke(() =>
+                    {
+                        ApplyPagination();
+                    });
+                }
+                catch { }
             });
         }
 
         private void ApplyFilters()
         {
+            if (_allMedicines == null) return;
+
             var searchQuery = txtSearch.Text?.Trim().ToLower() ?? "";
             var selectedCategory = (cbCategory.SelectedItem as ComboBoxItem)?.Content?.ToString() ?? "All Categories";
             var selectedStatus = (cbStatus.SelectedItem as ComboBoxItem)?.Content?.ToString() ?? "All Status";
 
             _filteredMedicines = _allMedicines.Where(m =>
             {
-                // Search filter
                 bool matchesSearch = string.IsNullOrEmpty(searchQuery) ||
                     m.Name.ToLower().Contains(searchQuery) ||
                     m.MedicineId.ToLower().Contains(searchQuery) ||
                     m.GenericName.ToLower().Contains(searchQuery);
 
-                // Category filter
-                bool matchesCategory = selectedCategory == "All Categories" ||
-                    m.Category == selectedCategory;
-
-                // Status filter
-                bool matchesStatus = selectedStatus == "All Status" ||
-                    m.Status == selectedStatus;
+                bool matchesCategory = selectedCategory == "All Categories" || m.Category == selectedCategory;
+                bool matchesStatus = selectedStatus == "All Status" || m.Status == selectedStatus;
 
                 return matchesSearch && matchesCategory && matchesStatus;
             }).ToList();
@@ -172,6 +228,8 @@ namespace RosalEHealthcare.UI.WPF.Views
 
         private void ApplyPagination()
         {
+            if (_filteredMedicines == null || dgMedicines == null) return;
+
             _totalPages = (int)Math.Ceiling((double)_filteredMedicines.Count / _pageSize);
             if (_totalPages == 0) _totalPages = 1;
 
@@ -182,61 +240,49 @@ namespace RosalEHealthcare.UI.WPF.Views
 
             dgMedicines.ItemsSource = pagedMedicines;
 
-            // Update UI
-            txtResultCount.Text = $"Showing {pagedMedicines.Count} of {_filteredMedicines.Count} medicines";
-            txtPageInfo.Text = $"Page {_currentPage} of {_totalPages}";
+            if (txtResultCount != null) txtResultCount.Text = $"Showing {pagedMedicines.Count} of {_filteredMedicines.Count} medicines";
+            if (txtPageInfo != null) txtPageInfo.Text = $"Page {_currentPage} of {_totalPages}";
 
-            // Update pagination buttons
-            btnFirst.IsEnabled = _currentPage > 1;
-            btnPrevious.IsEnabled = _currentPage > 1;
-            btnNext.IsEnabled = _currentPage < _totalPages;
-            btnLast.IsEnabled = _currentPage < _totalPages;
+            if (btnFirst != null) btnFirst.IsEnabled = _currentPage > 1;
+            if (btnPrevious != null) btnPrevious.IsEnabled = _currentPage > 1;
+            if (btnNext != null) btnNext.IsEnabled = _currentPage < _totalPages;
+            if (btnLast != null) btnLast.IsEnabled = _currentPage < _totalPages;
         }
 
         private void ShowLoading(bool show)
         {
-            LoadingOverlay.Visibility = show ? Visibility.Visible : Visibility.Collapsed;
+            if (LoadingOverlay != null)
+                LoadingOverlay.Visibility = show ? Visibility.Visible : Visibility.Collapsed;
         }
 
-        #region Event Handlers
-
-        private void TxtSearch_TextChanged(object sender, TextChangedEventArgs e)
-        {
-            ApplyFilters();
-        }
+        private void TxtSearch_TextChanged(object sender, TextChangedEventArgs e) => ApplyFilters();
 
         private void FilterChanged(object sender, SelectionChangedEventArgs e)
         {
-            if (_allMedicines != null)
-            {
-                ApplyFilters();
-            }
+            if (_allMedicines != null) ApplyFilters();
         }
 
-        private void BtnSearch_Click(object sender, RoutedEventArgs e)
+        private void BtnClearFilters_Click(object sender, RoutedEventArgs e)
         {
-            ApplyFilters();
+            if (txtSearch != null) txtSearch.Text = "";
+            if (cbCategory != null) cbCategory.SelectedIndex = 0;
+            if (cbStatus != null) cbStatus.SelectedIndex = 0;
+        }
+
+        private void ChkShowArchived_Changed(object sender, RoutedEventArgs e)
+        {
+            _showArchived = chkShowArchived.IsChecked == true;
+            _ = LoadDataAsync();
         }
 
         private void BtnAddMedicine_Click(object sender, RoutedEventArgs e)
         {
+            if (!_isInitialized) return;
             var dialog = new AddEditMedicineDialog();
             if (dialog.ShowDialog() == true)
             {
                 _ = LoadDataAsync();
-            }
-        }
-
-        private void BtnView_Click(object sender, RoutedEventArgs e)
-        {
-            if (sender is Button btn && btn.Tag is int id)
-            {
-                var medicine = _allMedicines.FirstOrDefault(m => m.Id == id);
-                if (medicine != null)
-                {
-                    var dialog = new ViewMedicineDialog(id);
-                    dialog.ShowDialog();
-                }
+                LogActivitySafe("Create", "Added new medicine");
             }
         }
 
@@ -248,84 +294,130 @@ namespace RosalEHealthcare.UI.WPF.Views
                 if (dialog.ShowDialog() == true)
                 {
                     _ = LoadDataAsync();
+                    LogActivitySafe("Update", $"Updated medicine (ID: {id})");
                 }
+            }
+        }
+
+        private void BtnView_Click(object sender, RoutedEventArgs e)
+        {
+            if (sender is Button btn && btn.Tag is int id)
+            {
+                var dialog = new ViewMedicineDialog(id);
+                dialog.ShowDialog();
             }
         }
 
         private async void BtnDelete_Click(object sender, RoutedEventArgs e)
         {
+            if (!_isInitialized) return;
             if (sender is Button btn && btn.Tag is int id)
             {
-                var result = MessageBox.Show(
-                    "Are you sure you want to delete this medicine?\n\nThis action cannot be undone.",
-                    "Confirm Delete",
-                    MessageBoxButton.YesNo,
-                    MessageBoxImage.Warning);
+                var medicine = _allMedicines.FirstOrDefault(m => m.Id == id);
+                if (medicine == null) return;
+
+                string action = medicine.IsActive ? "archive" : "restore";
+                var result = MessageBox.Show(medicine.IsActive ? $"Archive '{medicine.Name}'?" : $"Restore '{medicine.Name}'?",
+                    "Confirm", MessageBoxButton.YesNo, MessageBoxImage.Question);
 
                 if (result == MessageBoxResult.Yes)
                 {
                     try
                     {
                         ShowLoading(true);
-
+                        string user = SessionManager.CurrentUser?.FullName ?? "System";
                         await Task.Run(() =>
                         {
-                            _medicineService.DeleteMedicine(id);
+                            if (medicine.IsActive) _medicineService.ArchiveMedicine(id, user);
+                            else _medicineService.RestoreMedicine(id, user);
                         });
-
-                        MessageBox.Show("Medicine deleted successfully!",
-                            "Success", MessageBoxButton.OK, MessageBoxImage.Information);
-
+                        LogActivitySafe(action == "archive" ? "Archive" : "Restore", $"{action}: {medicine.Name}");
                         await LoadDataAsync();
                     }
-                    catch (Exception ex)
-                    {
-                        MessageBox.Show($"Error deleting medicine: {ex.Message}",
-                            "Delete Error", MessageBoxButton.OK, MessageBoxImage.Error);
-                    }
-                    finally
-                    {
-                        ShowLoading(false);
-                    }
+                    catch (Exception ex) { MessageBox.Show($"Error: {ex.Message}"); }
+                    finally { ShowLoading(false); }
                 }
             }
         }
 
-        private void BtnFirst_Click(object sender, RoutedEventArgs e)
+        private void LogActivitySafe(string type, string desc)
         {
-            _currentPage = 1;
-            ApplyPagination();
-        }
-
-        private void BtnPrevious_Click(object sender, RoutedEventArgs e)
-        {
-            if (_currentPage > 1)
+            try
             {
-                _currentPage--;
-                ApplyPagination();
+                if (SessionManager.CurrentUser != null && _activityLogService != null)
+                {
+                    _activityLogService.LogActivity(type, desc, "Medicine Inventory",
+                        SessionManager.CurrentUser.FullName, SessionManager.CurrentUser.Role);
+                }
             }
+            catch { }
         }
 
-        private void BtnNext_Click(object sender, RoutedEventArgs e)
+        private void BtnFirst_Click(object sender, RoutedEventArgs e) { _currentPage = 1; ApplyPagination(); }
+        private void BtnPrevious_Click(object sender, RoutedEventArgs e) { if (_currentPage > 1) { _currentPage--; ApplyPagination(); } }
+        private void BtnNext_Click(object sender, RoutedEventArgs e) { if (_currentPage < _totalPages) { _currentPage++; ApplyPagination(); } }
+        private void BtnLast_Click(object sender, RoutedEventArgs e) { _currentPage = _totalPages; ApplyPagination(); }
+
+        private void BtnExportExcel_Click(object sender, RoutedEventArgs e)
         {
-            if (_currentPage < _totalPages)
+            if (_exportService == null) { MessageBox.Show("Export unavailable. Install SkiaSharp.NativeAssets.Win32."); return; }
+            try
             {
-                _currentPage++;
-                ApplyPagination();
+                var medicines = MapToModel(_filteredMedicines);
+                string path = _exportService.ExportToExcel(medicines);
+                if (MessageBox.Show("Export success. Open file?", "Success", MessageBoxButton.YesNo) == MessageBoxResult.Yes) Process.Start(path);
             }
+            catch (Exception ex) { MessageBox.Show(ex.Message); }
         }
 
-        private void BtnLast_Click(object sender, RoutedEventArgs e)
+        private void BtnExportPdf_Click(object sender, RoutedEventArgs e)
         {
-            _currentPage = _totalPages;
-            ApplyPagination();
+            if (_exportService == null) { MessageBox.Show("Export unavailable. Install SkiaSharp.NativeAssets.Win32."); return; }
+            try
+            {
+                var medicines = MapToModel(_filteredMedicines);
+                string path = _exportService.ExportToPdf(medicines, SessionManager.CurrentUser?.FullName ?? "System");
+                if (MessageBox.Show("Export success. Open file?", "Success", MessageBoxButton.YesNo) == MessageBoxResult.Yes) Process.Start(path);
+            }
+            catch (Exception ex) { MessageBox.Show(ex.Message); }
         }
 
-        #endregion
+        private void BtnDownloadTemplate_Click(object sender, RoutedEventArgs e)
+        {
+            if (_exportService == null) return;
+            try
+            {
+                string path = _exportService.CreateImportTemplate();
+                if (MessageBox.Show("Template created. Open file?", "Success", MessageBoxButton.YesNo) == MessageBoxResult.Yes) Process.Start(path);
+            }
+            catch (Exception ex) { MessageBox.Show(ex.Message); }
+        }
+
+        private void BtnImport_Click(object sender, RoutedEventArgs e) => MessageBox.Show("Coming soon!");
+
+        private List<Medicine> MapToModel(List<MedicineViewModel> vms)
+        {
+            if (vms == null) return new List<Medicine>();
+            return vms.Select(vm => new Medicine
+            {
+                Id = vm.Id,
+                MedicineId = vm.MedicineId,
+                Name = vm.Name,
+                GenericName = vm.GenericName,
+                Brand = vm.Brand,
+                Category = vm.Category,
+                Type = vm.Type,
+                Strength = vm.Strength,
+                Stock = vm.Stock,
+                MinimumStockLevel = vm.MinimumStockLevel,
+                Price = vm.Price,
+                ExpiryDate = vm.ExpiryDate,
+                Status = vm.Status
+            }).ToList();
+        }
     }
 
-    #region ViewModel
-
+    // 2. VIEW MODEL (Inside the same namespace)
     public class MedicineViewModel : INotifyPropertyChanged
     {
         public int Id { get; set; }
@@ -341,47 +433,41 @@ namespace RosalEHealthcare.UI.WPF.Views
         public string Type { get; set; }
         public string Strength { get; set; }
         public string Unit { get; set; }
+        public int MinimumStockLevel { get; set; }
+        public bool IsActive { get; set; }
 
-        // Computed Properties
         public string Initials
         {
             get
             {
                 if (string.IsNullOrEmpty(Name)) return "?";
                 var words = Name.Split(' ');
-                if (words.Length >= 2)
-                    return $"{words[0][0]}{words[1][0]}".ToUpper();
+                if (words.Length >= 2) return $"{words[0][0]}{words[1][0]}".ToUpper();
                 return Name.Length >= 2 ? Name.Substring(0, 2).ToUpper() : Name.ToUpper();
             }
         }
 
         public string PriceFormatted => $"₱{Price:N2}";
-
         public string ExpiryDateFormatted => ExpiryDate.ToString("MMM yyyy");
-
-        public bool IsExpiring
-        {
-            get
-            {
-                var threeMonthsFromNow = DateTime.Now.AddMonths(3);
-                return ExpiryDate <= threeMonthsFromNow && ExpiryDate >= DateTime.Now;
-            }
-        }
-
+        public bool IsExpiring => ExpiryDate <= DateTime.Now.AddMonths(3) && ExpiryDate >= DateTime.Now;
         public bool IsExpired => ExpiryDate < DateTime.Now;
-
-        public string StockStatus
-        {
-            get
-            {
-                if (Stock == 0) return "Critical";
-                if (Stock <= 20) return "Low";
-                return "Good";
-            }
-        }
+        public string StockStatus => Stock == 0 ? "Critical" : (Stock <= MinimumStockLevel ? "Low" : "Good");
 
         public event PropertyChangedEventHandler PropertyChanged;
     }
 
-    #endregion
+    // 3. CONVERTER (Inside the same namespace)
+    public class BoolToArchiveStatusConverter : IValueConverter
+    {
+        public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
+        {
+            if (value is bool isActive) return isActive ? "Archive" : "Restore";
+            return "Archive";
+        }
+
+        public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
+        {
+            throw new NotImplementedException();
+        }
+    }
 }

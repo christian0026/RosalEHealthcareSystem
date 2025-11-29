@@ -23,6 +23,7 @@
             <converters:StatusToColorConverter x:Key="StatusToColorConverter"/>
             <converters:StringNullOrEmptyToVisibilityConverter x:Key="StrNullOrEmptyToVis"/>
             <converters:StringNullOrEmptyToVisibilityConverter x:Key="StringNullOrEmptyToVisibilityConverter"/>
+            <converters:BoolToArchiveTextConverter x:Key="BoolToArchiveText"/>
 
             <!-- Notification Converters -->
             <converters:ColorToLightBackgroundConverter x:Key="ColorToLightBackgroundConverter"/>

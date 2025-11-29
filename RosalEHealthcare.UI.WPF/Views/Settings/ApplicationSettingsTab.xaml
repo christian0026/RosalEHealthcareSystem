@@ -283,7 +283,7 @@
                                                                 Foreground="#7B1FA2"
                                                                 VerticalAlignment="Center"/>
                                     <TextBlock x:Name="TxtBuildDate" 
-                                               Text="Built: 2024" 
+                                               Text="Built: 2025" 
                                                FontSize="12" 
                                                FontWeight="SemiBold"
                                                Foreground="#7B1FA2"

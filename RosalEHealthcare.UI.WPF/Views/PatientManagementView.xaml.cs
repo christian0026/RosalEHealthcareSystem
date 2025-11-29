@@ -1,10 +1,13 @@
 ﻿using RosalEHealthcare.Core.Models;
 using RosalEHealthcare.Data.Contexts;
 using RosalEHealthcare.Data.Services;
+using RosalEHealthcare.UI.WPF.Helpers;
 using System;
 using System.Collections.Generic;
-using System.Data.Entity;
+using System.ComponentModel;
+using System.Diagnostics;
 using System.Linq;
+using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
@@ -16,243 +19,305 @@ namespace RosalEHealthcare.UI.WPF.Views
         private RosalEHealthcareDbContext _db;
         private PatientService _patientService;
         private DashboardService _dashboardService;
+
+        private List<PatientViewModel> _allPatients;
+        private List<PatientViewModel> _filteredPatients;
+
         private int _currentPage = 1;
         private int _pageSize = 10;
         private int _totalPages = 1;
+        private bool _isInitialized = false;
+
+        static PatientManagementView()
+        {
+            try { QuestPDF.Settings.License = QuestPDF.Infrastructure.LicenseType.Community; } catch { }
+        }
 
         public PatientManagementView()
         {
             InitializeComponent();
-            _db = new RosalEHealthcareDbContext();
-            _patientService = new PatientService(_db);
-            _dashboardService = new DashboardService(_db);
-            LoadData();
+            InitializeServices();
         }
 
-        private void LoadData()
+        public PatientManagementView(User user) : this() { }
+
+        private void InitializeServices()
         {
-            LoadSummaryCards();
-            LoadPatients();
+            try
+            {
+                _db = new RosalEHealthcareDbContext();
+                _patientService = new PatientService(_db);
+                _dashboardService = new DashboardService(_db);
+                _isInitialized = true;
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Error initializing services: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
         }
 
-        private void LoadSummaryCards()
+        private async void UserControl_Loaded(object sender, RoutedEventArgs e)
         {
-            CardTotalPatients.Value = _dashboardService.GetTotalPatients().ToString("N0");
-            CardTodayAppointments.Value = _dashboardService.GetTodayAppointments().ToString("N0");
-            CardRemainingPatients.Value = _patientService.GetPatientsWaitingToday().ToString("N0");
-            CardExpiringMedicines.Value = _dashboardService.GetExpiringMedicines(30).ToString("N0");
+            if (!_isInitialized) return;
+            if (_allPatients == null) await LoadDataAsync();
         }
 
-        private void LoadPatients()
+        private async Task LoadDataAsync()
         {
-            var query = txtSearch.Text?.Trim();
+            ShowLoading(true);
+            try
+            {
+                await LoadSummaryCards();
+                await LoadPatients();
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Error loading data: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+            finally
+            {
+                ShowLoading(false);
+            }
+        }
+
+        private async Task LoadSummaryCards()
+        {
+            await Task.Run(() =>
+            {
+                try
+                {
+                    var total = _dashboardService.GetTotalPatients();
+                    var today = _dashboardService.GetTodayAppointments();
+                    var pending = _dashboardService.GetPendingAppointments();
+
+                    var startOfMonth = new DateTime(DateTime.Now.Year, DateTime.Now.Month, 1);
+                    var newPatients = _db.Patients.Count(p => p.DateCreated >= startOfMonth);
+
+                    Dispatcher.Invoke(() =>
+                    {
+                        CardTotalPatients.Value = total.ToString("N0");
+                        CardTodayAppointments.Value = today.ToString("N0");
+                        CardPendingAppointments.Value = pending.ToString("N0");
+                        CardNewPatients.Value = newPatients.ToString("N0");
+                    });
+                }
+                catch { }
+            });
+        }
+
+        private async Task LoadPatients()
+        {
+            await Task.Run(() =>
+            {
+                try
+                {
+                    // FIX: Access DB directly to avoid "Missing Method" error
+                    var patients = _db.Patients.Where(p => !p.IsArchived).ToList();
+
+                    _allPatients = patients.Select(p => new PatientViewModel
+                    {
+                        Id = p.Id,
+                        PatientId = p.PatientId,
+                        FullName = p.FullName,
+                        Contact = p.Contact,
+                        Email = p.Email,
+                        BirthDate = p.BirthDate,
+                        Gender = p.Gender,
+                        LastVisit = p.LastVisit,
+                        PrimaryDiagnosis = p.PrimaryDiagnosis,
+                        Status = p.Status,
+                        Address = p.Address,
+                        Allergies = p.Allergies,
+                        BloodType = p.BloodType
+                    }).ToList();
+
+                    Dispatcher.Invoke(() => ApplyFilters());
+                }
+                catch (Exception ex) { Debug.WriteLine(ex.Message); }
+            });
+        }
+
+        private void ApplyFilters()
+        {
+            if (_allPatients == null) return;
+
+            var query = txtSearch.Text?.Trim().ToLower() ?? "";
             var status = (cmbStatus.SelectedItem as ComboBoxItem)?.Content?.ToString();
             var gender = (cmbGender.SelectedItem as ComboBoxItem)?.Content?.ToString();
 
-            var totalCount = _patientService.GetFilteredCount(query, status, gender);
-            _totalPages = (int)Math.Ceiling((double)totalCount / _pageSize);
+            _filteredPatients = _allPatients.Where(p =>
+            {
+                bool matchSearch = string.IsNullOrEmpty(query) ||
+                                   p.FullName.ToLower().Contains(query) ||
+                                   p.PatientId.ToLower().Contains(query);
+
+                bool matchStatus = status == "All Status" || p.Status == status;
+                bool matchGender = gender == "All Gender" || p.Gender == gender;
+
+                return matchSearch && matchStatus && matchGender;
+            }).ToList();
+
+            _currentPage = 1;
+            ApplyPagination();
+        }
+
+        private void ApplyPagination()
+        {
+            if (_filteredPatients == null) return;
+
+            _totalPages = (int)Math.Ceiling((double)_filteredPatients.Count / _pageSize);
             if (_totalPages == 0) _totalPages = 1;
 
-            var patients = _patientService.SearchPaged(query, status, gender, _currentPage, _pageSize)
-                .Select(p => new
+            var paged = _filteredPatients.Skip((_currentPage - 1) * _pageSize).Take(_pageSize).ToList();
+            dgPatients.ItemsSource = paged;
+
+            txtResultCount.Text = $"Showing {paged.Count} of {_filteredPatients.Count} patients";
+            txtPageInfo.Text = $"Page {_currentPage} of {_totalPages}";
+
+            btnFirst.IsEnabled = _currentPage > 1;
+            btnPrevious.IsEnabled = _currentPage > 1;
+            btnNext.IsEnabled = _currentPage < _totalPages;
+            btnLast.IsEnabled = _currentPage < _totalPages;
+        }
+
+        private void ShowLoading(bool show) => LoadingOverlay.Visibility = show ? Visibility.Visible : Visibility.Collapsed;
+
+        private void txtSearch_TextChanged(object sender, TextChangedEventArgs e) => ApplyFilters();
+        private void Filter_Changed(object sender, SelectionChangedEventArgs e) => ApplyFilters();
+        private void BtnClearFilters_Click(object sender, RoutedEventArgs e)
+        {
+            txtSearch.Text = "";
+            cmbStatus.SelectedIndex = 0;
+            cmbGender.SelectedIndex = 0;
+        }
+
+        private void BtnAddPatient_Click(object sender, RoutedEventArgs e)
+        {
+            try
+            {
+                var modal = new RegisterPatientModal(SessionManager.CurrentUser);
+                if (modal.ShowDialog() == true)
                 {
-                    p.Id,
-                    p.PatientId,
-                    p.FullName,
-                    Initials = GetInitials(p.FullName),
-                    AgeDisplay = $"Age {p.Age}",
-                    p.Contact,
-                    p.Email,
-                    p.BirthDate,
-                    p.Gender,
-                    p.LastVisit,
-                    p.PrimaryDiagnosis,
-                    p.Status,
-                    StatusBackground = GetStatusBackground(p.Status),
-                    StatusForeground = GetStatusForeground(p.Status)
-                }).ToList();
-
-            dgPatients.ItemsSource = patients;
-
-            int start = ((_currentPage - 1) * _pageSize) + 1;
-            int end = Math.Min(_currentPage * _pageSize, totalCount);
-            txtPatientCount.Text = totalCount == 0 ? "No patients found" : $"Showing {start}-{end} of {totalCount} patients";
-
-            BuildPagination();
-        }
-
-        private string GetInitials(string name)
-        {
-            if (string.IsNullOrWhiteSpace(name)) return "?";
-            var parts = name.Split(' ');
-            return parts.Length > 1
-                ? $"{parts[0][0]}{parts[parts.Length - 1][0]}".ToUpper()
-                : name.Substring(0, Math.Min(2, name.Length)).ToUpper();
-        }
-
-        private Brush GetStatusBackground(string status) => status?.ToUpper() switch
-        {
-            "COMPLETED" => new SolidColorBrush(Color.FromRgb(232, 245, 233)),
-            "PENDING" => new SolidColorBrush(Color.FromRgb(255, 243, 224)),
-            "CANCELLED" => new SolidColorBrush(Color.FromRgb(255, 235, 238)),
-            _ => new SolidColorBrush(Color.FromRgb(227, 242, 253))
-        };
-
-        private Brush GetStatusForeground(string status) => status?.ToUpper() switch
-        {
-            "COMPLETED" => new SolidColorBrush(Color.FromRgb(76, 175, 80)),
-            "PENDING" => new SolidColorBrush(Color.FromRgb(255, 152, 0)),
-            "CANCELLED" => new SolidColorBrush(Color.FromRgb(244, 67, 54)),
-            _ => new SolidColorBrush(Color.FromRgb(33, 150, 243))
-        };
-
-        private void BuildPagination() 
-        {
-            paginationPanel.Children.Clear();
-
-            var btnPrev = new Button { Content = "❮❮ Previous", Width = 100, IsEnabled = _currentPage > 1 };
-            btnPrev.Click += (s, e) => { _currentPage--; LoadPatients(); };
-            paginationPanel.Children.Add(btnPrev);
-
-            int start = Math.Max(1, _currentPage - 2);
-            int end = Math.Min(_totalPages, _currentPage + 2);
-
-            if (start > 1)
-            {
-                AddPageButton(1);
-                if (start > 2) paginationPanel.Children.Add(new TextBlock { Text = "...", Margin = new Thickness(8, 0, 8, 0), VerticalAlignment = VerticalAlignment.Center });
+                    _ = LoadDataAsync();
+                }
             }
+            catch { MessageBox.Show("Patient Registration Modal not implemented or referenced."); }
+        }
 
-            for (int i = start; i <= end; i++) AddPageButton(i);
-
-            if (end < _totalPages)
+        private void BtnView_Click(object sender, RoutedEventArgs e)
+        {
+            if (sender is Button btn && btn.Tag is int id)
             {
-                if (end < _totalPages - 1) paginationPanel.Children.Add(new TextBlock { Text = "...", Margin = new Thickness(8, 0, 8, 0), VerticalAlignment = VerticalAlignment.Center });
-                AddPageButton(_totalPages);
+                var patient = _allPatients.FirstOrDefault(p => p.Id == id);
+                if (patient == null) return;
+
+                lblViewPatientId.Text = $"ID: {patient.PatientId}";
+                patientDetailsPanel.Children.Clear();
+                AddDetailRow("Full Name", patient.FullName);
+                AddDetailRow("Date of Birth", patient.BirthDate?.ToString("MMMM dd, yyyy") ?? "N/A");
+                AddDetailRow("Gender", patient.Gender);
+                AddDetailRow("Contact", patient.Contact);
+                AddDetailRow("Email", patient.Email);
+                AddDetailRow("Address", patient.Address);
+                AddDetailRow("Blood Type", patient.BloodType);
+                AddDetailRow("Allergies", patient.Allergies);
+                AddDetailRow("Last Visit", patient.LastVisitFormatted);
+
+                viewDialog.Visibility = Visibility.Visible;
             }
-
-            var btnNext = new Button { Content = "Next ❯❯", Width = 100, IsEnabled = _currentPage < _totalPages };
-            btnNext.Click += (s, e) => { _currentPage++; LoadPatients(); };
-            paginationPanel.Children.Add(btnNext);
         }
 
-        private void AddPageButton(int page)
+        private void AddDetailRow(string label, string value)
         {
-            var btn = new Button { Content = page.ToString(), Width = 40, Height = 40, Tag = page };
-            btn.Click += (s, e) => { _currentPage = (int)((Button)s).Tag; LoadPatients(); };
-            paginationPanel.Children.Add(btn);
-        }
-
-        private void txtSearch_TextChanged(object sender, TextChangedEventArgs e) => LoadPatients();
-        private void Filter_Changed(object sender, SelectionChangedEventArgs e) { if (dgPatients != null) LoadPatients(); }
-        private void Search_Click(object sender, RoutedEventArgs e) => LoadPatients();
-
-        private void View_Click(object sender, RoutedEventArgs e)
-        {
-             var patient = _patientService.GetById((int)((dynamic)((Button)sender).Tag).Id);
-            if (patient == null) return;
-
-            patientDetailsPanel.Children.Clear();
-            AddDetail("Patient ID", patient.PatientId);
-            AddDetail("Full Name", patient.FullName);
-            AddDetail("Age", patient.Age.ToString());
-            AddDetail("Gender", patient.Gender);
-            AddDetail("Contact", patient.Contact);
-            AddDetail("Email", patient.Email ?? "N/A");
-            AddDetail("Address", patient.Address ?? "N/A");
-            AddDetail("Blood Type", patient.BloodType ?? "N/A");
-            AddDetail("Primary Diagnosis", patient.PrimaryDiagnosis ?? "N/A");
-            AddDetail("Allergies", patient.Allergies ?? "None");
-            AddDetail("Last Visit", patient.LastVisit?.ToString("MMMM dd, yyyy") ?? "No visits yet");
-
-            viewDialog.Visibility = Visibility.Visible;
-        }
-
-        private void AddDetail(string label, string value)
-        {
-            patientDetailsPanel.Children.Add(new TextBlock { Text = label, FontWeight = FontWeights.SemiBold, FontSize = 13, Foreground = new SolidColorBrush(Color.FromRgb(102, 102, 102)), Margin = new Thickness(0, 10, 0, 4) });
-            patientDetailsPanel.Children.Add(new TextBlock { Text = value, FontSize = 14, Foreground = new SolidColorBrush(Color.FromRgb(51, 51, 51)) });
+            var p = new StackPanel { Margin = new Thickness(0, 0, 0, 15) };
+            p.Children.Add(new TextBlock { Text = label, Foreground = Brushes.Gray, FontSize = 12 });
+            p.Children.Add(new TextBlock { Text = string.IsNullOrEmpty(value) ? "N/A" : value, FontSize = 14, FontWeight = FontWeights.Medium, TextWrapping = TextWrapping.Wrap });
+            patientDetailsPanel.Children.Add(p);
         }
 
         private void CloseViewDialog_Click(object sender, RoutedEventArgs e) => viewDialog.Visibility = Visibility.Collapsed;
 
-        private void Edit_Click(object sender, RoutedEventArgs e)
+        private void BtnEdit_Click(object sender, RoutedEventArgs e)
         {
-            MessageBox.Show("Edit functionality: Opens patient edit form", "Info", MessageBoxButton.OK, MessageBoxImage.Information);
-        }
-
-        private void Archive_Click(object sender, RoutedEventArgs e)
-        {
-            var patientId = (int)((dynamic)((Button)sender).Tag).Id;
-            if (MessageBox.Show("Archive this patient? They will no longer appear in active lists.", "Confirm Archive", MessageBoxButton.YesNo, MessageBoxImage.Warning) == MessageBoxResult.Yes)
+            if (sender is Button btn && btn.Tag is int id)
             {
-                _patientService.ArchivePatient(patientId);
-                MessageBox.Show("Patient archived successfully!", "Success", MessageBoxButton.OK, MessageBoxImage.Information);
-                LoadData();
+                MessageBox.Show($"Edit Patient ID: {id}", "Edit", MessageBoxButton.OK, MessageBoxImage.Information);
             }
         }
 
-        public int GetPatientsWaitingToday()
+        private async void BtnArchive_Click(object sender, RoutedEventArgs e)
         {
-            var today = DateTime.Today;
-            return _db.Appointments
-                .Count(a => DbFunctions.TruncateTime(a.Time) == today &&
-                       a.Status == "SCHEDULED");
+            if (sender is Button btn && btn.Tag is int id)
+            {
+                if (MessageBox.Show("Are you sure you want to archive this patient?", "Archive", MessageBoxButton.YesNo, MessageBoxImage.Warning) == MessageBoxResult.Yes)
+                {
+                    await Task.Run(() => _patientService.ArchivePatient(id));
+                    await LoadDataAsync();
+                }
+            }
         }
 
-        public int GetFilteredCount(string query, string status, string gender)
+        private void BtnFirst_Click(object sender, RoutedEventArgs e) { _currentPage = 1; ApplyPagination(); }
+        private void BtnPrevious_Click(object sender, RoutedEventArgs e) { _currentPage--; ApplyPagination(); }
+        private void BtnNext_Click(object sender, RoutedEventArgs e) { _currentPage++; ApplyPagination(); }
+        private void BtnLast_Click(object sender, RoutedEventArgs e) { _currentPage = _totalPages; ApplyPagination(); }
+
+        private void BtnExportExcel_Click(object sender, RoutedEventArgs e) => MessageBox.Show("Coming soon.");
+        private void BtnExportPdf_Click(object sender, RoutedEventArgs e) => MessageBox.Show("Coming soon.");
+    }
+
+    public class PatientViewModel
+    {
+        public int Id { get; set; }
+        public string PatientId { get; set; }
+        public string FullName { get; set; }
+        public string Contact { get; set; }
+        public string Email { get; set; }
+        public DateTime? BirthDate { get; set; }
+        public string Gender { get; set; }
+        public DateTime? LastVisit { get; set; }
+        public string PrimaryDiagnosis { get; set; }
+        public string Status { get; set; }
+        public string Address { get; set; }
+        public string BloodType { get; set; }
+        public string Allergies { get; set; }
+
+        public string AgeDisplay => BirthDate.HasValue ? $"Age {DateTime.Now.Year - BirthDate.Value.Year}" : "N/A";
+        public string LastVisitFormatted => LastVisit?.ToString("MMM dd, yyyy") ?? "No visits";
+        public string Initials
         {
-            var q = _db.Patients.AsQueryable();
-
-            // Apply filters
-            if (!string.IsNullOrWhiteSpace(query))
+            get
             {
-                query = query.ToLower();
-                q = q.Where(p => p.FullName.ToLower().Contains(query) ||
-                                p.PatientId.ToLower().Contains(query) ||
-                                p.Contact.ToLower().Contains(query));
+                if (string.IsNullOrEmpty(FullName)) return "?";
+                var parts = FullName.Split(' ');
+                return parts.Length > 1 ? (parts[0][0].ToString() + parts[1][0].ToString()).ToUpper() : FullName.Substring(0, 1).ToUpper();
             }
-
-            if (!string.IsNullOrWhiteSpace(status) && status != "All Status")
-            {
-                q = q.Where(p => p.Status == status);
-            }
-
-            if (!string.IsNullOrWhiteSpace(gender) && gender != "All Gender")
-            {
-                q = q.Where(p => p.Gender == gender);
-            }
-
-            return q.Count();
         }
 
-        public IEnumerable<Patient> SearchPaged(string query, string status, string gender, int page, int pageSize)
+        public Brush StatusBackground
         {
-            var q = _db.Patients.AsQueryable();
-
-            // Apply filters
-            if (!string.IsNullOrWhiteSpace(query))
+            get
             {
-                query = query.ToLower();
-                q = q.Where(p => p.FullName.ToLower().Contains(query) ||
-                                p.PatientId.ToLower().Contains(query) ||
-                                p.Contact.ToLower().Contains(query));
+                switch (Status?.ToUpper())
+                {
+                    case "ACTIVE": return new SolidColorBrush(Color.FromRgb(232, 245, 233));
+                    case "PENDING": return new SolidColorBrush(Color.FromRgb(255, 243, 224));
+                    default: return new SolidColorBrush(Color.FromRgb(227, 242, 253));
+                }
             }
+        }
 
-            if (!string.IsNullOrWhiteSpace(status) && status != "All Status")
+        public Brush StatusForeground
+        {
+            get
             {
-                q = q.Where(p => p.Status == status);
+                switch (Status?.ToUpper())
+                {
+                    case "ACTIVE": return new SolidColorBrush(Color.FromRgb(76, 175, 80));
+                    case "PENDING": return new SolidColorBrush(Color.FromRgb(255, 152, 0));
+                    default: return new SolidColorBrush(Color.FromRgb(33, 150, 243));
+                }
             }
-
-            if (!string.IsNullOrWhiteSpace(gender) && gender != "All Gender")
-            {
-                q = q.Where(p => p.Gender == gender);
-            }
-
-            return q.OrderByDescending(p => p.LastVisit)
-                    .Skip((page - 1) * pageSize)
-                    .Take(pageSize)
-                    .ToList();
         }
     }
 }

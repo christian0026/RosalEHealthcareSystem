@@ -8,14 +8,13 @@ namespace RosalEHealthcare.UI.WPF.Views
 {
     public partial class ViewMedicineDialog : Window
     {
-        private readonly MedicineService _medicineService;
         private readonly RosalEHealthcareDbContext _db;
+        private readonly MedicineService _medicineService;
         private readonly int _medicineId;
 
         public ViewMedicineDialog(int medicineId)
         {
             InitializeComponent();
-
             _db = new RosalEHealthcareDbContext();
             _medicineService = new MedicineService(_db);
             _medicineId = medicineId;
@@ -39,59 +38,77 @@ namespace RosalEHealthcare.UI.WPF.Views
                     return;
                 }
 
-                // Set initials
-                var name = medicine.Name ?? "?";
-                var words = name.Split(' ');
-                if (words.Length >= 2)
-                    txtInitials.Text = $"{words[0][0]}{words[1][0]}".ToUpper();
-                else
-                    txtInitials.Text = name.Length >= 2 ? name.Substring(0, 2).ToUpper() : name.ToUpper();
-
-                // Set details
+                // Header
                 txtMedicineName.Text = medicine.Name;
-                txtMedicineId.Text = medicine.MedicineId ?? "N/A";
-                txtGenericName.Text = medicine.GenericName ?? "-";
-                txtBrand.Text = medicine.Brand ?? "-";
-                txtCategory.Text = medicine.Category ?? "-";
-                txtType.Text = medicine.Type ?? "-";
-                txtStrength.Text = medicine.Strength ?? "-";
-                txtStock.Text = medicine.Stock.ToString();
+                txtMedicineId.Text = medicine.MedicineId;
+
+                // Status with color
+                txtStatus.Text = medicine.Status;
+                SetStatusColor(medicine.Status);
+
+                // Basic Information
+                txtGenericName.Text = medicine.GenericName ?? "N/A";
+                txtBrand.Text = medicine.Brand ?? "N/A";
+                txtCategory.Text = medicine.Category ?? "N/A";
+                txtType.Text = medicine.Type ?? "N/A";
+                txtStrength.Text = medicine.Strength ?? "N/A";
+                txtUnit.Text = medicine.Unit ?? "N/A";
+
+                // Stock & Pricing
+                txtStock.Text = $"{medicine.Stock} units";
+                txtMinStock.Text = $"{medicine.MinimumStockLevel} units";
                 txtPrice.Text = $"₱{medicine.Price:N2}";
-                txtExpiryDate.Text = medicine.ExpiryDate.ToString("MMMM dd, yyyy");
-                txtStatus.Text = medicine.Status ?? "Unknown";
 
-                // Set status color
-                switch (medicine.Status)
+                // Set stock color
+                if (medicine.Stock == 0)
                 {
-                    case "Available":
-                        statusBadge.Background = new SolidColorBrush(Color.FromRgb(232, 245, 233));
-                        txtStatus.Foreground = new SolidColorBrush(Color.FromRgb(46, 125, 50));
-                        break;
-                    case "Low Stock":
-                        statusBadge.Background = new SolidColorBrush(Color.FromRgb(255, 243, 224));
-                        txtStatus.Foreground = new SolidColorBrush(Color.FromRgb(245, 124, 0));
-                        break;
-                    case "Out of Stock":
-                        statusBadge.Background = new SolidColorBrush(Color.FromRgb(255, 235, 238));
-                        txtStatus.Foreground = new SolidColorBrush(Color.FromRgb(198, 40, 40));
-                        break;
-                    case "Expiring Soon":
-                        statusBadge.Background = new SolidColorBrush(Color.FromRgb(255, 243, 224));
-                        txtStatus.Foreground = new SolidColorBrush(Color.FromRgb(245, 124, 0));
-                        break;
+                    txtStock.Foreground = new SolidColorBrush(Color.FromRgb(211, 47, 47));
+                }
+                else if (medicine.Stock <= medicine.MinimumStockLevel)
+                {
+                    txtStock.Foreground = new SolidColorBrush(Color.FromRgb(255, 152, 0));
+                }
+                else
+                {
+                    txtStock.Foreground = new SolidColorBrush(Color.FromRgb(76, 175, 80));
                 }
 
-                // Highlight expiry date if expiring
-                var threeMonthsFromNow = DateTime.Now.AddMonths(3);
-                if (medicine.ExpiryDate <= threeMonthsFromNow && medicine.ExpiryDate >= DateTime.Now)
-                {
-                    txtExpiryDate.Foreground = new SolidColorBrush(Color.FromRgb(245, 124, 0));
-                    txtExpiryDate.FontWeight = FontWeights.SemiBold;
-                }
-                else if (medicine.ExpiryDate < DateTime.Now)
+                // Expiry Information
+                txtExpiryDate.Text = medicine.ExpiryDate.ToString("MMMM yyyy");
+
+                // Check if expiring or expired
+                var daysUntilExpiry = (medicine.ExpiryDate - DateTime.Now).Days;
+                if (daysUntilExpiry < 0)
                 {
                     txtExpiryDate.Foreground = new SolidColorBrush(Color.FromRgb(211, 47, 47));
-                    txtExpiryDate.FontWeight = FontWeights.Bold;
+                    txtExpiryDate.Text += " (EXPIRED)";
+                }
+                else if (daysUntilExpiry <= 90)
+                {
+                    txtExpiryDate.Foreground = new SolidColorBrush(Color.FromRgb(255, 152, 0));
+                    txtExpiryDate.Text += $" ({daysUntilExpiry} days remaining)";
+                }
+
+                // Additional Information
+                if (string.IsNullOrWhiteSpace(medicine.Notes))
+                {
+                    txtNotes.Text = "No notes available";
+                    txtNotes.Foreground = new SolidColorBrush(Color.FromRgb(158, 158, 158));
+                }
+                else
+                {
+                    txtNotes.Text = medicine.Notes;
+                    txtNotes.Foreground = new SolidColorBrush(Color.FromRgb(0, 0, 0));
+                }
+
+                // Last Modified
+                txtLastModifiedBy.Text = medicine.LastModifiedBy ?? "System";
+                txtLastModifiedAt.Text = medicine.LastModifiedAt?.ToString("MMM dd, yyyy hh:mm tt") ?? "N/A";
+
+                // Hide edit button if archived
+                if (!medicine.IsActive)
+                {
+                    btnEdit.Visibility = Visibility.Collapsed;
                 }
             }
             catch (Exception ex)
@@ -99,6 +116,40 @@ namespace RosalEHealthcare.UI.WPF.Views
                 MessageBox.Show($"Error loading medicine details: {ex.Message}",
                     "Load Error", MessageBoxButton.OK, MessageBoxImage.Error);
                 Close();
+            }
+        }
+
+        private void SetStatusColor(string status)
+        {
+            switch (status)
+            {
+                case "Available":
+                    StatusBadge.Background = new SolidColorBrush(Color.FromRgb(232, 245, 233));
+                    txtStatus.Foreground = new SolidColorBrush(Color.FromRgb(46, 125, 50));
+                    break;
+                case "Low Stock":
+                    StatusBadge.Background = new SolidColorBrush(Color.FromRgb(255, 243, 224));
+                    txtStatus.Foreground = new SolidColorBrush(Color.FromRgb(245, 124, 0));
+                    break;
+                case "Out of Stock":
+                case "Expired":
+                    StatusBadge.Background = new SolidColorBrush(Color.FromRgb(255, 235, 238));
+                    txtStatus.Foreground = new SolidColorBrush(Color.FromRgb(198, 40, 40));
+                    break;
+                case "Expiring Soon":
+                    StatusBadge.Background = new SolidColorBrush(Color.FromRgb(255, 243, 224));
+                    txtStatus.Foreground = new SolidColorBrush(Color.FromRgb(245, 124, 0));
+                    break;
+            }
+        }
+
+        private void BtnEdit_Click(object sender, RoutedEventArgs e)
+        {
+            var editDialog = new AddEditMedicineDialog(_medicineId);
+            if (editDialog.ShowDialog() == true)
+            {
+                // Reload data
+                LoadMedicineDetails();
             }
         }
 

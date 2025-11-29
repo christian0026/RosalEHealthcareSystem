@@ -77,7 +77,8 @@ namespace RosalEHealthcare.Data.Services
                 var builder = new SqlConnectionStringBuilder(connectionString);
                 string databaseName = builder.InitialCatalog;
 
-                // Execute SQL Server backup command
+                // FIX: Removed 'COMPRESSION' keyword which causes crash on SQL Express
+                // We rely on the C# ZipFile compression later in this method instead.
                 string backupSql = $@"
                     BACKUP DATABASE [{databaseName}] 
                     TO DISK = N'{bakFilePath}' 
@@ -87,7 +88,6 @@ namespace RosalEHealthcare.Data.Services
                          SKIP, 
                          NOREWIND, 
                          NOUNLOAD, 
-                         COMPRESSION,
                          STATS = 10";
 
                 progressCallback?.Invoke(40, "Executing backup command...");
@@ -106,7 +106,7 @@ namespace RosalEHealthcare.Data.Services
 
                 string finalFilePath = bakFilePath;
 
-                // Compress if enabled
+                // Compress if enabled (This logic now handles the compression instead of SQL Server)
                 if (compress)
                 {
                     progressCallback?.Invoke(80, "Compressing backup file...");
@@ -114,10 +114,11 @@ namespace RosalEHealthcare.Data.Services
 
                     using (var zip = ZipFile.Open(zipFilePath, ZipArchiveMode.Create))
                     {
+                        // Add the .bak file to the zip
                         zip.CreateEntryFromFile(bakFilePath, bakFileName, CompressionLevel.Optimal);
                     }
 
-                    // Delete original .bak file
+                    // Delete original .bak file to save space
                     File.Delete(bakFilePath);
 
                     finalFilePath = zipFilePath;
@@ -195,13 +196,14 @@ namespace RosalEHealthcare.Data.Services
                 }
 
                 string actualBackupFile = backupFilePath;
+                string tempDir = null;
 
                 // If it's a zip file, extract first
                 if (Path.GetExtension(backupFilePath).ToLower() == ".zip")
                 {
                     progressCallback?.Invoke(10, "Extracting backup file...");
 
-                    string tempDir = Path.Combine(Path.GetTempPath(), $"RosalRestore_{Guid.NewGuid()}");
+                    tempDir = Path.Combine(Path.GetTempPath(), $"RosalRestore_{Guid.NewGuid()}");
                     Directory.CreateDirectory(tempDir);
 
                     ZipFile.ExtractToDirectory(backupFilePath, tempDir);
@@ -232,7 +234,7 @@ namespace RosalEHealthcare.Data.Services
                 {
                     connection.Open();
 
-                    // Set to single user mode
+                    // Set to single user mode to kick off other users
                     string setSingleUser = $@"
                         ALTER DATABASE [{databaseName}] SET SINGLE_USER WITH ROLLBACK IMMEDIATE;";
 
@@ -269,6 +271,12 @@ namespace RosalEHealthcare.Data.Services
                     }
                 }
 
+                // Clean up temp directory if we created one for zip extraction
+                if (tempDir != null && Directory.Exists(tempDir))
+                {
+                    try { Directory.Delete(tempDir, true); } catch { }
+                }
+
                 // Send success notification
                 try
                 {
@@ -294,7 +302,7 @@ namespace RosalEHealthcare.Data.Services
                 }
                 catch { }
 
-                // Try to set database back to multi-user if possible
+                // Try to set database back to multi-user if possible using Master
                 try
                 {
                     var connectionString = _db.Database.Connection.ConnectionString;

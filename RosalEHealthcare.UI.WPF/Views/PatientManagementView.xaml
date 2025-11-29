@@ -1,212 +1,289 @@
 ﻿<UserControl x:Class="RosalEHealthcare.UI.WPF.Views.PatientManagementView"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-             xmlns:local="clr-namespace:RosalEHealthcare.UI.WPF.Controls"
-             Background="#F5F5F5">
+             xmlns:controls="clr-namespace:RosalEHealthcare.UI.WPF.Controls"
+             xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
+             xmlns:local="clr-namespace:RosalEHealthcare.UI.WPF.Views"
+             Background="#F0F2F5"
+             TextElement.Foreground="{DynamicResource MaterialDesignBody}"
+             TextElement.FontWeight="Regular"
+             TextElement.FontSize="13"
+             TextOptions.TextFormattingMode="Ideal"
+             TextOptions.TextRenderingMode="Auto"
+             FontFamily="{DynamicResource MaterialDesignFont}"
+             Loaded="UserControl_Loaded">
 
     <UserControl.Resources>
-        <Style x:Key="ActionBtn" TargetType="Button">
-            <Setter Property="Height" Value="32"/>
-            <Setter Property="Padding" Value="10,6"/>
-            <Setter Property="Margin" Value="4,0"/>
-            <Setter Property="FontSize" Value="12"/>
-            <Setter Property="FontWeight" Value="SemiBold"/>
-            <Setter Property="BorderThickness" Value="0"/>
-            <Setter Property="Cursor" Value="Hand"/>
-            <Setter Property="Template">
-                <Setter.Value>
-                    <ControlTemplate TargetType="Button">
-                        <Border Background="{TemplateBinding Background}" 
-                                CornerRadius="6" 
-                                Padding="{TemplateBinding Padding}">
-                            <ContentPresenter HorizontalAlignment="Center" 
-                                            VerticalAlignment="Center"/>
-                        </Border>
-                    </ControlTemplate>
-                </Setter.Value>
-            </Setter>
-            <Style.Triggers>
-                <Trigger Property="IsMouseOver" Value="True">
-                    <Setter Property="Opacity" Value="0.85"/>
-                </Trigger>
-            </Style.Triggers>
-        </Style>
+        <BooleanToVisibilityConverter x:Key="BoolToVis"/>
+        <local:BoolToArchiveStatusConverter x:Key="BoolToArchiveText"/>
+        <Style TargetType="ScrollBar" BasedOn="{StaticResource MaterialDesignScrollBarMinimal}"/>
     </UserControl.Resources>
 
-    <!-- SINGLE root container (Grid) so UserControl.Content is set only once -->
     <Grid>
-        <ScrollViewer VerticalScrollBarVisibility="Auto">
-            <StackPanel Margin="20">
-                <!-- Summary Cards -->
-                <Grid Margin="0,0,0,20">
-                    <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="*"/>
-                        <ColumnDefinition Width="*"/>
-                        <ColumnDefinition Width="*"/>
-                        <ColumnDefinition Width="*"/>
-                    </Grid.ColumnDefinitions>
+        <Border x:Name="LoadingOverlay" Background="#99FFFFFF" Visibility="Collapsed" Panel.ZIndex="999">
+            <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center">
+                <ProgressBar Style="{StaticResource MaterialDesignCircularProgressBar}"
+                             IsIndeterminate="True" Value="0" Width="50" Height="50" Margin="0,0,0,16"
+                             Foreground="{StaticResource PrimaryHueMidBrush}"/>
+                <TextBlock Text="Loading Patients..." Foreground="{StaticResource PrimaryHueMidBrush}" FontSize="16" FontWeight="Medium"/>
+            </StackPanel>
+        </Border>
 
-                    <local:SummaryCard Grid.Column="0" x:Name="CardTotalPatients" Title="Total Patients" Value="0" Icon="👥" 
-                                       TopColor="#4CAF50" IconBackground="#E8F5E9" Margin="0,0,10,0"/>
-                    <local:SummaryCard Grid.Column="1" x:Name="CardTodayAppointments" Title="Today's Appointments" Value="0" Icon="📅" 
-                                       TopColor="#2196F3" IconBackground="#E3F2FD" Margin="5,0,5,0"/>
-                    <local:SummaryCard Grid.Column="2" x:Name="CardRemainingPatients" Title="Remaining Patient" Value="0" Icon="✓" 
-                                       TopColor="#FF9800" IconBackground="#FFF3E0" TrendText="Requires attention" TrendColor="#FF9800" TrendIcon="⚠" Margin="5,0,5,0"/>
-                    <local:SummaryCard Grid.Column="3" x:Name="CardExpiringMedicines" Title="Expiring Medicines" Value="0" Icon="⏰" 
-                                       TopColor="#F44336" IconBackground="#FFEBEE" TrendText="Expiring within 30 days" TrendColor="#F44336" TrendIcon="🔴" Margin="10,0,0,0"/>
-                </Grid>
+        <Grid Margin="24">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="*"/>
+                <RowDefinition Height="Auto"/>
+            </Grid.RowDefinitions>
 
-                <!-- Patient Records -->
-                <Border Background="White" CornerRadius="10" Padding="25">
-                    <Border.Effect>
-                        <DropShadowEffect Color="#000000" BlurRadius="10" ShadowDepth="2" Opacity="0.1"/>
-                    </Border.Effect>
-                    <StackPanel>
-                        <TextBlock Text="Patient Records" FontSize="18" FontWeight="Bold" Foreground="#333" Margin="0,0,0,20"/>
+            <UniformGrid Grid.Row="0" Columns="4" Margin="0,0,0,24">
+                <controls:SummaryCard x:Name="CardTotalPatients" Title="Total Patients" Value="0" Icon="👥" TopColor="#4CAF50" IconBackground="#E8F5E9" Margin="0,0,16,0"/>
+                <controls:SummaryCard x:Name="CardTodayAppointments" Title="Today's Visits" Value="0" Icon="📅" TopColor="#2196F3" IconBackground="#E3F2FD" Margin="0,0,16,0"/>
+                <controls:SummaryCard x:Name="CardPendingAppointments" Title="Pending Checkups" Value="0" Icon="⏳" TopColor="#FF9800" IconBackground="#FFF3E0" Margin="0,0,16,0"/>
+                <controls:SummaryCard x:Name="CardNewPatients" Title="New (This Month)" Value="0" Icon="➕" TopColor="#9C27B0" IconBackground="#F3E5F5" TrendText="Growth" TrendColor="#9C27B0" TrendIcon="📈" Margin="0"/>
+            </UniformGrid>
 
-                        <!-- Filters -->
-                        <Grid Margin="0,0,0,20">
+            <Grid Grid.Row="1" Margin="0,0,0,16">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+
+                <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                    <materialDesign:ColorZone Mode="Standard" Padding="8,4" CornerRadius="8" Panel.ZIndex="1" Margin="0,0,16,0" materialDesign:ShadowAssist.ShadowDepth="Depth1">
+                        <Grid>
                             <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="2*"/>
-                                <ColumnDefinition Width="10"/>
-                                <ColumnDefinition Width="*"/>
-                                <ColumnDefinition Width="10"/>
-                                <ColumnDefinition Width="*"/>
-                                <ColumnDefinition Width="10"/>
                                 <ColumnDefinition Width="Auto"/>
+                                <ColumnDefinition Width="*"/>
                             </Grid.ColumnDefinitions>
-
-                            <TextBox x:Name="txtSearch" Grid.Column="0" Height="45" Padding="12" FontSize="14" TextChanged="txtSearch_TextChanged"/>
-                            <ComboBox x:Name="cmbStatus" Grid.Column="2" Height="45" FontSize="14" SelectionChanged="Filter_Changed">
-                                <ComboBoxItem Content="All Status" IsSelected="True"/>
-                                <ComboBoxItem Content="Active"/>
-                                <ComboBoxItem Content="Pending"/>
-                                <ComboBoxItem Content="Completed"/>
-                            </ComboBox>
-                            <ComboBox x:Name="cmbGender" Grid.Column="4" Height="45" FontSize="14" SelectionChanged="Filter_Changed">
-                                <ComboBoxItem Content="All Gender" IsSelected="True"/>
-                                <ComboBoxItem Content="Male"/>
-                                <ComboBoxItem Content="Female"/>
-                            </ComboBox>
-                            <Button Grid.Column="6" Content="🔍 Search" Background="#17a2b8" Foreground="White" Padding="20,12" FontSize="14" Click="Search_Click"/>
+                            <materialDesign:PackIcon Kind="Magnify" Opacity=".56" VerticalAlignment="Center" Margin="8,0"/>
+                            <TextBox x:Name="txtSearch" Grid.Column="1" Margin="8,0,0,0" materialDesign:HintAssist.Hint="Search patients..." materialDesign:TextFieldAssist.DecorationVisibility="Hidden" BorderThickness="0" MinWidth="250" VerticalAlignment="Center" TextChanged="txtSearch_TextChanged"/>
                         </Grid>
+                    </materialDesign:ColorZone>
 
-                        <Grid Margin="0,0,0,15">
-                            <TextBlock Text="Patient List" FontSize="16" FontWeight="Bold"/>
-                            <TextBlock x:Name="txtPatientCount" Text="Showing 0-0 of 0" FontSize="12" Foreground="#999" HorizontalAlignment="Right"/>
+                    <ComboBox x:Name="cmbStatus" materialDesign:HintAssist.Hint="Status" Style="{StaticResource MaterialDesignOutlinedComboBox}" Padding="12,10" MinWidth="150" Margin="0,0,12,0" SelectionChanged="Filter_Changed">
+                        <ComboBoxItem Content="All Status" IsSelected="True"/>
+                        <ComboBoxItem Content="Active"/>
+                        <ComboBoxItem Content="Pending"/>
+                        <ComboBoxItem Content="Archived"/>
+                    </ComboBox>
+
+                    <ComboBox x:Name="cmbGender" materialDesign:HintAssist.Hint="Gender" Style="{StaticResource MaterialDesignOutlinedComboBox}" Padding="12,10" MinWidth="130" Margin="0,0,12,0" SelectionChanged="Filter_Changed">
+                        <ComboBoxItem Content="All Gender" IsSelected="True"/>
+                        <ComboBoxItem Content="Male"/>
+                        <ComboBoxItem Content="Female"/>
+                    </ComboBox>
+
+                    <Button Style="{StaticResource MaterialDesignIconButton}" ToolTip="Clear Filters" Click="BtnClearFilters_Click">
+                        <materialDesign:PackIcon Kind="FilterOff" Opacity="0.6"/>
+                    </Button>
+                </StackPanel>
+
+                <StackPanel Grid.Column="1" Orientation="Horizontal">
+                    <materialDesign:PopupBox x:Name="btnExport" ToolTip="Tools &amp; Exports" Margin="0,0,12,0" PlacementMode="BottomAndAlignRightEdges">
+                        <materialDesign:PopupBox.ToggleContent>
+                            <Border BorderThickness="1" BorderBrush="{DynamicResource MaterialDesignDivider}" CornerRadius="4" Padding="12,8" Background="Transparent">
+                                <StackPanel Orientation="Horizontal">
+                                    <materialDesign:PackIcon Kind="Tools" Margin="0,0,8,0" VerticalAlignment="Center" Opacity="0.7"/>
+                                    <TextBlock Text="Tools" VerticalAlignment="Center" FontWeight="Medium"/>
+                                </StackPanel>
+                            </Border>
+                        </materialDesign:PopupBox.ToggleContent>
+                        <StackPanel>
+                            <Button Click="BtnExportExcel_Click">
+                                <StackPanel Orientation="Horizontal">
+                                    <materialDesign:PackIcon Kind="FileExcel" Margin="0,0,8,0" />
+                                    <TextBlock Text="Export to Excel"/>
+                                </StackPanel>
+                            </Button>
+                            <Button Click="BtnExportPdf_Click">
+                                <StackPanel Orientation="Horizontal">
+                                    <materialDesign:PackIcon Kind="FilePdfBox" Margin="0,0,8,0"/>
+                                    <TextBlock Text="Export to PDF"/>
+                                </StackPanel>
+                            </Button>
+                        </StackPanel>
+                    </materialDesign:PopupBox>
+
+                    <Button x:Name="btnAddPatient" Click="BtnAddPatient_Click" Style="{StaticResource MaterialDesignRaisedButton}" materialDesign:ButtonAssist.CornerRadius="8">
+                        <StackPanel Orientation="Horizontal">
+                            <materialDesign:PackIcon Kind="AccountPlus" Margin="0,0,8,0"/>
+                            <TextBlock Text="Add Patient" FontWeight="SemiBold"/>
+                        </StackPanel>
+                    </Button>
+                </StackPanel>
+            </Grid>
+
+            <materialDesign:Card Grid.Row="2" Background="White" UniformCornerRadius="8" materialDesign:ShadowAssist.ShadowDepth="Depth1">
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="*"/>
+                    </Grid.RowDefinitions>
+
+                    <Border BorderBrush="{DynamicResource MaterialDesignDivider}" BorderThickness="0,0,0,1" Padding="16">
+                        <Grid>
+                            <StackPanel Orientation="Horizontal">
+                                <materialDesign:PackIcon Kind="AccountDetails" VerticalAlignment="Center" Margin="0,0,8,0" Opacity="0.7"/>
+                                <TextBlock Text="Patient Records" FontWeight="Bold" FontSize="14" VerticalAlignment="Center"/>
+                            </StackPanel>
+                            <TextBlock x:Name="txtResultCount" Text="Showing 0 patients" HorizontalAlignment="Right" FontSize="12" Opacity="0.6" VerticalAlignment="Center"/>
                         </Grid>
+                    </Border>
 
-                        <!-- DataGrid -->
-                        <DataGrid x:Name="dgPatients" AutoGenerateColumns="False" IsReadOnly="True" RowHeight="70" 
-                                  HeadersVisibility="Column" GridLinesVisibility="None" BorderBrush="#E0E0E0" BorderThickness="1"
-                                  RowBackground="White" AlternatingRowBackground="#FAFAFA">
-                            <DataGrid.ColumnHeaderStyle>
-                                <Style TargetType="DataGridColumnHeader">
-                                    <Setter Property="Background" Value="#F5F5F5"/>
-                                    <Setter Property="Padding" Value="15,12"/>
-                                    <Setter Property="FontWeight" Value="Bold"/>
-                                    <Setter Property="FontSize" Value="12"/>
-                                </Style>
-                            </DataGrid.ColumnHeaderStyle>
-                            <DataGrid.Columns>
-                                <DataGridTemplateColumn Header="PATIENT INFO" Width="200">
-                                    <DataGridTemplateColumn.CellTemplate>
-                                        <DataTemplate>
-                                            <StackPanel Orientation="Horizontal">
-                                                <Border Width="40" Height="40" CornerRadius="20" Background="#4CAF50" Margin="0,0,12,0">
-                                                    <TextBlock Text="{Binding Initials}" Foreground="White" FontWeight="Bold" FontSize="14" 
-                                                               HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                                                </Border>
-                                                <StackPanel VerticalAlignment="Center">
-                                                    <TextBlock Text="{Binding FullName}" FontSize="14" FontWeight="SemiBold"/>
-                                                    <TextBlock Text="{Binding AgeDisplay}" FontSize="12" Foreground="#757575"/>
+                    <DataGrid x:Name="dgPatients" Grid.Row="1" AutoGenerateColumns="False" CanUserAddRows="False" IsReadOnly="True" 
+                              HeadersVisibility="Column" SelectionMode="Single" SelectionUnit="FullRow" GridLinesVisibility="Horizontal" 
+                              HorizontalGridLinesBrush="#F0F0F0" RowHeight="60" Background="Transparent" BorderThickness="0">
+
+                        <DataGrid.ColumnHeaderStyle>
+                            <Style TargetType="DataGridColumnHeader" BasedOn="{StaticResource MaterialDesignDataGridColumnHeader}">
+                                <Setter Property="FontWeight" Value="SemiBold"/>
+                                <Setter Property="Padding" Value="16,12"/>
+                            </Style>
+                        </DataGrid.ColumnHeaderStyle>
+                        <DataGrid.CellStyle>
+                            <Style TargetType="DataGridCell">
+                                <Setter Property="Padding" Value="16,8"/>
+                                <Setter Property="BorderThickness" Value="0"/>
+                                <Setter Property="Template">
+                                    <Setter.Value>
+                                        <ControlTemplate TargetType="DataGridCell">
+                                            <Border Padding="{TemplateBinding Padding}" Background="{TemplateBinding Background}">
+                                                <ContentPresenter VerticalAlignment="Center" />
+                                            </Border>
+                                        </ControlTemplate>
+                                    </Setter.Value>
+                                </Setter>
+                            </Style>
+                        </DataGrid.CellStyle>
+
+                        <DataGrid.Columns>
+                            <DataGridTemplateColumn Header="Patient Name" Width="2.5*">
+                                <DataGridTemplateColumn.CellTemplate>
+                                    <DataTemplate>
+                                        <StackPanel Orientation="Horizontal">
+                                            <materialDesign:ColorZone Mode="PrimaryLight" Width="40" Height="40" CornerRadius="20" Margin="0,0,12,0">
+                                                <TextBlock Text="{Binding Initials}" HorizontalAlignment="Center" VerticalAlignment="Center" FontWeight="Bold" Foreground="{DynamicResource PrimaryHueMidBrush}"/>
+                                            </materialDesign:ColorZone>
+                                            <StackPanel VerticalAlignment="Center">
+                                                <TextBlock Text="{Binding FullName}" FontWeight="SemiBold" FontSize="14"/>
+                                                <StackPanel Orientation="Horizontal">
+                                                    <TextBlock Text="{Binding PatientId}" FontSize="11" Opacity="0.6" Margin="0,0,8,0"/>
+                                                    <TextBlock Text="{Binding Gender}" FontSize="11" Opacity="0.6"/>
                                                 </StackPanel>
                                             </StackPanel>
-                                        </DataTemplate>
-                                    </DataGridTemplateColumn.CellTemplate>
-                                </DataGridTemplateColumn>
-                                <DataGridTextColumn Header="PATIENT ID" Binding="{Binding PatientId}" Width="120"/>
-                                <DataGridTemplateColumn Header="CONTACT" Width="180">
-                                    <DataGridTemplateColumn.CellTemplate>
-                                        <DataTemplate>
-                                            <StackPanel>
-                                                <TextBlock Text="{Binding Contact}" FontSize="13"/>
-                                                <TextBlock Text="{Binding Email}" FontSize="12" Foreground="#757575"/>
-                                            </StackPanel>
-                                        </DataTemplate>
-                                    </DataGridTemplateColumn.CellTemplate>
-                                </DataGridTemplateColumn>
-                                <DataGridTemplateColumn Header="BIRTHDATE" Width="140">
-                                    <DataGridTemplateColumn.CellTemplate>
-                                        <DataTemplate>
-                                            <StackPanel>
-                                                <TextBlock Text="{Binding BirthDate, StringFormat='{}{0:MMMM dd, yyyy}'}" FontSize="13"/>
-                                                <TextBlock Text="{Binding PrimaryDiagnosis}" FontSize="11" Foreground="#999"/>
-                                            </StackPanel>
-                                        </DataTemplate>
-                                    </DataGridTemplateColumn.CellTemplate>
-                                </DataGridTemplateColumn>
-                                <DataGridTextColumn Header="GENDER" Binding="{Binding Gender}" Width="100"/>
-                                <DataGridTemplateColumn Header="LAST VISIT" Width="150">
-                                    <DataGridTemplateColumn.CellTemplate>
-                                        <DataTemplate>
-                                            <StackPanel>
-                                                <TextBlock Text="{Binding LastVisit, StringFormat='{}{0:MMMM dd, yyyy}'}" FontSize="13"/>
-                                                <TextBlock Text="{Binding PrimaryDiagnosis}" FontSize="11" Foreground="#999"/>
-                                            </StackPanel>
-                                        </DataTemplate>
-                                    </DataGridTemplateColumn.CellTemplate>
-                                </DataGridTemplateColumn>
-                                <DataGridTemplateColumn Header="STATUS" Width="130">
-                                    <DataGridTemplateColumn.CellTemplate>
-                                        <DataTemplate>
-                                            <Border Background="{Binding StatusBackground}" Padding="10,6" CornerRadius="12" HorizontalAlignment="Center">
-                                                <TextBlock Text="{Binding Status}" Foreground="{Binding StatusForeground}" FontSize="12" FontWeight="Bold"/>
-                                            </Border>
-                                        </DataTemplate>
-                                    </DataGridTemplateColumn.CellTemplate>
-                                </DataGridTemplateColumn>
-                                <DataGridTemplateColumn Header="ACTIONS" Width="220">
-                                    <DataGridTemplateColumn.CellTemplate>
-                                        <DataTemplate>
-                                            <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
-                                                <!-- Tag binds to Id (int) so code-behind can cast to int -->
-                                                <Button Content="👁️ View" Background="#6c757d" Foreground="White" Style="{StaticResource ActionBtn}" Click="View_Click" Tag="{Binding Id}"/>
-                                                <Button Content="✏️ Edit" Background="#ffc107" Foreground="#333" Style="{StaticResource ActionBtn}" Click="Edit_Click" Tag="{Binding Id}"/>
-                                                <Button Content="🗄️ Archive" Background="#dc3545" Foreground="White" Style="{StaticResource ActionBtn}" Click="Archive_Click" Tag="{Binding Id}"/>
-                                            </StackPanel>
-                                        </DataTemplate>
-                                    </DataGridTemplateColumn.CellTemplate>
-                                </DataGridTemplateColumn>
-                            </DataGrid.Columns>
-                        </DataGrid>
+                                        </StackPanel>
+                                    </DataTemplate>
+                                </DataGridTemplateColumn.CellTemplate>
+                            </DataGridTemplateColumn>
 
-                        <!-- Pagination -->
-                        <Grid Margin="0,20,0,0">
-                            <StackPanel x:Name="paginationPanel" Orientation="Horizontal" HorizontalAlignment="Right"/>
-                        </Grid>
-                    </StackPanel>
-                </Border>
+                            <DataGridTemplateColumn Header="Contact" Width="1.5*">
+                                <DataGridTemplateColumn.CellTemplate>
+                                    <DataTemplate>
+                                        <StackPanel VerticalAlignment="Center">
+                                            <TextBlock Text="{Binding Contact}" FontSize="13"/>
+                                            <TextBlock Text="{Binding Email}" FontSize="11" Opacity="0.6"/>
+                                        </StackPanel>
+                                    </DataTemplate>
+                                </DataGridTemplateColumn.CellTemplate>
+                            </DataGridTemplateColumn>
+
+                            <DataGridTemplateColumn Header="Last Visit" Width="1.5*">
+                                <DataGridTemplateColumn.CellTemplate>
+                                    <DataTemplate>
+                                        <StackPanel VerticalAlignment="Center">
+                                            <TextBlock Text="{Binding LastVisitFormatted}" FontSize="13"/>
+                                            <TextBlock Text="{Binding PrimaryDiagnosis}" FontSize="11" Opacity="0.6" TextTrimming="CharacterEllipsis"/>
+                                        </StackPanel>
+                                    </DataTemplate>
+                                </DataGridTemplateColumn.CellTemplate>
+                            </DataGridTemplateColumn>
+
+                            <DataGridTemplateColumn Header="Status" Width="120">
+                                <DataGridTemplateColumn.CellTemplate>
+                                    <DataTemplate>
+                                        <Border CornerRadius="12" Padding="10,4" HorizontalAlignment="Center" Background="{Binding StatusBackground}">
+                                            <TextBlock Text="{Binding Status}" Foreground="{Binding StatusForeground}" FontSize="11" FontWeight="SemiBold"/>
+                                        </Border>
+                                    </DataTemplate>
+                                </DataGridTemplateColumn.CellTemplate>
+                            </DataGridTemplateColumn>
+
+                            <DataGridTemplateColumn Header="Actions" Width="Auto">
+                                <DataGridTemplateColumn.CellTemplate>
+                                    <DataTemplate>
+                                        <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                                            <Button Style="{StaticResource MaterialDesignIconButton}" ToolTip="View Details" Width="30" Height="30" Click="BtnView_Click" Tag="{Binding Id}">
+                                                <materialDesign:PackIcon Kind="Eye" Width="16" Height="16" Foreground="#0288D1"/>
+                                            </Button>
+                                            <Button Style="{StaticResource MaterialDesignIconButton}" ToolTip="Edit" Width="30" Height="30" Click="BtnEdit_Click" Tag="{Binding Id}">
+                                                <materialDesign:PackIcon Kind="Pencil" Width="16" Height="16" Foreground="#FFA000"/>
+                                            </Button>
+                                            <Button Style="{StaticResource MaterialDesignIconButton}" ToolTip="Archive" Width="30" Height="30" Click="BtnArchive_Click" Tag="{Binding Id}">
+                                                <materialDesign:PackIcon Kind="Archive" Width="16" Height="16" Foreground="#D32F2F"/>
+                                            </Button>
+                                        </StackPanel>
+                                    </DataTemplate>
+                                </DataGridTemplateColumn.CellTemplate>
+                            </DataGridTemplateColumn>
+                        </DataGrid.Columns>
+                    </DataGrid>
+                </Grid>
+            </materialDesign:Card>
+
+            <StackPanel Grid.Row="3" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,16,0,0">
+                <TextBlock x:Name="txtPageInfo" Text="Page 1 of 1" VerticalAlignment="Center" Margin="0,0,16,0" Opacity="0.6"/>
+                <Button x:Name="btnFirst" Click="BtnFirst_Click" Style="{StaticResource MaterialDesignIconButton}" ToolTip="First Page">
+                    <materialDesign:PackIcon Kind="PageFirst"/>
+                </Button>
+                <Button x:Name="btnPrevious" Click="BtnPrevious_Click" Style="{StaticResource MaterialDesignIconButton}" ToolTip="Previous">
+                    <materialDesign:PackIcon Kind="ChevronLeft"/>
+                </Button>
+                <Button x:Name="btnNext" Click="BtnNext_Click" Style="{StaticResource MaterialDesignIconButton}" ToolTip="Next">
+                    <materialDesign:PackIcon Kind="ChevronRight"/>
+                </Button>
+                <Button x:Name="btnLast" Click="BtnLast_Click" Style="{StaticResource MaterialDesignIconButton}" ToolTip="Last Page">
+                    <materialDesign:PackIcon Kind="PageLast"/>
+                </Button>
             </StackPanel>
-        </ScrollViewer>
+        </Grid>
 
-        <!-- View Patient Dialog -->
-        <Grid x:Name="viewDialog" Background="#80000000" Visibility="Collapsed" HorizontalAlignment="Center" VerticalAlignment="Center">
-            <Border Background="White" Width="600" MaxHeight="700" CornerRadius="12" Padding="30">
-                <Border.Effect>
-                    <DropShadowEffect BlurRadius="20" ShadowDepth="5" Opacity="0.3"/>
-                </Border.Effect>
-                <ScrollViewer VerticalScrollBarVisibility="Auto">
-                    <StackPanel>
-                        <Grid Margin="0,0,0,20">
-                            <TextBlock Text="Patient Details" FontSize="22" FontWeight="Bold" Foreground="#2E7D32"/>
-                            <Button Content="✕" Width="35" Height="35" FontSize="18" Background="Transparent" Foreground="#666" 
-                                    BorderThickness="0" Cursor="Hand" HorizontalAlignment="Right" Click="CloseViewDialog_Click"/>
+        <Grid x:Name="viewDialog" Background="#99000000" Visibility="Collapsed" Panel.ZIndex="1000">
+            <materialDesign:Card Width="700" Height="500" UniformCornerRadius="12" VerticalAlignment="Center" HorizontalAlignment="Center" Background="White">
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="*"/>
+                    </Grid.RowDefinitions>
+
+                    <Border Grid.Row="0" Padding="20" BorderBrush="#EEE" BorderThickness="0,0,0,1">
+                        <Grid>
+                            <StackPanel>
+                                <TextBlock Text="Patient Details" FontSize="20" FontWeight="Bold"/>
+                                <TextBlock x:Name="lblViewPatientId" Text="ID: PT-2024-001" FontSize="12" Foreground="Gray"/>
+                            </StackPanel>
+                            <Button HorizontalAlignment="Right" Style="{StaticResource MaterialDesignIconForegroundButton}" Click="CloseViewDialog_Click">
+                                <materialDesign:PackIcon Kind="Close"/>
+                            </Button>
                         </Grid>
-                        <StackPanel x:Name="patientDetailsPanel"/>
-                    </StackPanel>
-                </ScrollViewer>
-            </Border>
+                    </Border>
+
+                    <TabControl Grid.Row="1" Style="{StaticResource MaterialDesignTabControl}" materialDesign:ColorZoneAssist.Mode="Standard" Padding="0">
+                        <TabItem Header="Profile">
+                            <ScrollViewer VerticalScrollBarVisibility="Auto" Padding="20">
+                                <StackPanel x:Name="patientDetailsPanel"/>
+                            </ScrollViewer>
+                        </TabItem>
+                        <TabItem Header="Medical History">
+                            <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center">
+                                <materialDesign:PackIcon Kind="MedicalBag" Width="40" Height="40" Foreground="#DDD" HorizontalAlignment="Center"/>
+                                <TextBlock Text="History Feature Coming Soon" Foreground="Gray" Margin="0,10,0,0"/>
+                            </StackPanel>
+                        </TabItem>
+                    </TabControl>
+                </Grid>
+            </materialDesign:Card>
         </Grid>
     </Grid>
 </UserControl>

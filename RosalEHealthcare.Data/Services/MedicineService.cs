@@ -12,10 +12,8 @@ namespace RosalEHealthcare.Data.Services
         private readonly RosalEHealthcareDbContext _db;
         private readonly NotificationService _notificationService;
 
-        // Stock threshold for low stock alerts
         private const int LOW_STOCK_THRESHOLD = 20;
-        // Days before expiry to trigger alert
-        private const int EXPIRY_WARNING_DAYS = 30;
+        private const int EXPIRY_WARNING_DAYS = 90; // 3 months
 
         public MedicineService(RosalEHealthcareDbContext db)
         {
@@ -25,11 +23,17 @@ namespace RosalEHealthcare.Data.Services
 
         #region Basic CRUD
 
-        public IEnumerable<Medicine> GetAllMedicines()
+        /// <summary>
+        /// Get all active medicines
+        /// </summary>
+        public IEnumerable<Medicine> GetAllMedicines(bool includeArchived = false)
         {
-            return _db.Medicines
-                .OrderBy(m => m.Name)
-                .ToList();
+            var query = _db.Medicines.AsQueryable();
+
+            if (!includeArchived)
+                query = query.Where(m => m.IsActive);
+
+            return query.OrderBy(m => m.Name).ToList();
         }
 
         public Medicine GetById(int id)
@@ -43,23 +47,23 @@ namespace RosalEHealthcare.Data.Services
         }
 
         /// <summary>
-        /// Add a new medicine and check for alerts
+        /// Add new medicine with audit tracking
         /// </summary>
         public Medicine AddMedicine(Medicine medicine, string addedBy = null)
         {
             if (medicine == null) throw new ArgumentNullException(nameof(medicine));
 
             if (string.IsNullOrEmpty(medicine.MedicineId))
-            {
                 medicine.MedicineId = GenerateMedicineId();
-            }
 
             medicine.Status = DetermineStatus(medicine);
+            medicine.IsActive = true;
+            medicine.LastModifiedBy = addedBy;
+            medicine.LastModifiedAt = DateTime.Now;
 
             _db.Medicines.Add(medicine);
             _db.SaveChanges();
 
-            // Check and send alerts for new medicine
             try
             {
                 CheckAndSendAlerts(medicine);
@@ -73,25 +77,26 @@ namespace RosalEHealthcare.Data.Services
         }
 
         /// <summary>
-        /// Update medicine and check for stock/expiry alerts
+        /// Update medicine with audit tracking
         /// </summary>
         public void UpdateMedicine(Medicine medicine, string updatedBy = null)
         {
             if (medicine == null) throw new ArgumentNullException(nameof(medicine));
 
-            // Get old values for comparison
             var oldMedicine = _db.Medicines.AsNoTracking().FirstOrDefault(m => m.Id == medicine.Id);
             int? oldStock = oldMedicine?.Stock;
 
             medicine.Status = DetermineStatus(medicine);
+            medicine.LastModifiedBy = updatedBy;
+            medicine.LastModifiedAt = DateTime.Now;
 
             var entry = _db.Entry(medicine);
             if (entry.State == EntityState.Detached)
                 _db.Medicines.Attach(medicine);
+
             entry.State = EntityState.Modified;
             _db.SaveChanges();
 
-            // Check and send alerts
             try
             {
                 CheckAndSendAlerts(medicine, oldStock);
@@ -102,6 +107,41 @@ namespace RosalEHealthcare.Data.Services
             }
         }
 
+        /// <summary>
+        /// Archive medicine (soft delete)
+        /// </summary>
+        public void ArchiveMedicine(int id, string archivedBy = null)
+        {
+            var medicine = GetById(id);
+            if (medicine != null)
+            {
+                medicine.IsActive = false;
+                medicine.LastModifiedBy = archivedBy;
+                medicine.LastModifiedAt = DateTime.Now;
+                medicine.Notes = $"Archived by {archivedBy} on {DateTime.Now:yyyy-MM-dd HH:mm}";
+                _db.SaveChanges();
+            }
+        }
+
+        /// <summary>
+        /// Restore archived medicine
+        /// </summary>
+        public void RestoreMedicine(int id, string restoredBy = null)
+        {
+            var medicine = GetById(id);
+            if (medicine != null)
+            {
+                medicine.IsActive = true;
+                medicine.LastModifiedBy = restoredBy;
+                medicine.LastModifiedAt = DateTime.Now;
+                medicine.Notes = $"Restored by {restoredBy} on {DateTime.Now:yyyy-MM-dd HH:mm}";
+                _db.SaveChanges();
+            }
+        }
+
+        /// <summary>
+        /// Delete medicine permanently (use with caution)
+        /// </summary>
         public void DeleteMedicine(int id)
         {
             var medicine = GetById(id);
@@ -113,11 +153,8 @@ namespace RosalEHealthcare.Data.Services
         }
 
         /// <summary>
-        /// Update stock quantity with alert checking
+        /// Update stock with audit tracking
         /// </summary>
-        /// <param name="id">Medicine ID</param>
-        /// <param name="newStock">New stock quantity</param>
-        /// <param name="updatedBy">Name of user who updated</param>
         public void UpdateStock(int id, int newStock, string updatedBy = null)
         {
             var medicine = GetById(id);
@@ -126,9 +163,11 @@ namespace RosalEHealthcare.Data.Services
             int oldStock = medicine.Stock;
             medicine.Stock = newStock;
             medicine.Status = DetermineStatus(medicine);
+            medicine.LastModifiedBy = updatedBy;
+            medicine.LastModifiedAt = DateTime.Now;
+
             _db.SaveChanges();
 
-            // Check for stock alerts
             try
             {
                 CheckStockAlerts(medicine, oldStock);
@@ -143,51 +182,36 @@ namespace RosalEHealthcare.Data.Services
 
         #region Alert Checking
 
-        /// <summary>
-        /// Check and send appropriate alerts for a medicine
-        /// </summary>
         private void CheckAndSendAlerts(Medicine medicine, int? oldStock = null)
         {
             CheckStockAlerts(medicine, oldStock);
             CheckExpiryAlerts(medicine);
         }
 
-        /// <summary>
-        /// Check for stock-related alerts
-        /// </summary>
         private void CheckStockAlerts(Medicine medicine, int? oldStock = null)
         {
-            // Out of stock alert
             if (medicine.Stock == 0)
             {
-                // Only alert if stock just became 0
                 if (!oldStock.HasValue || oldStock.Value > 0)
                 {
                     _notificationService.NotifyOutOfStock(medicine.Name, medicine.MedicineId);
                 }
             }
-            // Low stock alert
-            else if (medicine.Stock <= LOW_STOCK_THRESHOLD)
+            else if (medicine.Stock <= medicine.MinimumStockLevel)
             {
-                // Only alert if stock just dropped below threshold
-                if (!oldStock.HasValue || oldStock.Value > LOW_STOCK_THRESHOLD)
+                if (!oldStock.HasValue || oldStock.Value > medicine.MinimumStockLevel)
                 {
-                    _notificationService.NotifyLowStock(medicine.Name, medicine.MedicineId, medicine.Stock, LOW_STOCK_THRESHOLD);
+                    _notificationService.NotifyLowStock(medicine.Name, medicine.MedicineId, medicine.Stock, medicine.MinimumStockLevel);
                 }
             }
         }
 
-        /// <summary>
-        /// Check for expiry-related alerts
-        /// </summary>
         private void CheckExpiryAlerts(Medicine medicine)
         {
-            // Check if ExpiryDate is set (not default)
             if (medicine.ExpiryDate != default(DateTime) && medicine.ExpiryDate > DateTime.MinValue)
             {
                 var daysUntilExpiry = (medicine.ExpiryDate - DateTime.Today).Days;
 
-                // Alert if expiring within warning period
                 if (daysUntilExpiry >= 0 && daysUntilExpiry <= EXPIRY_WARNING_DAYS)
                 {
                     _notificationService.NotifyExpiringMedicine(
@@ -199,26 +223,20 @@ namespace RosalEHealthcare.Data.Services
             }
         }
 
-        /// <summary>
-        /// Run daily check for expiring medicines (call from scheduled task or on dashboard load)
-        /// </summary>
-        /// <summary>
-        /// Run daily check for expiring medicines (call from scheduled task or on dashboard load)
-        /// </summary>
         public void CheckAllExpiringMedicines()
         {
             try
             {
                 var warningDate = DateTime.Today.AddDays(EXPIRY_WARNING_DAYS);
                 var expiringMedicines = _db.Medicines
-                    .Where(m => m.ExpiryDate >= DateTime.Today &&
+                    .Where(m => m.IsActive &&
+                               m.ExpiryDate >= DateTime.Today &&
                                m.ExpiryDate <= warningDate &&
                                m.Stock > 0)
                     .ToList();
 
                 foreach (var medicine in expiringMedicines)
                 {
-                    // Check if we already sent a notification today for this medicine
                     var today = DateTime.Today;
                     var existingNotification = _db.Notifications
                         .Any(n => n.Type == "ExpiringMedicine" &&
@@ -241,20 +259,16 @@ namespace RosalEHealthcare.Data.Services
             }
         }
 
-        /// <summary>
-        /// Run daily check for low stock medicines (call from scheduled task or on dashboard load)
-        /// </summary>
         public void CheckAllLowStockMedicines()
         {
             try
             {
                 var lowStockMedicines = _db.Medicines
-                    .Where(m => m.Stock > 0 && m.Stock <= LOW_STOCK_THRESHOLD)
+                    .Where(m => m.IsActive && m.Stock > 0 && m.Stock <= m.MinimumStockLevel)
                     .ToList();
 
                 foreach (var medicine in lowStockMedicines)
                 {
-                    // Check if we already sent a notification today for this medicine
                     var today = DateTime.Today;
                     var existingNotification = _db.Notifications
                         .Any(n => n.Type == "LowStock" &&
@@ -267,7 +281,7 @@ namespace RosalEHealthcare.Data.Services
                             medicine.Name,
                             medicine.MedicineId,
                             medicine.Stock,
-                            LOW_STOCK_THRESHOLD
+                            medicine.MinimumStockLevel
                         );
                     }
                 }
@@ -282,9 +296,12 @@ namespace RosalEHealthcare.Data.Services
 
         #region Search & Filter
 
-        public IEnumerable<Medicine> Search(string query, string category = null, string status = null)
+        public IEnumerable<Medicine> Search(string query, string category = null, string status = null, bool includeArchived = false)
         {
             var q = _db.Medicines.AsQueryable();
+
+            if (!includeArchived)
+                q = q.Where(m => m.IsActive);
 
             if (!string.IsNullOrWhiteSpace(query))
             {
@@ -303,40 +320,15 @@ namespace RosalEHealthcare.Data.Services
             if (!string.IsNullOrWhiteSpace(status) && status != "All Status")
                 q = q.Where(m => m.Status == status);
 
-            return q.ToList().OrderBy(m => m.Name ?? "").ToList();
+            return q.OrderBy(m => m.Name ?? "").ToList();
         }
 
-        public IEnumerable<Medicine> SearchPaged(string query, string category, string status, int pageNumber, int pageSize)
+        public int GetFilteredCount(string query, string category, string status, bool includeArchived = false)
         {
             var q = _db.Medicines.AsQueryable();
 
-            if (!string.IsNullOrWhiteSpace(query))
-            {
-                query = query.ToLower();
-                q = q.Where(m =>
-                    (m.Name != null && m.Name.ToLower().Contains(query)) ||
-                    (m.MedicineId != null && m.MedicineId.ToLower().Contains(query))
-                );
-            }
-
-            if (!string.IsNullOrWhiteSpace(category) && category != "All Categories")
-                q = q.Where(m => m.Category == category);
-
-            if (!string.IsNullOrWhiteSpace(status) && status != "All Status")
-                q = q.Where(m => m.Status == status);
-
-            var totalCount = q.Count();
-
-            var results = q.Skip((pageNumber - 1) * pageSize)
-                           .Take(pageSize)
-                           .ToList();
-
-            return results.OrderBy(m => m.Name ?? "").ToList();
-        }
-
-        public int GetFilteredCount(string query, string category, string status)
-        {
-            var q = _db.Medicines.AsQueryable();
+            if (!includeArchived)
+                q = q.Where(m => m.IsActive);
 
             if (!string.IsNullOrWhiteSpace(query))
             {
@@ -360,30 +352,34 @@ namespace RosalEHealthcare.Data.Services
 
         #region Statistics
 
-        public int GetTotalMedicines()
+        public int GetTotalMedicines(bool includeArchived = false)
         {
-            return _db.Medicines.Count();
+            if (includeArchived)
+                return _db.Medicines.Count();
+
+            return _db.Medicines.Count(m => m.IsActive);
         }
 
         public int GetLowStockCount()
         {
-            return _db.Medicines.Count(m => m.Stock > 0 && m.Stock <= LOW_STOCK_THRESHOLD);
+            return _db.Medicines.Count(m => m.IsActive && m.Stock > 0 && m.Stock <= m.MinimumStockLevel);
         }
 
         public int GetExpiringSoonCount()
         {
             var warningDate = DateTime.Now.AddDays(EXPIRY_WARNING_DAYS);
-            return _db.Medicines.Count(m => m.ExpiryDate <= warningDate && m.ExpiryDate >= DateTime.Now);
+            return _db.Medicines.Count(m => m.IsActive && m.ExpiryDate <= warningDate && m.ExpiryDate >= DateTime.Now);
         }
 
         public int GetOutOfStockCount()
         {
-            return _db.Medicines.Count(m => m.Stock == 0);
+            return _db.Medicines.Count(m => m.IsActive && m.Stock == 0);
         }
 
         public Dictionary<string, int> GetMedicinesByCategory()
         {
             return _db.Medicines
+                .Where(m => m.IsActive)
                 .GroupBy(m => m.Category ?? "Unknown")
                 .ToDictionary(g => g.Key, g => g.Count());
         }
@@ -391,7 +387,7 @@ namespace RosalEHealthcare.Data.Services
         public IEnumerable<Medicine> GetLowStockMedicines()
         {
             return _db.Medicines
-                .Where(m => m.Stock > 0 && m.Stock <= LOW_STOCK_THRESHOLD)
+                .Where(m => m.IsActive && m.Stock > 0 && m.Stock <= m.MinimumStockLevel)
                 .OrderBy(m => m.Stock)
                 .ToList();
         }
@@ -400,7 +396,7 @@ namespace RosalEHealthcare.Data.Services
         {
             var warningDate = DateTime.Now.AddDays(EXPIRY_WARNING_DAYS);
             return _db.Medicines
-                .Where(m => m.ExpiryDate <= warningDate && m.ExpiryDate >= DateTime.Now)
+                .Where(m => m.IsActive && m.ExpiryDate <= warningDate && m.ExpiryDate >= DateTime.Now)
                 .OrderBy(m => m.ExpiryDate)
                 .ToList();
         }
@@ -408,7 +404,7 @@ namespace RosalEHealthcare.Data.Services
         public IEnumerable<Medicine> GetOutOfStockMedicines()
         {
             return _db.Medicines
-                .Where(m => m.Stock == 0)
+                .Where(m => m.IsActive && m.Stock == 0)
                 .OrderBy(m => m.Name)
                 .ToList();
         }
@@ -416,7 +412,7 @@ namespace RosalEHealthcare.Data.Services
         public IEnumerable<string> GetAllCategories()
         {
             return _db.Medicines
-                .Where(m => !string.IsNullOrEmpty(m.Category))
+                .Where(m => m.IsActive && !string.IsNullOrEmpty(m.Category))
                 .Select(m => m.Category)
                 .Distinct()
                 .OrderBy(c => c)
@@ -432,10 +428,9 @@ namespace RosalEHealthcare.Data.Services
             if (medicine.Stock == 0)
                 return "Out of Stock";
 
-            if (medicine.Stock <= LOW_STOCK_THRESHOLD)
+            if (medicine.Stock <= medicine.MinimumStockLevel)
                 return "Low Stock";
 
-            // Check if ExpiryDate is set (not default)
             if (medicine.ExpiryDate != default(DateTime) && medicine.ExpiryDate > DateTime.MinValue)
             {
                 var warningDate = DateTime.Now.AddDays(EXPIRY_WARNING_DAYS);

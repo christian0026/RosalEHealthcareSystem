@@ -15,6 +15,16 @@ namespace RosalEHealthcare.UI.WPF
         {
             base.OnStartup(e);
 
+            try
+            {
+                QuestPDF.Settings.License = QuestPDF.Infrastructure.LicenseType.Community;
+            }
+            catch
+            {
+                // If this fails, it usually means SkiaSharp.NativeAssets.Win32 is missing from the UI project.
+                // We catch it here so the app continues launching.
+            }
+
             // Seed (run once)
             try
             {

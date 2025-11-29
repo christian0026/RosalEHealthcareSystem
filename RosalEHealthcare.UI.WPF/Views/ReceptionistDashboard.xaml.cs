@@ -342,6 +342,7 @@ namespace RosalEHealthcare.UI.WPF.Views
             }
         }
 
+
         #region Navigation
 
         private void HideAllContent()

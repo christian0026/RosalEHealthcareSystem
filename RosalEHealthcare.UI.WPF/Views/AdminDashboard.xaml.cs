@@ -297,8 +297,10 @@ namespace RosalEHealthcare.UI.WPF.Views
         {
             if (_currentUser == null) return;
 
+            // These names now point to the Header elements
             TxtUserFullName.Text = _currentUser.FullName ?? _currentUser.Email;
             TxtUserRole.Text = _currentUser.Role ?? "Administrator";
+            TxtUserInitials.Text = GetInitials(_currentUser.FullName ?? _currentUser.Email);
 
             if (!string.IsNullOrEmpty(_currentUser.ProfileImagePath) && File.Exists(_currentUser.ProfileImagePath))
             {
@@ -306,16 +308,27 @@ namespace RosalEHealthcare.UI.WPF.Views
                 {
                     var img = new BitmapImage(new Uri(_currentUser.ProfileImagePath, UriKind.RelativeOrAbsolute));
                     ProfileEllipse.Fill = new ImageBrush(img) { Stretch = Stretch.UniformToFill };
+                    TxtUserInitials.Visibility = Visibility.Collapsed;
                 }
                 catch
                 {
-                    ProfileEllipse.Fill = Brushes.LightGray;
+                    ProfileEllipse.Fill = Brushes.Transparent;
+                    TxtUserInitials.Visibility = Visibility.Visible;
                 }
             }
             else
             {
-                ProfileEllipse.Fill = Brushes.LightGray;
+                ProfileEllipse.Fill = Brushes.Transparent;
+                TxtUserInitials.Visibility = Visibility.Visible;
             }
+        }
+
+        private string GetInitials(string name)
+        {
+            if (string.IsNullOrEmpty(name)) return "AD";
+            var parts = name.Split(' ');
+            if (parts.Length > 1) return (parts[0][0].ToString() + parts[1][0].ToString()).ToUpper();
+            return name.Substring(0, 1).ToUpper();
         }
 
         #endregion

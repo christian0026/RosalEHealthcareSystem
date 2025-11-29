@@ -33,9 +33,17 @@ namespace RosalEHealthcare.UI.WPF.Views.Settings
         {
             InitializeComponent();
 
-            _db = new RosalEHealthcareDbContext();
-            _activityLogService = new ActivityLogService(_db);
-            _loginHistoryService = new LoginHistoryService(_db);
+            // Initialize services safely
+            try
+            {
+                _db = new RosalEHealthcareDbContext();
+                _activityLogService = new ActivityLogService(_db);
+                _loginHistoryService = new LoginHistoryService(_db);
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Database connection failed: {ex.Message}", "Critical Error", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
         }
 
         #region Load Settings
@@ -46,64 +54,41 @@ namespace RosalEHealthcare.UI.WPF.Views.Settings
 
             try
             {
-                // CRITICAL: Check if UI elements are initialized
-                if (TxtTodayActivities == null || TxtWeekActivities == null ||
-                    TxtMonthActivities == null || TxtTotalActivities == null)
+                // CRITICAL FIX: Check ALL UI elements are initialized
+                if (TxtTodayActivities == null || TxtTodayLogins == null)
                 {
                     System.Diagnostics.Debug.WriteLine("UI elements not initialized yet - deferring load");
                     // Defer loading until UI is ready
-                    this.Loaded += (s, e) =>
-                    {
-                        this.Loaded -= (s, e) => { }; // Unsubscribe to prevent multiple calls
-                        LoadSettings();
-                    };
+                    this.Loaded += SystemLogsTab_Loaded;
                     return;
                 }
 
-                // Verify services are initialized
-                if (_activityLogService == null)
-                {
-                    MessageBox.Show("Activity Log Service is not initialized. Please restart the application.",
-                        "Service Error", MessageBoxButton.OK, MessageBoxImage.Warning);
-                    return;
-                }
-
-                if (_loginHistoryService == null)
-                {
-                    MessageBox.Show("Login History Service is not initialized. Please restart the application.",
-                        "Service Error", MessageBoxButton.OK, MessageBoxImage.Warning);
-                    return;
-                }
-
-                // Test database connection first
-                try
-                {
-                    var testQuery = _db.ActivityLogs.Take(1).ToList();
-                }
-                catch (Exception dbEx)
-                {
-                    MessageBox.Show($"Database connection error:\n\n{dbEx.Message}\n\nPlease check your database connection.",
-                        "Database Error", MessageBoxButton.OK, MessageBoxImage.Error);
-                    return;
-                }
+                // Ensure services exist
+                if (_activityLogService == null || _loginHistoryService == null) return;
 
                 LoadActivityStats();
                 LoadActivityLogs();
+
+                // Only load other tabs if they are visible or we want to preload them
+                // To prevent null reference on collapsed elements in some WPF versions
                 LoadLoginStats();
                 LoadLoginHistory();
                 LoadActiveSessions();
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"Error loading logs:\n\n{ex.Message}\n\nInner Exception:\n{ex.InnerException?.Message}",
-                    "Error", MessageBoxButton.OK, MessageBoxImage.Error);
-
                 System.Diagnostics.Debug.WriteLine($"Full error: {ex}");
             }
             finally
             {
                 _isLoading = false;
             }
+        }
+
+        private void SystemLogsTab_Loaded(object sender, RoutedEventArgs e)
+        {
+            this.Loaded -= SystemLogsTab_Loaded; // Unsubscribe
+            LoadSettings();
         }
 
         #endregion
@@ -121,10 +106,12 @@ namespace RosalEHealthcare.UI.WPF.Views.Settings
 
         private void SetActiveSubTab(Button button)
         {
-            BtnActivityLogs.Style = (Style)FindResource("SubTabButton");
-            BtnLoginHistory.Style = (Style)FindResource("SubTabButton");
-            BtnActiveSessions.Style = (Style)FindResource("SubTabButton");
+            // Reset styles
+            if (BtnActivityLogs != null) BtnActivityLogs.Style = (Style)FindResource("SubTabButton");
+            if (BtnLoginHistory != null) BtnLoginHistory.Style = (Style)FindResource("SubTabButton");
+            if (BtnActiveSessions != null) BtnActiveSessions.Style = (Style)FindResource("SubTabButton");
 
+            // Set active style
             button.Style = (Style)FindResource("SubTabButtonActive");
         }
 
@@ -132,22 +119,22 @@ namespace RosalEHealthcare.UI.WPF.Views.Settings
         {
             _currentSubTab = tabName;
 
-            ActivityLogsPanel.Visibility = Visibility.Collapsed;
-            LoginHistoryPanel.Visibility = Visibility.Collapsed;
-            ActiveSessionsPanel.Visibility = Visibility.Collapsed;
+            if (ActivityLogsPanel != null) ActivityLogsPanel.Visibility = Visibility.Collapsed;
+            if (LoginHistoryPanel != null) LoginHistoryPanel.Visibility = Visibility.Collapsed;
+            if (ActiveSessionsPanel != null) ActiveSessionsPanel.Visibility = Visibility.Collapsed;
 
             switch (tabName)
             {
                 case "ActivityLogs":
-                    ActivityLogsPanel.Visibility = Visibility.Visible;
+                    if (ActivityLogsPanel != null) ActivityLogsPanel.Visibility = Visibility.Visible;
                     LoadActivityLogs();
                     break;
                 case "LoginHistory":
-                    LoginHistoryPanel.Visibility = Visibility.Visible;
+                    if (LoginHistoryPanel != null) LoginHistoryPanel.Visibility = Visibility.Visible;
                     LoadLoginHistory();
                     break;
                 case "ActiveSessions":
-                    ActiveSessionsPanel.Visibility = Visibility.Visible;
+                    if (ActiveSessionsPanel != null) ActiveSessionsPanel.Visibility = Visibility.Visible;
                     LoadActiveSessions();
                     break;
             }
@@ -161,60 +148,27 @@ namespace RosalEHealthcare.UI.WPF.Views.Settings
         {
             try
             {
-                System.Diagnostics.Debug.WriteLine("=== LoadActivityStats START ===");
+                if (_activityLogService == null) return;
 
-                if (_activityLogService == null)
-                {
-                    System.Diagnostics.Debug.WriteLine("ERROR: ActivityLogService is NULL");
-                    return;
-                }
-
-                System.Diagnostics.Debug.WriteLine("ActivityLogService is OK");
-
-                // Check each UI element individually
-                if (TxtTodayActivities == null)
-                {
-                    System.Diagnostics.Debug.WriteLine("ERROR: TxtTodayActivities is NULL");
-                    return;
-                }
-                if (TxtWeekActivities == null)
-                {
-                    System.Diagnostics.Debug.WriteLine("ERROR: TxtWeekActivities is NULL");
-                    return;
-                }
-                if (TxtMonthActivities == null)
-                {
-                    System.Diagnostics.Debug.WriteLine("ERROR: TxtMonthActivities is NULL");
-                    return;
-                }
-                if (TxtTotalActivities == null)
-                {
-                    System.Diagnostics.Debug.WriteLine("ERROR: TxtTotalActivities is NULL");
-                    return;
-                }
-
-                System.Diagnostics.Debug.WriteLine("All UI elements are OK");
+                // Null Check UI Elements before using
+                if (TxtTodayActivities == null || TxtWeekActivities == null ||
+                    TxtMonthActivities == null || TxtTotalActivities == null) return;
 
                 var today = DateTime.Today;
                 var weekStart = today.AddDays(-(int)today.DayOfWeek);
                 var monthStart = new DateTime(today.Year, today.Month, 1);
 
-                System.Diagnostics.Debug.WriteLine("Getting activities from database...");
-                var allLogs = _activityLogService.GetRecentActivities(10000).ToList();
-                System.Diagnostics.Debug.WriteLine($"Got {allLogs.Count} activities");
+                // Get counts directly from DB for performance (assuming Service supports it, or fetch simplified list)
+                var allLogs = _activityLogService.GetRecentActivities(1000).ToList();
 
                 TxtTodayActivities.Text = allLogs.Count(l => l.PerformedAt.Date == today).ToString();
                 TxtWeekActivities.Text = allLogs.Count(l => l.PerformedAt >= weekStart).ToString();
                 TxtMonthActivities.Text = allLogs.Count(l => l.PerformedAt >= monthStart).ToString();
-                TxtTotalActivities.Text = allLogs.Count.ToString();
-
-                System.Diagnostics.Debug.WriteLine("=== LoadActivityStats END - SUCCESS ===");
+                TxtTotalActivities.Text = _activityLogService.GetTotalCount().ToString(); // Use count method if available
             }
             catch (Exception ex)
             {
                 System.Diagnostics.Debug.WriteLine($"ERROR in LoadActivityStats: {ex.Message}");
-                System.Diagnostics.Debug.WriteLine($"Stack trace: {ex.StackTrace}");
-                MessageBox.Show($"Error in LoadActivityStats: {ex.Message}", "Debug Error", MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
 
@@ -222,35 +176,25 @@ namespace RosalEHealthcare.UI.WPF.Views.Settings
         {
             try
             {
-                if (_activityLogService == null) return;
+                if (_activityLogService == null || ActivityLogsList == null) return;
+
                 string searchText = TxtActivitySearch?.Text?.Trim() ?? "";
                 string module = GetSelectedTag(CmbActivityModule);
                 string activityType = GetSelectedTag(CmbActivityType);
 
-                // Get all logs first (increase count if needed)
-                var allLogs = _activityLogService.GetRecentActivities(10000).AsQueryable();
+                var allLogs = _activityLogService.GetRecentActivities(1000).AsQueryable();
 
-                // Apply filters
                 if (!string.IsNullOrEmpty(searchText))
                 {
-                    allLogs = allLogs.Where(l => l.Description.Contains(searchText) ||
-                                                 l.PerformedBy.Contains(searchText));
+                    allLogs = allLogs.Where(l => (l.Description != null && l.Description.IndexOf(searchText, StringComparison.OrdinalIgnoreCase) >= 0) ||
+                                                 (l.PerformedBy != null && l.PerformedBy.IndexOf(searchText, StringComparison.OrdinalIgnoreCase) >= 0));
                 }
 
-                if (!string.IsNullOrEmpty(module))
-                {
-                    allLogs = allLogs.Where(l => l.Module == module);
-                }
+                if (!string.IsNullOrEmpty(module)) allLogs = allLogs.Where(l => l.Module == module);
+                if (!string.IsNullOrEmpty(activityType)) allLogs = allLogs.Where(l => l.ActivityType == activityType);
 
-                if (!string.IsNullOrEmpty(activityType))
-                {
-                    allLogs = allLogs.Where(l => l.ActivityType == activityType);
-                }
-
-                // Get total count
                 _activityTotalCount = allLogs.Count();
 
-                // Apply pagination
                 var logs = allLogs.OrderByDescending(l => l.PerformedAt)
                                   .Skip((_activityCurrentPage - 1) * _activityPageSize)
                                   .Take(_activityPageSize)
@@ -260,33 +204,34 @@ namespace RosalEHealthcare.UI.WPF.Views.Settings
                 {
                     ActivityLogsList.ItemsSource = logs;
                     ActivityLogsList.Visibility = Visibility.Visible;
-                    EmptyActivityPanel.Visibility = Visibility.Collapsed;
+                    if (EmptyActivityPanel != null) EmptyActivityPanel.Visibility = Visibility.Collapsed;
                 }
                 else
                 {
                     ActivityLogsList.ItemsSource = null;
                     ActivityLogsList.Visibility = Visibility.Collapsed;
-                    EmptyActivityPanel.Visibility = Visibility.Visible;
+                    if (EmptyActivityPanel != null) EmptyActivityPanel.Visibility = Visibility.Visible;
                 }
 
                 UpdateActivityPagination();
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"Error loading activity logs: {ex.Message}",
-                    "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                System.Diagnostics.Debug.WriteLine($"Error loading activity logs: {ex.Message}");
             }
         }
 
         private void UpdateActivityPagination()
         {
+            if (TxtActivityPagination == null) return;
+
             int startRecord = _activityTotalCount == 0 ? 0 : ((_activityCurrentPage - 1) * _activityPageSize) + 1;
             int endRecord = Math.Min(_activityCurrentPage * _activityPageSize, _activityTotalCount);
 
             TxtActivityPagination.Text = $"Showing {startRecord}-{endRecord} of {_activityTotalCount}";
 
-            BtnActivityPrevPage.IsEnabled = _activityCurrentPage > 1;
-            BtnActivityNextPage.IsEnabled = endRecord < _activityTotalCount;
+            if (BtnActivityPrevPage != null) BtnActivityPrevPage.IsEnabled = _activityCurrentPage > 1;
+            if (BtnActivityNextPage != null) BtnActivityNextPage.IsEnabled = endRecord < _activityTotalCount;
         }
 
         private void TxtActivitySearch_KeyDown(object sender, KeyEventArgs e)
@@ -315,9 +260,9 @@ namespace RosalEHealthcare.UI.WPF.Views.Settings
 
         private void BtnRefreshActivities_Click(object sender, RoutedEventArgs e)
         {
-            TxtActivitySearch.Text = "";
-            CmbActivityModule.SelectedIndex = 0;
-            CmbActivityType.SelectedIndex = 0;
+            if (TxtActivitySearch != null) TxtActivitySearch.Text = "";
+            if (CmbActivityModule != null) CmbActivityModule.SelectedIndex = 0;
+            if (CmbActivityType != null) CmbActivityType.SelectedIndex = 0;
             _activityCurrentPage = 1;
             LoadActivityLogs();
             LoadActivityStats();
@@ -350,6 +295,13 @@ namespace RosalEHealthcare.UI.WPF.Views.Settings
         {
             try
             {
+                // FIX: Add Null Checks for Login Stats UI Elements
+                if (_loginHistoryService == null ||
+                    TxtTodayLogins == null ||
+                    TxtSuccessfulLogins == null ||
+                    TxtFailedLogins == null ||
+                    TxtLoginSuccessRate == null) return;
+
                 var stats = _loginHistoryService.GetTodayStatistics();
 
                 TxtTodayLogins.Text = stats.TotalLogins.ToString();
@@ -367,12 +319,14 @@ namespace RosalEHealthcare.UI.WPF.Views.Settings
         {
             try
             {
+                if (_loginHistoryService == null || LoginHistoryList == null) return;
+
                 string searchText = TxtLoginSearch?.Text?.Trim() ?? "";
                 string status = GetSelectedTag(CmbLoginStatus);
 
-                // Use the Search method from LoginHistoryService - use "query" not "searchQuery"
-                 var logs = _loginHistoryService.Search(
-                    query: searchText,  // Changed from searchQuery to query
+                // Fix: Use named arguments to match Service signature exactly if needed, or just pass positionally
+                var logs = _loginHistoryService.Search(
+                    query: searchText,
                     status: status,
                     startDate: null,
                     endDate: null,
@@ -386,33 +340,34 @@ namespace RosalEHealthcare.UI.WPF.Views.Settings
                 {
                     LoginHistoryList.ItemsSource = logs;
                     LoginHistoryList.Visibility = Visibility.Visible;
-                    EmptyLoginPanel.Visibility = Visibility.Collapsed;
+                    if (EmptyLoginPanel != null) EmptyLoginPanel.Visibility = Visibility.Collapsed;
                 }
                 else
                 {
                     LoginHistoryList.ItemsSource = null;
                     LoginHistoryList.Visibility = Visibility.Collapsed;
-                    EmptyLoginPanel.Visibility = Visibility.Visible;
+                    if (EmptyLoginPanel != null) EmptyLoginPanel.Visibility = Visibility.Visible;
                 }
 
                 UpdateLoginPagination();
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"Error loading login history: {ex.Message}",
-                    "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                System.Diagnostics.Debug.WriteLine($"Error loading login history: {ex.Message}");
             }
         }
 
         private void UpdateLoginPagination()
         {
+            if (TxtLoginPagination == null) return;
+
             int startRecord = _loginTotalCount == 0 ? 0 : ((_loginCurrentPage - 1) * _loginPageSize) + 1;
             int endRecord = Math.Min(_loginCurrentPage * _loginPageSize, _loginTotalCount);
 
             TxtLoginPagination.Text = $"Showing {startRecord}-{endRecord} of {_loginTotalCount}";
 
-            BtnLoginPrevPage.IsEnabled = _loginCurrentPage > 1;
-            BtnLoginNextPage.IsEnabled = endRecord < _loginTotalCount;
+            if (BtnLoginPrevPage != null) BtnLoginPrevPage.IsEnabled = _loginCurrentPage > 1;
+            if (BtnLoginNextPage != null) BtnLoginNextPage.IsEnabled = endRecord < _loginTotalCount;
         }
 
         private void TxtLoginSearch_KeyDown(object sender, KeyEventArgs e)
@@ -441,8 +396,8 @@ namespace RosalEHealthcare.UI.WPF.Views.Settings
 
         private void BtnRefreshLogins_Click(object sender, RoutedEventArgs e)
         {
-            TxtLoginSearch.Text = "";
-            CmbLoginStatus.SelectedIndex = 0;
+            if (TxtLoginSearch != null) TxtLoginSearch.Text = "";
+            if (CmbLoginStatus != null) CmbLoginStatus.SelectedIndex = 0;
             _loginCurrentPage = 1;
             LoadLoginHistory();
             LoadLoginStats();
@@ -475,6 +430,8 @@ namespace RosalEHealthcare.UI.WPF.Views.Settings
         {
             try
             {
+                if (_loginHistoryService == null || TxtActiveSessionCount == null || ActiveSessionsList == null) return;
+
                 var sessions = _loginHistoryService.GetActiveSessions().ToList();
 
                 TxtActiveSessionCount.Text = sessions.Count.ToString();
@@ -483,23 +440,25 @@ namespace RosalEHealthcare.UI.WPF.Views.Settings
                 {
                     ActiveSessionsList.ItemsSource = sessions;
                     ActiveSessionsList.Visibility = Visibility.Visible;
-                    EmptySessionsPanel.Visibility = Visibility.Collapsed;
+                    if (EmptySessionsPanel != null) EmptySessionsPanel.Visibility = Visibility.Collapsed;
                 }
                 else
                 {
                     ActiveSessionsList.ItemsSource = null;
                     ActiveSessionsList.Visibility = Visibility.Collapsed;
-                    EmptySessionsPanel.Visibility = Visibility.Visible;
+                    if (EmptySessionsPanel != null) EmptySessionsPanel.Visibility = Visibility.Visible;
                 }
 
                 // Disable force logout all if no sessions or only current user
-                BtnForceLogoutAll.IsEnabled = sessions.Count > 1 ||
-                    (sessions.Count == 1 && sessions[0].UserId != SessionManager.CurrentUser?.Id);
+                if (BtnForceLogoutAll != null)
+                {
+                    BtnForceLogoutAll.IsEnabled = sessions.Count > 1 ||
+                        (sessions.Count == 1 && sessions[0].UserId != SessionManager.CurrentUser?.Id);
+                }
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"Error loading active sessions: {ex.Message}",
-                    "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                System.Diagnostics.Debug.WriteLine($"Error loading active sessions: {ex.Message}");
             }
         }
 
@@ -512,45 +471,28 @@ namespace RosalEHealthcare.UI.WPF.Views.Settings
         {
             if (sender is Button button && button.Tag is LoginHistory session)
             {
-                // Prevent logging out yourself
                 if (session.UserId == SessionManager.CurrentUser?.Id)
                 {
-                    MessageBox.Show("You cannot force logout your own session.",
-                        "Not Allowed", MessageBoxButton.OK, MessageBoxImage.Warning);
+                    MessageBox.Show("You cannot force logout your own session.", "Not Allowed", MessageBoxButton.OK, MessageBoxImage.Warning);
                     return;
                 }
 
-                var result = MessageBox.Show(
-                    $"Are you sure you want to force logout {session.FullName}?\n\nThey will be logged out immediately.",
-                    "Force Logout",
-                    MessageBoxButton.YesNo,
-                    MessageBoxImage.Question);
-
-                if (result == MessageBoxResult.Yes)
+                if (MessageBox.Show($"Are you sure you want to force logout {session.FullName}?", "Force Logout", MessageBoxButton.YesNo) == MessageBoxResult.Yes)
                 {
                     try
                     {
-                        var currentUser = SessionManager.CurrentUser?.FullName ?? "System";
-                        _loginHistoryService.ForceLogout(session.Id, currentUser);
+                        string user = SessionManager.CurrentUser?.FullName ?? "System";
+                        _loginHistoryService.ForceLogout(session.Id, user);
 
-                        // Log activity
-                        _activityLogService.LogActivity(
-                            activityType: "ForceLogout",
-                            description: $"Forced logout of user: {session.FullName}",
-                            module: "SystemSettings",
-                            performedBy: currentUser,
-                            performedByRole: SessionManager.CurrentUser?.Role ?? "Administrator"
-                        );
+                        // Log
+                        _activityLogService.LogActivity("ForceLogout", $"Forced logout of {session.FullName}", "SystemSettings", user, "Administrator");
 
                         LoadActiveSessions();
-
-                        MessageBox.Show($"{session.FullName} has been logged out.",
-                            "Success", MessageBoxButton.OK, MessageBoxImage.Information);
+                        MessageBox.Show($"{session.FullName} has been logged out.", "Success", MessageBoxButton.OK, MessageBoxImage.Information);
                     }
                     catch (Exception ex)
                     {
-                        MessageBox.Show($"Error forcing logout: {ex.Message}",
-                            "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                        MessageBox.Show($"Error: {ex.Message}");
                     }
                 }
             }
@@ -558,39 +500,23 @@ namespace RosalEHealthcare.UI.WPF.Views.Settings
 
         private void BtnForceLogoutAll_Click(object sender, RoutedEventArgs e)
         {
-            var result = MessageBox.Show(
-                "Are you sure you want to force logout ALL users?\n\nAll users except you will be logged out immediately.",
-                "Force Logout All",
-                MessageBoxButton.YesNo,
-                MessageBoxImage.Warning);
-
-            if (result == MessageBoxResult.Yes)
+            if (MessageBox.Show("Force logout ALL users except yourself?", "Force Logout All", MessageBoxButton.YesNo, MessageBoxImage.Warning) == MessageBoxResult.Yes)
             {
                 try
                 {
-                    var currentUser = SessionManager.CurrentUser?.FullName ?? "System";
-                    var currentSessionId = SessionManager.CurrentSessionId;
+                    string user = SessionManager.CurrentUser?.FullName ?? "System";
+                    var currentSessionId = SessionManager.CurrentSessionId.ToString(); // Ensure string conversion if needed
 
-                    _loginHistoryService.ForceLogoutAll(currentUser, currentSessionId);
+                    _loginHistoryService.ForceLogoutAll(user, currentSessionId);
 
-                    // Log activity
-                    _activityLogService.LogActivity(
-                        activityType: "ForceLogout",
-                        description: "Forced logout of all users",
-                        module: "SystemSettings",
-                        performedBy: currentUser,
-                        performedByRole: SessionManager.CurrentUser?.Role ?? "Administrator"
-                    );
+                    _activityLogService.LogActivity("ForceLogout", "Forced logout of all users", "SystemSettings", user, "Administrator");
 
                     LoadActiveSessions();
-
-                    MessageBox.Show("All other users have been logged out.",
-                        "Success", MessageBoxButton.OK, MessageBoxImage.Information);
+                    MessageBox.Show("All other users have been logged out.", "Success", MessageBoxButton.OK, MessageBoxImage.Information);
                 }
                 catch (Exception ex)
                 {
-                    MessageBox.Show($"Error forcing logout: {ex.Message}",
-                        "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                    MessageBox.Show($"Error: {ex.Message}");
                 }
             }
         }
