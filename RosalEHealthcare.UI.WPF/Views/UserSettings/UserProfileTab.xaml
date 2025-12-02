@@ -5,33 +5,26 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:iconPacks="http://metro.mahapps.com/winfx/xaml/iconpacks"
              mc:Ignorable="d" 
-             d:DesignHeight="700" d:DesignWidth="900"
-             Background="Transparent">
+             d:DesignHeight="900" d:DesignWidth="1000"
+             Background="White">
 
     <UserControl.Resources>
-        <!-- Section Card Style -->
         <Style x:Key="SectionCard" TargetType="Border">
-            <Setter Property="Background" Value="White"/>
-            <Setter Property="BorderBrush" Value="#E8E8E8"/>
+            <Setter Property="Background" Value="#FFFFFF"/>
+            <Setter Property="BorderBrush" Value="#E0E0E0"/>
             <Setter Property="BorderThickness" Value="1"/>
-            <Setter Property="CornerRadius" Value="12"/>
+            <Setter Property="CornerRadius" Value="8"/>
             <Setter Property="Padding" Value="24"/>
-            <Setter Property="Margin" Value="0,0,0,20"/>
-            <Setter Property="Effect">
-                <Setter.Value>
-                    <DropShadowEffect Color="#000000" BlurRadius="8" ShadowDepth="1" Opacity="0.06"/>
-                </Setter.Value>
-            </Setter>
+            <Setter Property="Margin" Value="0,0,0,24"/>
         </Style>
 
-        <!-- Section Title Style -->
         <Style x:Key="SectionTitle" TargetType="TextBlock">
             <Setter Property="FontSize" Value="16"/>
             <Setter Property="FontWeight" Value="SemiBold"/>
             <Setter Property="Foreground" Value="#333333"/>
+            <Setter Property="Margin" Value="0,0,0,16"/>
         </Style>
 
-        <!-- Field Label Style -->
         <Style x:Key="FieldLabel" TargetType="TextBlock">
             <Setter Property="FontSize" Value="13"/>
             <Setter Property="FontWeight" Value="Medium"/>
@@ -39,13 +32,12 @@
             <Setter Property="Margin" Value="0,0,0,8"/>
         </Style>
 
-        <!-- Text Input Style -->
         <Style x:Key="TextInput" TargetType="TextBox">
-            <Setter Property="Height" Value="44"/>
-            <Setter Property="Padding" Value="14,10"/>
+            <Setter Property="Height" Value="42"/>
+            <Setter Property="Padding" Value="12,10"/>
             <Setter Property="FontSize" Value="14"/>
             <Setter Property="Background" Value="White"/>
-            <Setter Property="BorderBrush" Value="#E0E0E0"/>
+            <Setter Property="BorderBrush" Value="#DDDDDD"/>
             <Setter Property="BorderThickness" Value="1"/>
             <Setter Property="VerticalContentAlignment" Value="Center"/>
             <Setter Property="Template">
@@ -54,18 +46,20 @@
                         <Border Background="{TemplateBinding Background}"
                                 BorderBrush="{TemplateBinding BorderBrush}"
                                 BorderThickness="{TemplateBinding BorderThickness}"
-                                CornerRadius="8">
-                            <ScrollViewer x:Name="PART_ContentHost" 
-                                          Padding="{TemplateBinding Padding}"
-                                          VerticalAlignment="Center"/>
+                                CornerRadius="6">
+                            <ScrollViewer x:Name="PART_ContentHost" Padding="{TemplateBinding Padding}"/>
                         </Border>
                         <ControlTemplate.Triggers>
                             <Trigger Property="IsFocused" Value="True">
                                 <Setter Property="BorderBrush" Value="#2E7D32"/>
-                                <Setter Property="BorderThickness" Value="2"/>
+                                <Setter Property="BorderThickness" Value="1"/>
+                            </Trigger>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter Property="BorderBrush" Value="#4CAF50"/>
                             </Trigger>
                             <Trigger Property="IsReadOnly" Value="True">
-                                <Setter Property="Background" Value="#F5F5F5"/>
+                                <Setter Property="Background" Value="#F9F9F9"/>
+                                <Setter Property="Foreground" Value="#666666"/>
                             </Trigger>
                         </ControlTemplate.Triggers>
                     </ControlTemplate>
@@ -73,11 +67,35 @@
             </Setter>
         </Style>
 
-        <!-- Primary Button Style -->
+        <Style x:Key="SecondaryButton" TargetType="Button">
+            <Setter Property="Background" Value="White"/>
+            <Setter Property="Foreground" Value="#555555"/>
+            <Setter Property="Padding" Value="16,8"/>
+            <Setter Property="FontSize" Value="13"/>
+            <Setter Property="FontWeight" Value="Medium"/>
+            <Setter Property="BorderBrush" Value="#DDDDDD"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border x:Name="border" Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}" Padding="{TemplateBinding Padding}" CornerRadius="6">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="border" Property="Background" Value="#F5F5F5"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
         <Style x:Key="PrimaryButton" TargetType="Button">
             <Setter Property="Background" Value="#2E7D32"/>
             <Setter Property="Foreground" Value="White"/>
-            <Setter Property="Padding" Value="24,12"/>
+            <Setter Property="Padding" Value="24,10"/>
             <Setter Property="FontSize" Value="14"/>
             <Setter Property="FontWeight" Value="SemiBold"/>
             <Setter Property="BorderThickness" Value="0"/>
@@ -85,76 +103,26 @@
             <Setter Property="Template">
                 <Setter.Value>
                     <ControlTemplate TargetType="Button">
-                        <Border x:Name="border"
-                                Background="{TemplateBinding Background}"
-                                Padding="{TemplateBinding Padding}"
-                                CornerRadius="8">
+                        <Border x:Name="border" Background="{TemplateBinding Background}" Padding="{TemplateBinding Padding}" CornerRadius="6">
                             <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
                         </Border>
                         <ControlTemplate.Triggers>
                             <Trigger Property="IsMouseOver" Value="True">
                                 <Setter TargetName="border" Property="Background" Value="#388E3C"/>
                             </Trigger>
-                            <Trigger Property="IsPressed" Value="True">
-                                <Setter TargetName="border" Property="Background" Value="#1B5E20"/>
-                            </Trigger>
-                            <Trigger Property="IsEnabled" Value="False">
-                                <Setter TargetName="border" Property="Background" Value="#BDBDBD"/>
-                            </Trigger>
                         </ControlTemplate.Triggers>
                     </ControlTemplate>
                 </Setter.Value>
             </Setter>
-        </Style>
-
-        <!-- Secondary Button Style -->
-        <Style x:Key="SecondaryButton" TargetType="Button">
-            <Setter Property="Background" Value="White"/>
-            <Setter Property="Foreground" Value="#666666"/>
-            <Setter Property="Padding" Value="24,12"/>
-            <Setter Property="FontSize" Value="14"/>
-            <Setter Property="FontWeight" Value="Medium"/>
-            <Setter Property="BorderBrush" Value="#D0D0D0"/>
-            <Setter Property="BorderThickness" Value="1"/>
-            <Setter Property="Cursor" Value="Hand"/>
-            <Setter Property="Template">
-                <Setter.Value>
-                    <ControlTemplate TargetType="Button">
-                        <Border x:Name="border"
-                                Background="{TemplateBinding Background}"
-                                BorderBrush="{TemplateBinding BorderBrush}"
-                                BorderThickness="{TemplateBinding BorderThickness}"
-                                Padding="{TemplateBinding Padding}"
-                                CornerRadius="8">
-                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                        </Border>
-                        <ControlTemplate.Triggers>
-                            <Trigger Property="IsMouseOver" Value="True">
-                                <Setter TargetName="border" Property="Background" Value="#F5F5F5"/>
-                            </Trigger>
-                            <Trigger Property="IsPressed" Value="True">
-                                <Setter TargetName="border" Property="Background" Value="#EEEEEE"/>
-                            </Trigger>
-                        </ControlTemplate.Triggers>
-                    </ControlTemplate>
-                </Setter.Value>
-            </Setter>
-        </Style>
-
-        <!-- Info Badge Style -->
-        <Style x:Key="InfoBadge" TargetType="Border">
-            <Setter Property="Background" Value="#E3F2FD"/>
-            <Setter Property="CornerRadius" Value="6"/>
-            <Setter Property="Padding" Value="12,8"/>
         </Style>
     </UserControl.Resources>
 
-    <ScrollViewer VerticalScrollBarVisibility="Auto" 
-                  HorizontalScrollBarVisibility="Disabled"
-                  Padding="32,24">
-        <StackPanel MaxWidth="800">
+    <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled" Padding="40">
+        <StackPanel>
 
-            <!-- PROFILE PICTURE Section -->
+            <TextBlock Text="My Profile" FontSize="20" FontWeight="Bold" Foreground="#333" Margin="0,0,0,4"/>
+            <TextBlock Text="View and manage your profile information" FontSize="13" Foreground="#888" Margin="0,0,0,24"/>
+
             <Border Style="{StaticResource SectionCard}">
                 <Grid>
                     <Grid.ColumnDefinitions>
@@ -162,72 +130,39 @@
                         <ColumnDefinition Width="*"/>
                     </Grid.ColumnDefinitions>
 
-                    <!-- Avatar -->
-                    <Border Grid.Column="0" 
-                            Width="100" Height="100" 
-                            CornerRadius="50" 
-                            Background="#E8F5E9"
-                            Margin="0,0,24,0">
+                    <Border Grid.Column="0" Width="100" Height="100" CornerRadius="50" Margin="0,0,24,0">
+                        <Border.Background>
+                            <SolidColorBrush Color="#EEEEEE"/>
+                        </Border.Background>
                         <Grid>
                             <Ellipse x:Name="ProfileImageEllipse" Fill="Transparent"/>
-                            <TextBlock x:Name="TxtAvatarInitials"
-                                       Text="JD"
-                                       FontSize="32"
-                                       FontWeight="Bold"
-                                       Foreground="#2E7D32"
-                                       HorizontalAlignment="Center"
-                                       VerticalAlignment="Center"/>
+                            <TextBlock x:Name="TxtAvatarInitials" Text="JD" FontSize="36" FontWeight="Bold" Foreground="#999" HorizontalAlignment="Center" VerticalAlignment="Center"/>
                         </Grid>
                     </Border>
 
-                    <!-- Profile Info -->
                     <StackPanel Grid.Column="1" VerticalAlignment="Center">
-                        <TextBlock x:Name="TxtDisplayName"
-                                   Text="John Doe"
-                                   FontSize="22"
-                                   FontWeight="Bold"
-                                   Foreground="#333"/>
-                        <StackPanel Orientation="Horizontal" Margin="0,6,0,0">
-                            <Border Style="{StaticResource InfoBadge}" Margin="0,0,8,0">
+                        <TextBlock x:Name="TxtDisplayName" Text="Christian Fernandez" FontSize="20" FontWeight="Bold" Foreground="#333" Margin="0,0,0,4"/>
+                        <StackPanel Orientation="Horizontal" Margin="0,0,0,16">
+                            <Border Background="#E3F2FD" CornerRadius="4" Padding="8,4" Margin="0,0,12,0">
                                 <StackPanel Orientation="Horizontal">
-                                    <iconPacks:PackIconMaterial Kind="BadgeAccount" 
-                                                                Width="14" Height="14" 
-                                                                Foreground="#1976D2"
-                                                                VerticalAlignment="Center"/>
-                                    <TextBlock x:Name="TxtRoleBadge"
-                                               Text="Doctor"
-                                               FontSize="12"
-                                               FontWeight="SemiBold"
-                                               Foreground="#1976D2"
-                                               Margin="6,0,0,0"/>
+                                    <iconPacks:PackIconMaterial Kind="BadgeAccount" Width="14" Height="14" Foreground="#1976D2" VerticalAlignment="Center" Margin="0,0,4,0"/>
+                                    <TextBlock x:Name="TxtRoleBadge" Text="Doctor" FontSize="12" FontWeight="SemiBold" Foreground="#1976D2"/>
                                 </StackPanel>
                             </Border>
-                            <TextBlock x:Name="TxtMemberSince"
-                                       Text="Member since January 2025"
-                                       FontSize="12"
-                                       Foreground="#888"
-                                       VerticalAlignment="Center"/>
+                            <TextBlock x:Name="TxtMemberSince" Text="Member since November 2025" FontSize="12" Foreground="#888" VerticalAlignment="Center"/>
                         </StackPanel>
 
-                        <StackPanel Orientation="Horizontal" Margin="0,16,0,0">
-                            <Button x:Name="BtnChangePhoto"
-                                    Style="{StaticResource SecondaryButton}"
-                                    Padding="16,10"
-                                    Margin="0,0,12,0"
-                                    Click="BtnChangePhoto_Click">
+                        <StackPanel Orientation="Horizontal">
+                            <Button x:Name="BtnChangePhoto" Style="{StaticResource SecondaryButton}" Margin="0,0,8,0" Click="BtnChangePhoto_Click">
                                 <StackPanel Orientation="Horizontal">
-                                    <iconPacks:PackIconMaterial Kind="Camera" Width="16" Height="16"/>
-                                    <TextBlock Text="Change Photo" Margin="8,0,0,0"/>
+                                    <iconPacks:PackIconMaterial Kind="Camera" Width="14" Height="14" Margin="0,0,8,0" VerticalAlignment="Center"/>
+                                    <TextBlock Text="Change Photo"/>
                                 </StackPanel>
                             </Button>
-                            <Button x:Name="BtnRemovePhoto"
-                                    Style="{StaticResource SecondaryButton}"
-                                    Padding="16,10"
-                                    Click="BtnRemovePhoto_Click"
-                                    Visibility="Collapsed">
+                            <Button x:Name="BtnRemovePhoto" Style="{StaticResource SecondaryButton}" Click="BtnRemovePhoto_Click">
                                 <StackPanel Orientation="Horizontal">
-                                    <iconPacks:PackIconMaterial Kind="Delete" Width="16" Height="16"/>
-                                    <TextBlock Text="Remove" Margin="8,0,0,0"/>
+                                    <iconPacks:PackIconMaterial Kind="Delete" Width="14" Height="14" Margin="0,0,8,0" VerticalAlignment="Center"/>
+                                    <TextBlock Text="Remove"/>
                                 </StackPanel>
                             </Button>
                         </StackPanel>
@@ -235,88 +170,69 @@
                 </Grid>
             </Border>
 
-            <!-- PERSONAL INFORMATION Section -->
             <Border Style="{StaticResource SectionCard}">
                 <StackPanel>
-                    <StackPanel Orientation="Horizontal" Margin="0,0,0,20">
-                        <iconPacks:PackIconMaterial Kind="AccountOutline" 
-                                                    Width="22" Height="22" 
-                                                    Foreground="#2E7D32"
-                                                    VerticalAlignment="Center"/>
-                        <TextBlock Text="Personal Information" 
-                                   Style="{StaticResource SectionTitle}"
-                                   Margin="12,0,0,0"/>
+                    <StackPanel Orientation="Horizontal" Margin="0,0,0,16">
+                        <iconPacks:PackIconMaterial Kind="AccountOutline" Width="20" Height="20" Foreground="#2E7D32" VerticalAlignment="Center" Margin="0,0,8,0"/>
+                        <TextBlock Text="Personal Information" Style="{StaticResource SectionTitle}" Margin="0"/>
                     </StackPanel>
+                    <TextBlock Text="Update your personal details" FontSize="12" Foreground="#888" Margin="0,0,0,24"/>
 
                     <Grid>
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="*"/>
-                            <ColumnDefinition Width="20"/>
+                            <ColumnDefinition Width="24"/>
                             <ColumnDefinition Width="*"/>
                         </Grid.ColumnDefinitions>
                         <Grid.RowDefinitions>
                             <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="24"/>
                             <RowDefinition Height="Auto"/>
                         </Grid.RowDefinitions>
 
-                        <!-- First Name -->
-                        <StackPanel Grid.Column="0" Grid.Row="0" Margin="0,0,0,16">
+                        <StackPanel Grid.Column="0" Grid.Row="0">
                             <TextBlock Text="First Name" Style="{StaticResource FieldLabel}"/>
                             <TextBox x:Name="TxtFirstName" Style="{StaticResource TextInput}"/>
                         </StackPanel>
 
-                        <!-- Last Name -->
-                        <StackPanel Grid.Column="2" Grid.Row="0" Margin="0,0,0,16">
+                        <StackPanel Grid.Column="2" Grid.Row="0">
                             <TextBlock Text="Last Name" Style="{StaticResource FieldLabel}"/>
                             <TextBox x:Name="TxtLastName" Style="{StaticResource TextInput}"/>
                         </StackPanel>
 
-                        <!-- Email (Read-only) -->
-                        <StackPanel Grid.Column="0" Grid.Row="1">
+                        <StackPanel Grid.Column="0" Grid.Row="2">
                             <TextBlock Text="Email Address" Style="{StaticResource FieldLabel}"/>
-                            <TextBox x:Name="TxtEmail" 
-                                     Style="{StaticResource TextInput}"
-                                     IsReadOnly="True"/>
+                            <TextBox x:Name="TxtEmail" Style="{StaticResource TextInput}" IsReadOnly="True" Background="#F9F9F9"/>
                         </StackPanel>
 
-                        <!-- Username (Read-only) -->
-                        <StackPanel Grid.Column="2" Grid.Row="1">
+                        <StackPanel Grid.Column="2" Grid.Row="2">
                             <TextBlock Text="Username" Style="{StaticResource FieldLabel}"/>
-                            <TextBox x:Name="TxtUsername" 
-                                     Style="{StaticResource TextInput}"
-                                     IsReadOnly="True"/>
+                            <TextBox x:Name="TxtUsername" Style="{StaticResource TextInput}" IsReadOnly="True" Background="#F9F9F9"/>
                         </StackPanel>
                     </Grid>
                 </StackPanel>
             </Border>
 
-            <!-- CONTACT INFORMATION Section -->
             <Border Style="{StaticResource SectionCard}">
                 <StackPanel>
-                    <StackPanel Orientation="Horizontal" Margin="0,0,0,20">
-                        <iconPacks:PackIconMaterial Kind="Phone" 
-                                                    Width="22" Height="22" 
-                                                    Foreground="#FF9800"
-                                                    VerticalAlignment="Center"/>
-                        <TextBlock Text="Contact Information" 
-                                   Style="{StaticResource SectionTitle}"
-                                   Margin="12,0,0,0"/>
+                    <StackPanel Orientation="Horizontal" Margin="0,0,0,16">
+                        <iconPacks:PackIconMaterial Kind="PhoneOutline" Width="20" Height="20" Foreground="#FF9800" VerticalAlignment="Center" Margin="0,0,8,0"/>
+                        <TextBlock Text="Contact Information" Style="{StaticResource SectionTitle}" Margin="0"/>
                     </StackPanel>
+                    <TextBlock Text="How can we reach you?" FontSize="12" Foreground="#888" Margin="0,0,0,24"/>
 
                     <Grid>
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="*"/>
-                            <ColumnDefinition Width="20"/>
+                            <ColumnDefinition Width="24"/>
                             <ColumnDefinition Width="*"/>
                         </Grid.ColumnDefinitions>
 
-                        <!-- Phone Number -->
                         <StackPanel Grid.Column="0">
                             <TextBlock Text="Phone Number" Style="{StaticResource FieldLabel}"/>
                             <TextBox x:Name="TxtPhone" Style="{StaticResource TextInput}"/>
                         </StackPanel>
 
-                        <!-- Address -->
                         <StackPanel Grid.Column="2">
                             <TextBlock Text="Address" Style="{StaticResource FieldLabel}"/>
                             <TextBox x:Name="TxtAddress" Style="{StaticResource TextInput}"/>
@@ -325,104 +241,56 @@
                 </StackPanel>
             </Border>
 
-            <!-- ACCOUNT INFORMATION Section -->
             <Border Style="{StaticResource SectionCard}">
                 <StackPanel>
-                    <StackPanel Orientation="Horizontal" Margin="0,0,0,20">
-                        <iconPacks:PackIconMaterial Kind="ShieldAccount" 
-                                                    Width="22" Height="22" 
-                                                    Foreground="#9C27B0"
-                                                    VerticalAlignment="Center"/>
-                        <TextBlock Text="Account Information" 
-                                   Style="{StaticResource SectionTitle}"
-                                   Margin="12,0,0,0"/>
+                    <StackPanel Orientation="Horizontal" Margin="0,0,0,16">
+                        <iconPacks:PackIconMaterial Kind="ShieldAccount" Width="20" Height="20" Foreground="#9C27B0" VerticalAlignment="Center" Margin="0,0,8,0"/>
+                        <TextBlock Text="Account Information" Style="{StaticResource SectionTitle}" Margin="0"/>
                     </StackPanel>
+                    <TextBlock Text="System access details" FontSize="12" Foreground="#888" Margin="0,0,0,24"/>
 
                     <Grid>
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="*"/>
-                            <ColumnDefinition Width="20"/>
+                            <ColumnDefinition Width="24"/>
                             <ColumnDefinition Width="*"/>
-                            <ColumnDefinition Width="20"/>
+                            <ColumnDefinition Width="24"/>
                             <ColumnDefinition Width="*"/>
                         </Grid.ColumnDefinitions>
 
-                        <!-- Role -->
-                        <Border Grid.Column="0" 
-                                Background="#F5F5F5" 
-                                CornerRadius="8" 
-                                Padding="14,12">
+                        <Border Grid.Column="0" Background="#F9F9F9" CornerRadius="6" Padding="16,12">
                             <StackPanel>
-                                <TextBlock Text="Role" 
-                                           FontSize="11" 
-                                           Foreground="#888"/>
-                                <TextBlock x:Name="TxtRole"
-                                           Text="Doctor"
-                                           FontSize="15"
-                                           FontWeight="SemiBold"
-                                           Foreground="#333"
-                                           Margin="0,4,0,0"/>
+                                <TextBlock Text="Role" FontSize="11" Foreground="#888"/>
+                                <TextBlock x:Name="TxtRole" Text="Doctor" FontSize="14" FontWeight="SemiBold" Foreground="#333" Margin="0,4,0,0"/>
                             </StackPanel>
                         </Border>
 
-                        <!-- Status -->
-                        <Border Grid.Column="2" 
-                                Background="#F5F5F5" 
-                                CornerRadius="8" 
-                                Padding="14,12">
+                        <Border Grid.Column="2" Background="#F9F9F9" CornerRadius="6" Padding="16,12">
                             <StackPanel>
-                                <TextBlock Text="Status" 
-                                           FontSize="11" 
-                                           Foreground="#888"/>
+                                <TextBlock Text="Status" FontSize="11" Foreground="#888"/>
                                 <StackPanel Orientation="Horizontal" Margin="0,4,0,0">
-                                    <Ellipse x:Name="StatusIndicator"
-                                             Width="10" Height="10" 
-                                             Fill="#4CAF50"
-                                             VerticalAlignment="Center"/>
-                                    <TextBlock x:Name="TxtStatus"
-                                               Text="Active"
-                                               FontSize="15"
-                                               FontWeight="SemiBold"
-                                               Foreground="#333"
-                                               Margin="8,0,0,0"/>
+                                    <Ellipse x:Name="StatusIndicator" Width="8" Height="8" Fill="#4CAF50" Margin="0,0,8,0"/>
+                                    <TextBlock x:Name="TxtStatus" Text="Active" FontSize="14" FontWeight="SemiBold" Foreground="#333"/>
                                 </StackPanel>
                             </StackPanel>
                         </Border>
 
-                        <!-- Last Login -->
-                        <Border Grid.Column="4" 
-                                Background="#F5F5F5" 
-                                CornerRadius="8" 
-                                Padding="14,12">
+                        <Border Grid.Column="4" Background="#F9F9F9" CornerRadius="6" Padding="16,12">
                             <StackPanel>
-                                <TextBlock Text="Last Login" 
-                                           FontSize="11" 
-                                           Foreground="#888"/>
-                                <TextBlock x:Name="TxtLastLogin"
-                                           Text="Today at 9:30 AM"
-                                           FontSize="15"
-                                           FontWeight="SemiBold"
-                                           Foreground="#333"
-                                           Margin="0,4,0,0"/>
+                                <TextBlock Text="Last Login" FontSize="11" Foreground="#888"/>
+                                <TextBlock x:Name="TxtLastLogin" Text="Today at 1:54 AM" FontSize="14" FontWeight="SemiBold" Foreground="#333" Margin="0,4,0,0"/>
                             </StackPanel>
                         </Border>
                     </Grid>
                 </StackPanel>
             </Border>
 
-            <!-- Action Buttons -->
-            <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
-                <Button x:Name="BtnCancel"
-                        Content="Cancel"
-                        Style="{StaticResource SecondaryButton}"
-                        Margin="0,0,12,0"
-                        Click="BtnCancel_Click"/>
-                <Button x:Name="BtnSaveProfile"
-                        Style="{StaticResource PrimaryButton}"
-                        Click="BtnSaveProfile_Click">
+            <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,8,0,0">
+                <Button x:Name="BtnCancel" Style="{StaticResource SecondaryButton}" Content="Cancel" Margin="0,0,12,0" Click="BtnCancel_Click"/>
+                <Button x:Name="BtnSaveProfile" Style="{StaticResource PrimaryButton}" Click="BtnSaveProfile_Click">
                     <StackPanel Orientation="Horizontal">
-                        <iconPacks:PackIconMaterial Kind="ContentSave" Width="18" Height="18"/>
-                        <TextBlock Text="Save Changes" Margin="10,0,0,0"/>
+                        <iconPacks:PackIconMaterial Kind="ContentSave" Width="16" Height="16" Margin="0,0,8,0" VerticalAlignment="Center"/>
+                        <TextBlock Text="Save Changes"/>
                     </StackPanel>
                 </Button>
             </StackPanel>

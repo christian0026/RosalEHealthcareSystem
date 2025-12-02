@@ -2,6 +2,7 @@
 using RosalEHealthcare.Data.Contexts;
 using RosalEHealthcare.Data.Services;
 using RosalEHealthcare.UI.WPF.Helpers;
+using RosalEHealthcare.UI.WPF.ViewModels;
 using System;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
@@ -407,11 +408,27 @@ namespace RosalEHealthcare.UI.WPF.Views
                 return;
             }
 
-            // Navigate to Prescription Management with patient preselected
-            // This would need to be implemented based on your navigation system
-            MessageBox.Show($"Opening Prescription Management for {SelectedPatient.FullName}...",
-                "New Prescription", MessageBoxButton.OK, MessageBoxImage.Information);
+            // Open prescription management in a new window with patient preselected
+            var prescriptionView = new DoctorPrescriptionManagement();
+            var viewModel = prescriptionView.DataContext as DoctorPrescriptionViewModel;
+            if (viewModel != null)
+            {
+                viewModel.SelectedPatient = SelectedPatient;
+            }
 
+            var window = new Window
+            {
+                Title = "New Prescription - " + SelectedPatient.FullName,
+                Content = prescriptionView,
+                Width = 1100,
+                Height = 800,
+                WindowStartupLocation = WindowStartupLocation.CenterScreen,
+                Owner = Window.GetWindow(this)
+            };
+            window.ShowDialog();
+
+            // Refresh prescriptions after closing
+            LoadPrescriptions();
         }
 
         private void BtnViewPrescription_Click(object sender, RoutedEventArgs e)

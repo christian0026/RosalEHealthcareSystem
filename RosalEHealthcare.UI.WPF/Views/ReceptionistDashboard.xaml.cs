@@ -405,18 +405,7 @@ namespace RosalEHealthcare.UI.WPF.Views
 
         private void Logout_Click(object sender, RoutedEventArgs e)
         {
-            var result = MessageBox.Show("Are you sure you want to logout?",
-                                         "Confirm Logout",
-                                         MessageBoxButton.YesNo,
-                                         MessageBoxImage.Question);
-
-            if (result == MessageBoxResult.Yes)
-            {
-                SessionManager.ClearSession();
-                var login = new LoginWindow();
-                login.Show();
-                this.Close();
-            }
+            LogoutHelper.Logout(this);
         }
 
         #endregion
@@ -474,7 +463,20 @@ namespace RosalEHealthcare.UI.WPF.Views
 
         protected override void OnClosing(System.ComponentModel.CancelEventArgs e)
         {
-            // Stop notification polling
+            // Check if we're already in the process of closing via logout
+            if (Application.Current.MainWindow != this)
+            {
+                // Allow close without prompting (logout animation is handling it)
+                e.Cancel = false;
+                return;
+            }
+
+            // Cancel the default close
+            e.Cancel = true;
+
+            // Show exit animation instead
+            LogoutHelper.ExitApplication(this);
+
             NotificationBell?.Stop();
 
             base.OnClosing(e);

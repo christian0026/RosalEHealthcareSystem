@@ -8,37 +8,35 @@
         Background="Transparent"
         WindowStartupLocation="CenterScreen"
         ResizeMode="NoResize"
-        Width="450"
-        Height="300"
+        Width="500"
+        Height="350"
         Topmost="True">
 
     <Window.Resources>
-        <!-- Fade In Animation -->
         <Storyboard x:Key="FadeInAnimation">
             <DoubleAnimation Storyboard.TargetName="MainGrid"
-                           Storyboard.TargetProperty="Opacity"
-                           From="0"
-                           To="1"
-                           Duration="0:0:0.3"/>
+                             Storyboard.TargetProperty="Opacity"
+                             From="0"
+                             To="1"
+                             Duration="0:0:0.3"/>
             <DoubleAnimation Storyboard.TargetName="MainGrid"
-                           Storyboard.TargetProperty="(UIElement.RenderTransform).(TranslateTransform.Y)"
-                           From="30"
-                           To="0"
-                           Duration="0:0:0.4">
+                             Storyboard.TargetProperty="(UIElement.RenderTransform).(TranslateTransform.Y)"
+                             From="30"
+                             To="0"
+                             Duration="0:0:0.4">
                 <DoubleAnimation.EasingFunction>
                     <CubicEase EasingMode="EaseOut"/>
                 </DoubleAnimation.EasingFunction>
             </DoubleAnimation>
         </Storyboard>
 
-        <!-- Wave Animation for Icon -->
         <Storyboard x:Key="WaveAnimation" RepeatBehavior="Forever">
             <DoubleAnimation Storyboard.TargetName="iconLogout"
-                           Storyboard.TargetProperty="(UIElement.RenderTransform).(RotateTransform.Angle)"
-                           From="-15"
-                           To="15"
-                           Duration="0:0:0.6"
-                           AutoReverse="True"/>
+                             Storyboard.TargetProperty="(UIElement.RenderTransform).(RotateTransform.Angle)"
+                             From="-15"
+                             To="15"
+                             Duration="0:0:0.6"
+                             AutoReverse="True"/>
         </Storyboard>
     </Window.Resources>
 
@@ -49,7 +47,7 @@
         </EventTrigger>
     </Window.Triggers>
 
-    <Border CornerRadius="15" Background="White">
+    <Border CornerRadius="15" Background="White" Margin="30">
         <Border.Effect>
             <DropShadowEffect Color="#000000" BlurRadius="40" ShadowDepth="0" Opacity="0.4"/>
         </Border.Effect>
@@ -64,7 +62,6 @@
                 <RowDefinition Height="Auto"/>
             </Grid.RowDefinitions>
 
-            <!-- Top Section with Gradient -->
             <Grid Grid.Row="0">
                 <Grid.Background>
                     <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
@@ -73,19 +70,29 @@
                     </LinearGradientBrush>
                 </Grid.Background>
 
+                <Grid.Clip>
+                    <RectangleGeometry Rect="0,0,440,200" RadiusX="15" RadiusY="15"/>
+                </Grid.Clip>
+
+                <Border CornerRadius="15,15,0,0">
+                    <Border.Background>
+                        <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
+                            <GradientStop Color="#2E7D32" Offset="0"/>
+                            <GradientStop Color="#43A047" Offset="1"/>
+                        </LinearGradientBrush>
+                    </Border.Background>
+                </Border>
+
                 <StackPanel VerticalAlignment="Center" 
-                           HorizontalAlignment="Center"
-                           Margin="40">
+                            HorizontalAlignment="Center"
+                            Margin="40,20">
 
-                    <!-- Animated Logout Icon -->
-                    <Grid Width="80" Height="80" Margin="0,0,0,20">
-                        <!-- Background Circle -->
+                    <Grid Width="80" Height="80" Margin="0,0,0,15">
                         <Ellipse Width="80" 
-                                Height="80"
-                                Fill="White"
-                                Opacity="0.2"/>
+                                 Height="80"
+                                 Fill="White"
+                                 Opacity="0.2"/>
 
-                        <!-- Icon with Wave Animation -->
                         <iconPacks:PackIconMaterial x:Name="iconLogout"
                                                    Kind="Logout"
                                                    Width="40"
@@ -100,47 +107,41 @@
                         </iconPacks:PackIconMaterial>
                     </Grid>
 
-                    <!-- Goodbye Message -->
                     <TextBlock x:Name="txtMessage"
-                              Text="Logging out..."
-                              FontSize="24"
-                              FontWeight="Bold"
-                              Foreground="White"
-                              HorizontalAlignment="Center"
-                              Margin="0,0,0,8"/>
+                               Text="Logging out..."
+                               FontSize="24"
+                               FontWeight="Bold"
+                               Foreground="White"
+                               HorizontalAlignment="Center"
+                               Margin="0,0,0,8"/>
 
                     <TextBlock x:Name="txtSubMessage"
-                              Text="Please wait while we securely close your session"
-                              FontSize="13"
-                              Foreground="White"
-                              Opacity="0.9"
-                              HorizontalAlignment="Center"
-                              TextWrapping="Wrap"
-                              TextAlignment="Center"
-                              MaxWidth="320"/>
+                               Text="Please wait while we securely close your session"
+                               FontSize="13"
+                               Foreground="White"
+                               Opacity="0.9"
+                               HorizontalAlignment="Center"
+                               TextWrapping="Wrap"
+                               TextAlignment="Center"
+                               MaxWidth="320"/>
                 </StackPanel>
             </Grid>
 
-            <!-- Bottom Section -->
             <StackPanel Grid.Row="1" 
-                       Margin="30,20,30,30">
+                        Margin="30,20,30,30">
 
-                <!-- Progress Indicator (Optional) -->
                 <Grid x:Name="progressIndicator" Height="4" Margin="0,0,0,15">
-                    <!-- Background -->
                     <Border Background="#E0E0E0" 
-                           CornerRadius="2"/>
+                            CornerRadius="2"/>
 
-                    <!-- Progress Bar -->
                     <Border x:Name="progressBar"
-                           Background="#2E7D32"
-                           CornerRadius="2"
-                           HorizontalAlignment="Left"/>
+                            Background="#2E7D32"
+                            CornerRadius="2"
+                            HorizontalAlignment="Left"/>
                 </Grid>
 
-                <!-- User Info -->
                 <StackPanel Orientation="Horizontal" 
-                           HorizontalAlignment="Center">
+                            HorizontalAlignment="Center">
                     <iconPacks:PackIconMaterial Kind="Account"
                                                Width="16"
                                                Height="16"
@@ -148,10 +149,10 @@
                                                VerticalAlignment="Center"
                                                Margin="0,0,8,0"/>
                     <TextBlock x:Name="txtUserName"
-                              Text="User Name"
-                              FontSize="12"
-                              Foreground="#666"
-                              VerticalAlignment="Center"/>
+                               Text="User Name"
+                               FontSize="12"
+                               Foreground="#666"
+                               VerticalAlignment="Center"/>
                 </StackPanel>
             </StackPanel>
         </Grid>

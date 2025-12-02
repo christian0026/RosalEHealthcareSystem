@@ -383,8 +383,17 @@ namespace RosalEHealthcare.UI.WPF.Views
                 }
                 else
                 {
+                    // AUTO-LINK to existing patient
+                    int? patientId = null;
+                    var existingPatient = _db.Patients.FirstOrDefault(p =>
+                        p.FullName.ToLower() == fullName.ToLower() &&
+                        p.Contact == contact &&
+                        p.Status != "Archived");
+                    if (existingPatient != null)
+                        patientId = existingPatient.Id;
                     var appointment = new Appointment
                     {
+                        PatientId = patientId,
                         PatientName = fullName,
                         Contact = contact,
                         BirthDate = birthDate,

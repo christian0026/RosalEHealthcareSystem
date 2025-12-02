@@ -19,5 +19,6 @@ namespace RosalEHealthcare.Core.Models
         public string Route { get; set; } // e.g. Oral, IV
 
         public virtual Prescription Prescription { get; set; }
+        public virtual Medicine Medicine { get; set; }
     }
 }

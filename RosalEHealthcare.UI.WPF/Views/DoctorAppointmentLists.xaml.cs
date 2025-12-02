@@ -157,15 +157,40 @@ namespace RosalEHealthcare.UI.WPF.Views
 
         private void Card_CompleteClicked(object sender, Appointment appointment)
         {
-            var result = MessageBox.Show("Mark appointment for " + appointment.PatientName + " as completed?",
-                "Complete Appointment", MessageBoxButton.YesNo, MessageBoxImage.Question);
+            var result = MessageBox.Show(
+                "Mark appointment for " + appointment.PatientName + " as completed?\n\nWould you like to add a medical history record?",
+                "Complete Appointment",
+                MessageBoxButton.YesNoCancel,
+                MessageBoxImage.Question);
 
-            if (result == MessageBoxResult.Yes)
+            if (result == MessageBoxResult.Cancel)
+                return;
+
+            // Update status
+            _svc.UpdateStatus(appointment.Id, "COMPLETED");
+
+            // If Yes, open medical history dialog
+            if (result == MessageBoxResult.Yes && appointment.PatientId.HasValue)
             {
-                _svc.UpdateStatus(appointment.Id, "COMPLETED");
-                LoadAppointmentsAsync();
-                MessageBox.Show("Appointment marked as completed!", "Success", MessageBoxButton.OK, MessageBoxImage.Information);
+                try
+                {
+                    var patient = _db.Patients.Find(appointment.PatientId.Value);
+                    if (patient != null)
+                    {
+                        var patientService = new PatientService(_db);
+                        var dialog = new AddMedicalHistoryDialog(patient, patientService);
+                        dialog.Owner = Window.GetWindow(this);
+                        dialog.ShowDialog();
+                    }
+                }
+                catch (Exception ex)
+                {
+                    MessageBox.Show("Could not open medical history dialog: " + ex.Message);
+                }
             }
+
+            LoadAppointmentsAsync();
+            MessageBox.Show("Appointment marked as completed!", "Success", MessageBoxButton.OK, MessageBoxImage.Information);
         }
 
         private void Card_ViewDetailsClicked(object sender, Appointment appointment)

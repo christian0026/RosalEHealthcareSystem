@@ -32,5 +32,9 @@ namespace RosalEHealthcare.Core.Models
         // Metadata
         public string CreatedBy { get; set; }
         public DateTime CreatedAt { get; set; }
+
+        // Add this navigation property at the end of the Appointment class
+        public virtual Patient Patient { get; set; }
+
     }
 }

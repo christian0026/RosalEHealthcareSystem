@@ -1,11 +1,10 @@
-﻿using DocumentFormat.OpenXml.InkML;
-using Newtonsoft.Json;
-using RosalEHealthcare.Core.Models;
+﻿using RosalEHealthcare.Core.Models;
 using RosalEHealthcare.Data.Contexts;
 using System;
 using System.Collections.Generic;
 using System.Data.Entity;
 using System.Linq;
+using Newtonsoft.Json; // Ensure Newtonsoft.Json is installed via NuGet
 
 namespace RosalEHealthcare.Data.Services
 {
@@ -25,7 +24,8 @@ namespace RosalEHealthcare.Data.Services
 
         #region Basic CRUD
 
-        public IEnumerable<User> GetAll()
+        // FIXED: Renamed from GetAll to GetAllUsers to match UserManagementView usage
+        public IEnumerable<User> GetAllUsers()
         {
             return _db.Users.OrderByDescending(u => u.DateCreated).ToList();
         }
@@ -48,9 +48,6 @@ namespace RosalEHealthcare.Data.Services
         /// <summary>
         /// Add a new user and notify admin
         /// </summary>
-        /// <param name="user">User to add</param>
-        /// <param name="createdBy">Name of user who created the account (optional)</param>
-        /// <returns>Added user</returns>
         public User AddUser(User user, string createdBy = null)
         {
             if (user == null) throw new ArgumentNullException(nameof(user));
@@ -63,7 +60,7 @@ namespace RosalEHealthcare.Data.Services
 
             // Set defaults
             user.DateCreated = DateTime.Now;
-            user.CreatedAt = DateTime.Now;
+            user.CreatedAt = DateTime.Now; // Ensure both date fields are populated if they exist
             user.Status = user.Status ?? "Active";
             user.IsActive = true;
             user.FailedLoginAttempts = 0;
@@ -97,9 +94,6 @@ namespace RosalEHealthcare.Data.Services
         /// <summary>
         /// Update user and optionally notify admin
         /// </summary>
-        /// <param name="user">User to update</param>
-        /// <param name="modifiedBy">Name of user who modified (optional)</param>
-        /// <param name="changes">Description of changes made (optional)</param>
         public void UpdateUser(User user, string modifiedBy = null, string changes = null)
         {
             if (user == null) throw new ArgumentNullException(nameof(user));
@@ -151,10 +145,14 @@ namespace RosalEHealthcare.Data.Services
         public string GenerateUserCode()
         {
             var year = DateTime.Now.Year;
+            // Removed specific prefix logic to ensure uniqueness check covers broadly or stick to format
+            // Assuming format USR-YYYY-XXXX
+
             var prefix = $"USR-{year}-";
 
+            // Get the last user code for this year to increment
             var lastUser = _db.Users
-                .Where(u => u.UserCode != null && u.UserCode.StartsWith(prefix))
+                .Where(u => u.UserCode != null && u.UserCode.Contains(prefix))
                 .OrderByDescending(u => u.UserCode)
                 .FirstOrDefault();
 
@@ -162,7 +160,7 @@ namespace RosalEHealthcare.Data.Services
             if (lastUser != null && !string.IsNullOrEmpty(lastUser.UserCode))
             {
                 var parts = lastUser.UserCode.Split('-');
-                if (parts.Length == 3 && int.TryParse(parts[2], out int lastNumber))
+                if (parts.Length >= 3 && int.TryParse(parts[2], out int lastNumber))
                 {
                     nextNumber = lastNumber + 1;
                 }
@@ -187,7 +185,15 @@ namespace RosalEHealthcare.Data.Services
             }
 
             // Verify password
-            bool isValid = BCrypt.Net.BCrypt.Verify(plainPassword, user.PasswordHash);
+            bool isValid = false;
+            try
+            {
+                isValid = BCrypt.Net.BCrypt.Verify(plainPassword, user.PasswordHash);
+            }
+            catch
+            {
+                return false;
+            }
 
             if (isValid)
             {
@@ -232,10 +238,6 @@ namespace RosalEHealthcare.Data.Services
             return false;
         }
 
-        /// <summary>
-        /// Record a failed login attempt
-        /// </summary>
-        /// <param name="user">User who failed login</param>
         public void RecordFailedLogin(User user)
         {
             user.FailedLoginAttempts++;
@@ -265,12 +267,6 @@ namespace RosalEHealthcare.Data.Services
             UpdateUser(user);
         }
 
-        /// <summary>
-        /// Record failed login by username (for notification purposes)
-        /// </summary>
-        /// <param name="username">Username that failed</param>
-        /// <param name="attemptCount">Number of attempts</param>
-        /// <param name="ipAddress">IP address (optional)</param>
         public void RecordFailedLoginAttempt(string username, int attemptCount, string ipAddress = null)
         {
             // Notify admin after 3 failed attempts
@@ -299,11 +295,6 @@ namespace RosalEHealthcare.Data.Services
             }
         }
 
-        /// <summary>
-        /// Lock a user account and notify admin
-        /// </summary>
-        /// <param name="userId">User ID to lock</param>
-        /// <param name="reason">Reason for locking (optional)</param>
         public void LockAccount(int userId, string reason = null)
         {
             var user = GetById(userId);
@@ -415,7 +406,7 @@ namespace RosalEHealthcare.Data.Services
             }
 
             // Also check current password
-            if (BCrypt.Net.BCrypt.Verify(newPassword, user.PasswordHash))
+            if (!string.IsNullOrEmpty(user.PasswordHash) && BCrypt.Net.BCrypt.Verify(newPassword, user.PasswordHash))
             {
                 return true;
             }
@@ -425,6 +416,8 @@ namespace RosalEHealthcare.Data.Services
 
         private void AddPasswordToHistory(User user, string passwordHash)
         {
+            if (string.IsNullOrEmpty(passwordHash)) return;
+
             List<string> history;
 
             try
@@ -455,7 +448,7 @@ namespace RosalEHealthcare.Data.Services
             var random = new Random();
             var password = new char[12];
 
-            // Ensure at least one of each type
+            // Ensure at least one of each type to meet complexity requirements
             password[0] = "ABCDEFGHJKLMNPQRSTUVWXYZ"[random.Next(24)];
             password[1] = "abcdefghjkmnpqrstuvwxyz"[random.Next(23)];
             password[2] = "23456789"[random.Next(8)];
@@ -528,7 +521,7 @@ namespace RosalEHealthcare.Data.Services
                 q = q.Where(u => u.Status == status);
             }
 
-            // Sorting
+            // Sorting logic
             switch (sortBy)
             {
                 case "FullName":
@@ -673,7 +666,7 @@ namespace RosalEHealthcare.Data.Services
 
         #endregion
 
-        #region Legacy Support
+        #region Legacy Support / Registration
 
         public void Register(string fullName, string email, string password, string role)
         {
@@ -687,7 +680,9 @@ namespace RosalEHealthcare.Data.Services
                 Role = role,
                 Status = "Active",
                 DateCreated = DateTime.Now,
-                PasswordChangedAt = DateTime.Now
+                PasswordChangedAt = DateTime.Now,
+                FailedLoginAttempts = 0,
+                IsActive = true
             };
             _db.Users.Add(user);
             _db.SaveChanges();
@@ -737,7 +732,7 @@ namespace RosalEHealthcare.Data.Services
                 baseUsername = parts[0];
             }
 
-            // Remove special characters, keep only letters, numbers, dots, and underscores
+            // Remove special characters
             baseUsername = System.Text.RegularExpressions.Regex.Replace(baseUsername, @"[^a-z0-9._]", "");
 
             // Ensure it's unique
@@ -752,41 +747,33 @@ namespace RosalEHealthcare.Data.Services
             return username;
         }
 
-        /// <summary>
-        /// Validate user login by username
-        /// </summary>
         public bool ValidateUserByUsername(string username, string plainPassword)
         {
             var user = GetByUsername(username);
             if (user == null) return false;
 
-            // Check if account is locked
             if (IsAccountLocked(user))
             {
                 return false;
             }
 
-            // Verify password
-            bool isValid = BCrypt.Net.BCrypt.Verify(plainPassword, user.PasswordHash);
+            bool isValid = false;
+            try
+            {
+                isValid = BCrypt.Net.BCrypt.Verify(plainPassword, user.PasswordHash);
+            }
+            catch { }
 
             if (isValid)
             {
-                // Reset failed attempts on successful login
                 user.FailedLoginAttempts = 0;
                 user.LockoutEndTime = null;
                 user.LastLogin = DateTime.Now;
-
-                // Unlock if was locked
-                if (user.Status == "Locked")
-                {
-                    user.Status = "Active";
-                }
-
+                if (user.Status == "Locked") user.Status = "Active";
                 UpdateUser(user);
             }
             else
             {
-                // Increment failed attempts
                 RecordFailedLogin(user);
             }
 

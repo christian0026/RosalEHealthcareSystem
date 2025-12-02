@@ -4,290 +4,236 @@ using RosalEHealthcare.Data.Services;
 using RosalEHealthcare.UI.WPF.Helpers;
 using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Linq;
+using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
-using System.Windows.Threading;
 
 namespace RosalEHealthcare.UI.WPF.Views
 {
     public partial class UserManagementView : UserControl
     {
-        private readonly RosalEHealthcareDbContext _db;
-        private readonly UserService _userService;
-        private readonly ActivityLogService _activityLogService;
+        private UserService _userService;
+        private ActivityLogService _activityLogService;
+        private RosalEHealthcareDbContext _db;
 
-        // Pagination
+        private bool _isInitialized = false;
+        private List<UserViewModel> _allUsers;
+        private List<UserViewModel> _filteredUsers;
+
         private int _currentPage = 1;
         private int _pageSize = 10;
         private int _totalPages = 1;
-        private int _totalRecords = 0;
-
-        // Search debounce
-        private DispatcherTimer _searchTimer;
 
         public UserManagementView()
         {
             InitializeComponent();
-
-            _db = new RosalEHealthcareDbContext();
-            _userService = new UserService(_db);
-            _activityLogService = new ActivityLogService(_db);
-
-            // Setup search debounce
-            _searchTimer = new DispatcherTimer
-            {
-                Interval = TimeSpan.FromMilliseconds(300)
-            };
-            _searchTimer.Tick += (s, e) =>
-            {
-                _searchTimer.Stop();
-                _currentPage = 1;
-                LoadUsers();
-            };
+            InitializeServices();
         }
 
-        private void UserControl_Loaded(object sender, RoutedEventArgs e)
-        {
-            LoadSummaryCards();
-            LoadUsers();
-        }
-
-        #region Data Loading
-
-        private void LoadSummaryCards()
+        private void InitializeServices()
         {
             try
             {
-                CardTotalUsers.Value = _userService.GetTotalUsers().ToString();
-                CardDoctors.Value = _userService.GetUsersByRole("Doctor").ToString();
-                CardReceptionists.Value = _userService.GetUsersByRole("Receptionist").ToString();
-                CardAdmins.Value = _userService.GetUsersByRole("Administrator").ToString();
-
-                // Calculate trend
-                var thisMonth = _userService.GetNewUsersThisMonth();
-                var lastMonth = _userService.GetNewUsersLastMonth();
-                var growth = lastMonth > 0 ? Math.Round(((double)(thisMonth - lastMonth) / lastMonth) * 100, 1) : (thisMonth > 0 ? 100 : 0);
-
-                CardTotalUsers.TrendText = growth >= 0 ? $"+{growth}% from last month" : $"{growth}% from last month";
-                CardTotalUsers.TrendIcon = growth >= 0 ? "↑" : "↓";
-                CardTotalUsers.TrendColor = growth >= 0
-                    ? new SolidColorBrush(Color.FromRgb(76, 175, 80))
-                    : new SolidColorBrush(Color.FromRgb(244, 67, 54));
+                _db = new RosalEHealthcareDbContext();
+                _userService = new UserService(_db);
+                _activityLogService = new ActivityLogService(_db);
+                _isInitialized = true;
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine($"Error loading summary cards: {ex.Message}");
+                _isInitialized = false;
+                MessageBox.Show($"Database Connection Failed:\n{ex.Message}", "Critical Error", MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
 
-        private void LoadUsers()
+        private async void UserControl_Loaded(object sender, RoutedEventArgs e)
         {
+            if (!_isInitialized) return;
+
+            if (_allUsers == null)
+            {
+                await LoadDataAsync();
+            }
+        }
+
+        private async Task LoadDataAsync()
+        {
+            ShowLoading(true);
             try
             {
-                string query = SearchBox.Text?.Trim();
-                string role = (RoleFilter.SelectedItem as ComboBoxItem)?.Content?.ToString() ?? "All Roles";
-                string status = (StatusFilter.SelectedItem as ComboBoxItem)?.Content?.ToString() ?? "All Status";
-
-                _totalRecords = _userService.GetFilteredCount(query, role, status);
-                _totalPages = (int)Math.Ceiling((double)_totalRecords / _pageSize);
-                if (_totalPages == 0) _totalPages = 1;
-
-                var users = _userService.SearchPaged(query, role, status, _currentPage, _pageSize);
-
-                // Convert to display model
-                var displayUsers = users.Select(u => new UserDisplayModel
-                {
-                    Id = u.Id,
-                    UserCode = u.UserCode ?? $"USR-{u.Id:D4}",
-                    Username = u.Username,
-                    FullName = u.FullName,
-                    Email = u.Email,
-                    Role = u.Role,
-                    Status = u.Status ?? "Active",
-                    LastLogin = u.LastLogin,
-                    DateCreated = u.DateCreated,
-                    ProfileImagePath = u.ProfileImagePath,
-                    Initials = u.Initials
-                }).ToList();
-
-                UsersDataGrid.ItemsSource = displayUsers;
-
-                TxtResultCount.Text = $" ({_totalRecords} user{(_totalRecords != 1 ? "s" : "")})";
-                UpdatePaginationUI();
+                await LoadStatisticsAsync();
+                await LoadUsersAsync();
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"Error loading users: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                MessageBox.Show($"Error loading data: {ex.Message}", "Load Error", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+            finally
+            {
+                ShowLoading(false);
             }
         }
 
-        #endregion
-
-        #region Pagination
-
-        private void UpdatePaginationUI()
+        private async Task LoadStatisticsAsync()
         {
-            int startRecord = ((_currentPage - 1) * _pageSize) + 1;
-            int endRecord = Math.Min(_currentPage * _pageSize, _totalRecords);
-
-            TxtPageInfo.Text = _totalRecords > 0
-                ? $"Showing {startRecord}-{endRecord} of {_totalRecords} users"
-                : "No users found";
-
-            BtnPrevPage.IsEnabled = _currentPage > 1;
-            BtnNextPage.IsEnabled = _currentPage < _totalPages;
-
-            UpdatePageButtons();
-        }
-
-        private void UpdatePageButtons()
-        {
-            BtnPage1.Style = (Style)FindResource("PaginationButton");
-            BtnPage2.Style = (Style)FindResource("PaginationButton");
-            BtnPage3.Style = (Style)FindResource("PaginationButton");
-            BtnPageLast.Style = (Style)FindResource("PaginationButton");
-
-            if (_totalPages <= 3)
+            await Task.Run(() =>
             {
-                BtnPage1.Content = "1";
-                BtnPage1.Visibility = _totalPages >= 1 ? Visibility.Visible : Visibility.Collapsed;
-                BtnPage2.Content = "2";
-                BtnPage2.Visibility = _totalPages >= 2 ? Visibility.Visible : Visibility.Collapsed;
-                BtnPage3.Content = "3";
-                BtnPage3.Visibility = _totalPages >= 3 ? Visibility.Visible : Visibility.Collapsed;
-                TxtEllipsis.Visibility = Visibility.Collapsed;
-                BtnPageLast.Visibility = Visibility.Collapsed;
-            }
-            else
-            {
-                BtnPage1.Visibility = Visibility.Visible;
-                BtnPage2.Visibility = Visibility.Visible;
-                BtnPage3.Visibility = Visibility.Visible;
-                TxtEllipsis.Visibility = Visibility.Visible;
-                BtnPageLast.Visibility = Visibility.Visible;
-                BtnPageLast.Content = _totalPages.ToString();
-
-                if (_currentPage <= 2)
+                try
                 {
-                    BtnPage1.Content = "1";
-                    BtnPage2.Content = "2";
-                    BtnPage3.Content = "3";
+                    var totalUsers = _userService.GetTotalUsers();
+                    var doctors = _userService.GetUsersByRole("Doctor");
+                    var receptionists = _userService.GetUsersByRole("Receptionist");
+                    var admins = _userService.GetUsersByRole("Administrator");
+
+                    Dispatcher.Invoke(() =>
+                    {
+                        if (CardTotalUsers != null) CardTotalUsers.Value = totalUsers.ToString();
+                        if (CardDoctors != null) CardDoctors.Value = doctors.ToString();
+                        if (CardReceptionists != null) CardReceptionists.Value = receptionists.ToString();
+                        if (CardAdmins != null) CardAdmins.Value = admins.ToString();
+                    });
                 }
-                else if (_currentPage >= _totalPages - 1)
+                catch { }
+            });
+        }
+
+        private async Task LoadUsersAsync()
+        {
+            await Task.Run(() =>
+            {
+                try
                 {
-                    BtnPage1.Content = (_totalPages - 2).ToString();
-                    BtnPage2.Content = (_totalPages - 1).ToString();
-                    BtnPage3.Content = _totalPages.ToString();
+                    var users = _userService.GetAllUsers().ToList();
+
+                    _allUsers = users.Select(u => new UserViewModel
+                    {
+                        Id = u.Id,
+                        UserCode = u.UserCode ?? $"USR-{u.Id:D4}",
+                        Username = u.Username,
+                        FullName = u.FullName ?? "Unknown",
+                        Email = u.Email,
+                        Role = u.Role,
+                        Status = u.Status ?? "Active",
+                        LastLogin = u.LastLogin,
+                        ProfileImagePath = u.ProfileImagePath
+                    }).ToList();
+
+                    _filteredUsers = new List<UserViewModel>(_allUsers);
+
+                    Dispatcher.Invoke(() =>
+                    {
+                        ApplyPagination();
+                    });
                 }
-                else
-                {
-                    BtnPage1.Content = (_currentPage - 1).ToString();
-                    BtnPage2.Content = _currentPage.ToString();
-                    BtnPage3.Content = (_currentPage + 1).ToString();
-                }
-            }
-
-            // Highlight current page
-            if (BtnPage1.Content.ToString() == _currentPage.ToString())
-                BtnPage1.Style = (Style)FindResource("PaginationButtonActive");
-            else if (BtnPage2.Content.ToString() == _currentPage.ToString())
-                BtnPage2.Style = (Style)FindResource("PaginationButtonActive");
-            else if (BtnPage3.Content.ToString() == _currentPage.ToString())
-                BtnPage3.Style = (Style)FindResource("PaginationButtonActive");
-            else if (BtnPageLast.Content.ToString() == _currentPage.ToString())
-                BtnPageLast.Style = (Style)FindResource("PaginationButtonActive");
+                catch { }
+            });
         }
 
-        private void PrevPage_Click(object sender, RoutedEventArgs e)
+        private void ApplyFilters()
         {
-            if (_currentPage > 1)
+            if (_allUsers == null) return;
+
+            var searchQuery = txtSearch.Text?.Trim().ToLower() ?? "";
+            var selectedRole = (cbRole.SelectedItem as ComboBoxItem)?.Content?.ToString() ?? "All Roles";
+            var selectedStatus = (cbStatus.SelectedItem as ComboBoxItem)?.Content?.ToString() ?? "All Status";
+
+            _filteredUsers = _allUsers.Where(u =>
             {
-                _currentPage--;
-                LoadUsers();
-            }
-        }
+                bool matchesSearch = string.IsNullOrEmpty(searchQuery) ||
+                    u.FullName.ToLower().Contains(searchQuery) ||
+                    u.Username.ToLower().Contains(searchQuery) ||
+                    u.Email.ToLower().Contains(searchQuery) ||
+                    u.UserCode.ToLower().Contains(searchQuery);
 
-        private void NextPage_Click(object sender, RoutedEventArgs e)
-        {
-            if (_currentPage < _totalPages)
-            {
-                _currentPage++;
-                LoadUsers();
-            }
-        }
+                bool matchesRole = selectedRole == "All Roles" || u.Role == selectedRole;
+                bool matchesStatus = selectedStatus == "All Status" || u.Status == selectedStatus;
 
-        private void PageNumber_Click(object sender, RoutedEventArgs e)
-        {
-            if (sender is Button btn && int.TryParse(btn.Content.ToString(), out int page))
-            {
-                if (page >= 1 && page <= _totalPages && page != _currentPage)
-                {
-                    _currentPage = page;
-                    LoadUsers();
-                }
-            }
-        }
+                return matchesSearch && matchesRole && matchesStatus;
+            }).ToList();
 
-        #endregion
-
-        #region Search & Filter
-
-        private void SearchBox_TextChanged(object sender, TextChangedEventArgs e)
-        {
-            _searchTimer.Stop();
-            _searchTimer.Start();
-        }
-
-        private void Filter_SelectionChanged(object sender, SelectionChangedEventArgs e)
-        {
-            if (IsLoaded)
-            {
-                _currentPage = 1;
-                LoadUsers();
-            }
-        }
-
-        private void ClearFilters_Click(object sender, RoutedEventArgs e)
-        {
-            SearchBox.Text = "";
-            RoleFilter.SelectedIndex = 0;
-            StatusFilter.SelectedIndex = 0;
             _currentPage = 1;
-            LoadUsers();
+            ApplyPagination();
         }
 
-        #endregion
-
-        #region User Actions
-
-        private void AddUser_Click(object sender, RoutedEventArgs e)
+        private void ApplyPagination()
         {
+            if (_filteredUsers == null || dgUsers == null) return;
+
+            _totalPages = (int)Math.Ceiling((double)_filteredUsers.Count / _pageSize);
+            if (_totalPages == 0) _totalPages = 1;
+
+            var pagedUsers = _filteredUsers
+                .Skip((_currentPage - 1) * _pageSize)
+                .Take(_pageSize)
+                .ToList();
+
+            dgUsers.ItemsSource = pagedUsers;
+
+            if (txtResultCount != null) txtResultCount.Text = $"Showing {pagedUsers.Count} of {_filteredUsers.Count} users";
+            if (txtPageInfo != null) txtPageInfo.Text = $"Page {_currentPage} of {_totalPages}";
+
+            if (btnFirst != null) btnFirst.IsEnabled = _currentPage > 1;
+            if (btnPrevious != null) btnPrevious.IsEnabled = _currentPage > 1;
+            if (btnNext != null) btnNext.IsEnabled = _currentPage < _totalPages;
+            if (btnLast != null) btnLast.IsEnabled = _currentPage < _totalPages;
+        }
+
+        private void ShowLoading(bool show)
+        {
+            if (LoadingOverlay != null)
+                LoadingOverlay.Visibility = show ? Visibility.Visible : Visibility.Collapsed;
+        }
+
+        private void TxtSearch_TextChanged(object sender, TextChangedEventArgs e) => ApplyFilters();
+
+        private void FilterChanged(object sender, SelectionChangedEventArgs e)
+        {
+            if (_allUsers != null) ApplyFilters();
+        }
+
+        private void BtnClearFilters_Click(object sender, RoutedEventArgs e)
+        {
+            if (txtSearch != null) txtSearch.Text = "";
+            if (cbRole != null) cbRole.SelectedIndex = 0;
+            if (cbStatus != null) cbStatus.SelectedIndex = 0;
+        }
+
+        private void BtnAddUser_Click(object sender, RoutedEventArgs e)
+        {
+            if (!_isInitialized) return;
             var dialog = new AddEditUserWindow();
             if (dialog.ShowDialog() == true)
             {
-                // Log activity
-                var currentUser = SessionManager.CurrentUser;
-                _activityLogService.LogActivity(
-                    "UserCreated",
-                    $"Created new user: {dialog.User?.FullName} ({dialog.User?.Email})",
-                    "UserManagement",
-                    currentUser?.FullName ?? "System",
-                    currentUser?.Role,
-                    dialog.User?.Id.ToString()
-                );
-
-                LoadSummaryCards();
-                LoadUsers();
+                _ = LoadDataAsync();
+                LogActivitySafe("UserCreated", $"Created new user: {dialog.User?.FullName}");
             }
         }
 
-        private void ViewUser_Click(object sender, RoutedEventArgs e)
+        private void BtnEdit_Click(object sender, RoutedEventArgs e)
         {
-            if (sender is Button btn && btn.Tag is int userId)
+            if (sender is Button btn && btn.Tag is int id)
             {
-                var user = _userService.GetById(userId);
+                var user = _userService.GetById(id);
+                if (user != null)
+                {
+                    var dialog = new AddEditUserWindow(user);
+                    if (dialog.ShowDialog() == true)
+                    {
+                        _ = LoadDataAsync();
+                        LogActivitySafe("UserUpdated", $"Updated user: {user.FullName}");
+                    }
+                }
+            }
+        }
+
+        private void BtnView_Click(object sender, RoutedEventArgs e)
+        {
+            if (sender is Button btn && btn.Tag is int id)
+            {
+                var user = _userService.GetById(id);
                 if (user != null)
                 {
                     var dialog = new ViewUserDialog(user);
@@ -296,97 +242,63 @@ namespace RosalEHealthcare.UI.WPF.Views
             }
         }
 
-        private void EditUser_Click(object sender, RoutedEventArgs e)
+        private async void BtnDelete_Click(object sender, RoutedEventArgs e)
         {
-            if (sender is Button btn && btn.Tag is int userId)
+            if (!_isInitialized) return;
+            if (sender is Button btn && btn.Tag is int id)
             {
-                var user = _userService.GetById(userId);
-                if (user != null)
-                {
-                    var dialog = new AddEditUserWindow(user);
-                    if (dialog.ShowDialog() == true)
-                    {
-                        // Log activity
-                        var currentUser = SessionManager.CurrentUser;
-                        _activityLogService.LogActivity(
-                            "UserUpdated",
-                            $"Updated user: {user.FullName} ({user.Email})",
-                            "UserManagement",
-                            currentUser?.FullName ?? "System",
-                            currentUser?.Role,
-                            user.Id.ToString()
-                        );
-
-                        LoadSummaryCards();
-                        LoadUsers();
-                    }
-                }
-            }
-        }
-
-        private void DeleteUser_Click(object sender, RoutedEventArgs e)
-        {
-            if (sender is Button btn && btn.Tag is int userId)
-            {
-                var user = _userService.GetById(userId);
+                var user = _allUsers.FirstOrDefault(u => u.Id == id);
                 if (user == null) return;
 
-                var currentUser = SessionManager.CurrentUser;
-
-                // Check if can delete
-                if (!_userService.CanDeleteUser(userId, currentUser?.Id ?? 0, out string reason))
+                // Prevent deleting self
+                if (SessionManager.CurrentUser != null && SessionManager.CurrentUser.Id == id)
                 {
-                    MessageBox.Show(reason, "Cannot Delete User", MessageBoxButton.OK, MessageBoxImage.Warning);
+                    MessageBox.Show("You cannot delete your own account.", "Action Denied", MessageBoxButton.OK, MessageBoxImage.Warning);
                     return;
                 }
 
-                // Confirm deletion with details
-                var result = MessageBox.Show(
-                    $"Are you sure you want to delete this user?\n\n" +
-                    $"Name: {user.FullName}\n" +
-                    $"Email: {user.Email}\n" +
-                    $"Role: {user.Role}\n" +
-                    $"User ID: {user.UserCode}\n\n" +
-                    $"This action cannot be undone.",
-                    "Confirm Delete",
-                    MessageBoxButton.YesNo,
-                    MessageBoxImage.Warning
-                );
+                var result = MessageBox.Show($"Are you sure you want to delete user '{user.FullName}'?\nThis action cannot be undone.",
+                    "Confirm Delete", MessageBoxButton.YesNo, MessageBoxImage.Warning);
 
                 if (result == MessageBoxResult.Yes)
                 {
                     try
                     {
-                        _userService.DeleteUser(userId);
-
-                        // Log activity
-                        _activityLogService.LogActivity(
-                            "UserDeleted",
-                            $"Deleted user: {user.FullName} ({user.Email})",
-                            "UserManagement",
-                            currentUser?.FullName ?? "System",
-                            currentUser?.Role,
-                            userId.ToString()
-                        );
-
-                        MessageBox.Show("User deleted successfully.", "Success", MessageBoxButton.OK, MessageBoxImage.Information);
-                        LoadSummaryCards();
-                        LoadUsers();
+                        ShowLoading(true);
+                        await Task.Run(() =>
+                        {
+                            _userService.DeleteUser(id);
+                        });
+                        LogActivitySafe("UserDeleted", $"Deleted user: {user.FullName}");
+                        await LoadDataAsync();
                     }
-                    catch (Exception ex)
-                    {
-                        MessageBox.Show($"Error deleting user: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
-                    }
+                    catch (Exception ex) { MessageBox.Show($"Error: {ex.Message}"); }
+                    finally { ShowLoading(false); }
                 }
             }
         }
 
-        #endregion
+        private void LogActivitySafe(string type, string desc)
+        {
+            try
+            {
+                if (SessionManager.CurrentUser != null && _activityLogService != null)
+                {
+                    _activityLogService.LogActivity(type, desc, "User Management",
+                        SessionManager.CurrentUser.FullName, SessionManager.CurrentUser.Role);
+                }
+            }
+            catch { }
+        }
+
+        private void BtnFirst_Click(object sender, RoutedEventArgs e) { _currentPage = 1; ApplyPagination(); }
+        private void BtnPrevious_Click(object sender, RoutedEventArgs e) { if (_currentPage > 1) { _currentPage--; ApplyPagination(); } }
+        private void BtnNext_Click(object sender, RoutedEventArgs e) { if (_currentPage < _totalPages) { _currentPage++; ApplyPagination(); } }
+        private void BtnLast_Click(object sender, RoutedEventArgs e) { _currentPage = _totalPages; ApplyPagination(); }
     }
 
-    #region Display Model
-
-    public class UserDisplayModel
+    // VIEW MODEL
+    public class UserViewModel
     {
         public int Id { get; set; }
         public string UserCode { get; set; }
@@ -396,22 +308,31 @@ namespace RosalEHealthcare.UI.WPF.Views
         public string Role { get; set; }
         public string Status { get; set; }
         public DateTime? LastLogin { get; set; }
-        public DateTime DateCreated { get; set; }
         public string ProfileImagePath { get; set; }
-        public string Initials { get; set; }
+
+        public string Initials
+        {
+            get
+            {
+                if (string.IsNullOrEmpty(FullName)) return "?";
+                var words = FullName.Split(' ');
+                if (words.Length >= 2) return $"{words[0][0]}{words[1][0]}".ToUpper();
+                return FullName.Length >= 2 ? FullName.Substring(0, 2).ToUpper() : FullName.ToUpper();
+            }
+        }
 
         public string LastLoginFormatted => LastLogin.HasValue ? LastLogin.Value.ToString("MMM dd, yyyy HH:mm") : "Never";
 
-        // Role badge colors
+        // Colors logic inside ViewModel for clean XAML
         public Brush RoleBadgeBackground
         {
             get
             {
                 switch (Role)
                 {
-                    case "Administrator": return new SolidColorBrush(Color.FromRgb(255, 235, 238));
-                    case "Doctor": return new SolidColorBrush(Color.FromRgb(227, 242, 253));
-                    case "Receptionist": return new SolidColorBrush(Color.FromRgb(255, 243, 224));
+                    case "Administrator": return new SolidColorBrush(Color.FromRgb(255, 235, 238)); // Red Light
+                    case "Doctor": return new SolidColorBrush(Color.FromRgb(227, 242, 253)); // Blue Light
+                    case "Receptionist": return new SolidColorBrush(Color.FromRgb(255, 243, 224)); // Orange Light
                     default: return new SolidColorBrush(Color.FromRgb(245, 245, 245));
                 }
             }
@@ -423,44 +344,12 @@ namespace RosalEHealthcare.UI.WPF.Views
             {
                 switch (Role)
                 {
-                    case "Administrator": return new SolidColorBrush(Color.FromRgb(198, 40, 40));
-                    case "Doctor": return new SolidColorBrush(Color.FromRgb(21, 101, 192));
-                    case "Receptionist": return new SolidColorBrush(Color.FromRgb(239, 108, 0));
+                    case "Administrator": return new SolidColorBrush(Color.FromRgb(198, 40, 40)); // Red Dark
+                    case "Doctor": return new SolidColorBrush(Color.FromRgb(21, 101, 192)); // Blue Dark
+                    case "Receptionist": return new SolidColorBrush(Color.FromRgb(239, 108, 0)); // Orange Dark
                     default: return new SolidColorBrush(Color.FromRgb(97, 97, 97));
                 }
             }
         }
-
-        public Brush StatusBadgeBackground
-        {
-            get
-            {
-                switch (Status)
-                {
-                    case "Active": return new SolidColorBrush(Color.FromRgb(232, 245, 233));
-                    case "Inactive": return new SolidColorBrush(Color.FromRgb(245, 245, 245));
-                    case "Locked": return new SolidColorBrush(Color.FromRgb(255, 235, 238));
-                    case "Pending": return new SolidColorBrush(Color.FromRgb(255, 243, 224));
-                    default: return new SolidColorBrush(Color.FromRgb(245, 245, 245));
-                }
-            }
-        }
-
-        public Brush StatusBadgeColor
-        {
-            get
-            {
-                switch (Status)
-                {
-                    case "Active": return new SolidColorBrush(Color.FromRgb(46, 125, 50));
-                    case "Inactive": return new SolidColorBrush(Color.FromRgb(117, 117, 117));
-                    case "Locked": return new SolidColorBrush(Color.FromRgb(198, 40, 40));
-                    case "Pending": return new SolidColorBrush(Color.FromRgb(239, 108, 0));
-                    default: return new SolidColorBrush(Color.FromRgb(117, 117, 117));
-                }
-            }
-        }
     }
-
-    #endregion
 }

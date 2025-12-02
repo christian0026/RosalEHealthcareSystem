@@ -66,7 +66,8 @@ namespace RosalEHealthcare.UI.WPF.Views
             }
 
             // Update progress bar width
-            double maxWidth = 390; // Total width minus margins
+            // Calculation: Window Width (500) - Outer Margins (60) - Inner StackPanel Margins (60) = 380
+            double maxWidth = 380;
             progressBar.Width = (maxWidth * _progress) / 100;
         }
 

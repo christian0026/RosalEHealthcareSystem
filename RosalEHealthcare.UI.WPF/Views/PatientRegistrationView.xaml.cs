@@ -390,6 +390,7 @@ namespace RosalEHealthcare.UI.WPF.Views
                     // Generate new Patient ID
                     patient.PatientId = GeneratePatientId();
                     _patientService.AddPatient(patient);
+                    LinkPendingAppointments(patient);
                     MessageBox.Show($"Patient registered successfully!\nPatient ID: {patient.PatientId}\n\nPlease proceed to schedule an appointment.",
                                     "Registration Successful", MessageBoxButton.OK, MessageBoxImage.Information);
                 }
@@ -687,5 +688,28 @@ namespace RosalEHealthcare.UI.WPF.Views
         }
 
         #endregion
+
+        private void LinkPendingAppointments(Patient patient)
+        {
+            try
+            {
+                var pendingAppointments = _db.Appointments
+                    .Where(a => a.PatientId == null &&
+                                a.PatientName.ToLower() == patient.FullName.ToLower() &&
+                                a.Contact == patient.Contact)
+                    .ToList();
+
+                foreach (var appt in pendingAppointments)
+                {
+                    appt.PatientId = patient.Id;
+                }
+
+                if (pendingAppointments.Any())
+                    _db.SaveChanges();
+            }
+            catch { /* Ignore linking errors */ }
+        }
     }
+
+
 }

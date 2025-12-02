@@ -47,6 +47,31 @@ namespace RosalEHealthcare.Data.Contexts
                 .WithMany()
                 .HasForeignKey(m => m.PatientId)
                 .WillCascadeOnDelete(false);
+
+            // Prescription -> PrescriptionMedicines
+            modelBuilder.Entity<Prescription>()
+                .HasMany(p => p.Medicines)
+                .WithRequired(m => m.Prescription)
+                .HasForeignKey(m => m.PrescriptionId)
+                .WillCascadeOnDelete(true);
+
+            // PrescriptionMedicine -> Medicine
+            modelBuilder.Entity<PrescriptionMedicine>()
+                .HasOptional(pm => pm.Medicine)
+                .WithMany()
+                .HasForeignKey(pm => pm.MedicineId)
+                .WillCascadeOnDelete(false);
+
+            // Appointment -> Patient
+            modelBuilder.Entity<Appointment>()
+                .HasOptional(a => a.Patient)
+                .WithMany()
+                .HasForeignKey(a => a.PatientId)
+                .WillCascadeOnDelete(false);
+
+            // Table mappings
+            modelBuilder.Entity<MedicalHistory>().ToTable("MedicalHistory");
+            modelBuilder.Entity<PrescriptionMedicine>().ToTable("PrescriptionMedicines");
         }
     }
 }
