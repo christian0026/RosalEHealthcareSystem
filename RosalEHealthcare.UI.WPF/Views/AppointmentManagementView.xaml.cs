@@ -383,17 +383,35 @@ namespace RosalEHealthcare.UI.WPF.Views
                 }
                 else
                 {
-                    // AUTO-LINK to existing patient
-                    int? patientId = null;
-                    var existingPatient = _db.Patients.FirstOrDefault(p =>
-                        p.FullName.ToLower() == fullName.ToLower() &&
-                        p.Contact == contact &&
-                        p.Status != "Archived");
+                    // ═══════════════════════════════════════════════════════════
+                    // AUTO-LINK: Try to find an existing patient by name + contact
+                    // ═══════════════════════════════════════════════════════════
+                    int? linkedPatientId = null;
+                    string linkMessage = "";
+
+                    // Normalize contact for comparison
+                    var normalizedContact = System.Text.RegularExpressions.Regex.Replace(contact ?? "", @"[\s\-\(\)\+]", "");
+
+                    var existingPatient = _db.Patients
+                        .Where(p => p.Status != "Archived")
+                        .ToList()
+                        .FirstOrDefault(p =>
+                            p.FullName?.Trim().ToLower() == fullName.Trim().ToLower() &&
+                            System.Text.RegularExpressions.Regex.Replace(p.Contact ?? "", @"[\s\-\(\)\+]", "") == normalizedContact);
+
                     if (existingPatient != null)
-                        patientId = existingPatient.Id;
+                    {
+                        linkedPatientId = existingPatient.Id;
+                        linkMessage = $"\n\n✓ Linked to existing patient record: {existingPatient.PatientId}";
+                    }
+                    else
+                    {
+                        linkMessage = "\n\n⚠ No matching patient found. Patient should register first for full integration.";
+                    }
+
                     var appointment = new Appointment
                     {
-                        PatientId = patientId,
+                        PatientId = linkedPatientId,  // Link to patient if found
                         PatientName = fullName,
                         Contact = contact,
                         BirthDate = birthDate,
@@ -410,8 +428,16 @@ namespace RosalEHealthcare.UI.WPF.Views
 
                     _appointmentService.AddAppointment(appointment);
 
-                    MessageBox.Show("Appointment scheduled successfully!\n\nAppointment ID: " + appointment.AppointmentId + "\nPatient: " + fullName + "\nDate & Time: " + appointmentDateTime.ToString("MMMM dd, yyyy hh:mm tt") + "\nStatus: PENDING",
-                                    "Success", MessageBoxButton.OK, MessageBoxImage.Information);
+                    MessageBox.Show(
+                        $"Appointment scheduled successfully!\n\n" +
+                        $"Appointment ID: {appointment.AppointmentId}\n" +
+                        $"Patient: {fullName}\n" +
+                        $"Date & Time: {appointmentDateTime:MMMM dd, yyyy hh:mm tt}\n" +
+                        $"Status: PENDING" +
+                        linkMessage,
+                        "Success",
+                        MessageBoxButton.OK,
+                        MessageBoxImage.Information);
                 }
 
                 CloseDialog_Click(null, null);

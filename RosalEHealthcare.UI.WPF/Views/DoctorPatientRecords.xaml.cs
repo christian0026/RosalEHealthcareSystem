@@ -10,6 +10,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
+using System.Data.Entity;
 
 namespace RosalEHealthcare.UI.WPF.Views
 {
@@ -143,32 +144,67 @@ namespace RosalEHealthcare.UI.WPF.Views
         {
             if (SelectedPatient == null) return;
 
-            var visits = await Task.Run(() =>
-                _patientService.GetMedicalHistory(SelectedPatient.Id).ToList());
-
-            VisitHistories.Clear();
-            foreach (var visit in visits)
+            try
             {
-                VisitHistories.Add(visit);
-            }
+                var visits = await Task.Run(() =>
+                {
+                    return _db.Appointments
+                        .Where(a => a.PatientId == SelectedPatient.Id)
+                        .OrderByDescending(a => a.Time)
+                        .ToList()
+                        .Select(a => new MedicalHistory
+                        {
+                            VisitDate = a.Time,
+                            VisitType = a.Type ?? "Consultation",
+                            Diagnosis = a.Condition ?? "N/A",
+                            DoctorName = a.CreatedBy ?? "N/A",
+                            PatientId = SelectedPatient.Id,
+                            ClinicalNotes = $"Status: {a.Status}"
+                        })
+                        .ToList();
+                });
 
-            dgVisitHistory.ItemsSource = VisitHistories;
+                VisitHistories.Clear();
+                foreach (var visit in visits)
+                {
+                    VisitHistories.Add(visit);
+                }
+
+                dgVisitHistory.ItemsSource = VisitHistories;
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"LoadVisitHistory error: {ex.Message}");
+            }
         }
 
         private async Task LoadPrescriptions()
         {
             if (SelectedPatient == null) return;
 
-            var prescriptions = await Task.Run(() =>
-                _patientService.GetPatientPrescriptions(SelectedPatient.Id).ToList());
-
-            Prescriptions.Clear();
-            foreach (var prescription in prescriptions)
+            try
             {
-                Prescriptions.Add(prescription);
-            }
+                var prescriptions = await Task.Run(() =>
+                {
+                    return _db.Prescriptions
+                        .Include("Medicines")
+                        .Where(p => p.PatientId == SelectedPatient.Id)
+                        .OrderByDescending(p => p.CreatedAt)
+                        .ToList();
+                });
 
-            icPrescriptions.ItemsSource = Prescriptions;
+                Prescriptions.Clear();
+                foreach (var prescription in prescriptions)
+                {
+                    Prescriptions.Add(prescription);
+                }
+
+                icPrescriptions.ItemsSource = Prescriptions;
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"LoadPrescriptions error: {ex.Message}");
+            }
         }
 
         #endregion
@@ -408,27 +444,37 @@ namespace RosalEHealthcare.UI.WPF.Views
                 return;
             }
 
-            // Open prescription management in a new window with patient preselected
-            var prescriptionView = new DoctorPrescriptionManagement();
-            var viewModel = prescriptionView.DataContext as DoctorPrescriptionViewModel;
-            if (viewModel != null)
+            try
             {
-                viewModel.SelectedPatient = SelectedPatient;
+                var prescriptionView = new DoctorPrescriptionManagement();
+                var viewModel = prescriptionView.DataContext as ViewModels.DoctorPrescriptionViewModel;
+
+                if (viewModel != null)
+                {
+                    viewModel.SelectedPatient = SelectedPatient;
+                }
+
+                var window = new Window
+                {
+                    Title = $"New Prescription - {SelectedPatient.FullName}",
+                    Content = prescriptionView,
+                    Width = 1150,
+                    Height = 850,
+                    WindowStartupLocation = WindowStartupLocation.CenterScreen,
+                    Owner = Window.GetWindow(this),
+                    ResizeMode = ResizeMode.CanResize
+                };
+
+                window.ShowDialog();
+
+                // Refresh prescriptions after closing
+                _ = LoadPrescriptions();
             }
-
-            var window = new Window
+            catch (Exception ex)
             {
-                Title = "New Prescription - " + SelectedPatient.FullName,
-                Content = prescriptionView,
-                Width = 1100,
-                Height = 800,
-                WindowStartupLocation = WindowStartupLocation.CenterScreen,
-                Owner = Window.GetWindow(this)
-            };
-            window.ShowDialog();
-
-            // Refresh prescriptions after closing
-            LoadPrescriptions();
+                MessageBox.Show($"Error opening prescription management:\n{ex.Message}",
+                    "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
         }
 
         private void BtnViewPrescription_Click(object sender, RoutedEventArgs e)

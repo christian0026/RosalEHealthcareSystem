@@ -68,9 +68,11 @@
                              TextChanged="TxtSearch_TextChanged" materialDesign:HintAssist.Hint="Search by patient name..."/>
 
                     <ComboBox x:Name="cbStatus" Grid.Column="2" Height="45" Padding="12,10" FontSize="14"
-                              SelectionChanged="CbStatus_SelectionChanged">
+                            SelectionChanged="CbStatus_SelectionChanged">
                         <ComboBoxItem Content="All Status" IsSelected="True"/>
                         <ComboBoxItem Content="COMPLETED"/>
+                        <ComboBoxItem Content="IN_PROGRESS"/>
+                        <!-- ADD THIS LINE -->
                         <ComboBoxItem Content="CONFIRMED"/>
                         <ComboBoxItem Content="PENDING"/>
                         <ComboBoxItem Content="CANCELLED"/>

@@ -57,6 +57,10 @@ namespace RosalEHealthcare.Core.Models
         [MaxLength(100)]
         public string CreatedBy { get; set; }
 
+        // Link to appointment
+        public int? AppointmentId { get; set; }
+        public virtual Appointment Appointment { get; set; }
+
         // Navigation
         [ForeignKey("PatientId")]
         public virtual Patient Patient { get; set; }

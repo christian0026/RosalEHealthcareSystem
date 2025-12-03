@@ -36,10 +36,11 @@ namespace RosalEHealthcare.Data.Contexts
         {
             base.OnModelCreating(modelBuilder);
 
+            // MedicalHistory -> Appointment relationship
             modelBuilder.Entity<MedicalHistory>()
-                .HasRequired<Patient>(m => m.Patient)
+                .HasOptional(m => m.Appointment)
                 .WithMany()
-                .HasForeignKey(m => m.PatientId)
+                .HasForeignKey(m => m.AppointmentId)
                 .WillCascadeOnDelete(false);
 
             modelBuilder.Entity<MedicalDocument>()
@@ -62,7 +63,7 @@ namespace RosalEHealthcare.Data.Contexts
                 .HasForeignKey(pm => pm.MedicineId)
                 .WillCascadeOnDelete(false);
 
-            // Appointment -> Patient
+            // Appointment -> Patient relationship
             modelBuilder.Entity<Appointment>()
                 .HasOptional(a => a.Patient)
                 .WithMany()

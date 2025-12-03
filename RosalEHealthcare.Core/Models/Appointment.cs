@@ -35,6 +35,21 @@ namespace RosalEHealthcare.Core.Models
 
         // Add this navigation property at the end of the Appointment class
         public virtual Patient Patient { get; set; }
+        public DateTime? ConsultationStartedAt { get; set; }
+        public DateTime? ConsultationCompletedAt { get; set; }
 
+        // Computed property for consultation duration
+        public string ConsultationDuration
+        {
+            get
+            {
+                if (ConsultationStartedAt.HasValue && ConsultationCompletedAt.HasValue)
+                {
+                    var duration = ConsultationCompletedAt.Value - ConsultationStartedAt.Value;
+                    return $"{(int)duration.TotalMinutes} mins";
+                }
+                return null;
+            }
+        }
     }
 }

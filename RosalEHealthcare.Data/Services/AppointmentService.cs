@@ -71,6 +71,19 @@ namespace RosalEHealthcare.Data.Services
         }
 
         /// <summary>
+        /// Links an appointment to a patient
+        /// </summary>
+        public bool LinkToPatient(int appointmentId, int patientId)
+        {
+            var appointment = _db.Appointments.Find(appointmentId);
+            if (appointment == null) return false;
+
+            appointment.PatientId = patientId;
+            _db.SaveChanges();
+            return true;
+        }
+
+        /// <summary>
         /// Update an appointment and optionally notify
         /// </summary>
         /// <param name="appt">Appointment to update</param>
@@ -299,13 +312,24 @@ namespace RosalEHealthcare.Data.Services
         }
 
         /// <summary>
-        /// Mark appointment as completed (Doctor action)
+        /// Completes an appointment (IN_PROGRESS or CONFIRMED -> COMPLETED)
         /// </summary>
-        /// <param name="id">Appointment ID</param>
-        /// <param name="doctorName">Name of doctor</param>
-        public void CompleteAppointment(int id, string doctorName)
+        public bool CompleteAppointment(int appointmentId)
         {
-            UpdateStatus(id, "COMPLETED", doctorName, "Doctor");
+            var appointment = _db.Appointments.Find(appointmentId);
+            if (appointment == null) return false;
+
+            appointment.Status = "COMPLETED";
+            appointment.ConsultationCompletedAt = DateTime.Now;
+
+            // If consultation wasn't formally started, set start time to now
+            if (!appointment.ConsultationStartedAt.HasValue)
+            {
+                appointment.ConsultationStartedAt = DateTime.Now;
+            }
+
+            _db.SaveChanges();
+            return true;
         }
 
         /// <summary>
@@ -313,9 +337,31 @@ namespace RosalEHealthcare.Data.Services
         /// </summary>
         /// <param name="id">Appointment ID</param>
         /// <param name="doctorName">Name of doctor</param>
-        public void ConfirmAppointment(int id, string doctorName)
+        /// <summary>
+        /// Confirms an appointment (PENDING -> CONFIRMED)
+        /// </summary>
+        public bool ConfirmAppointment(int appointmentId)
         {
-            UpdateStatus(id, "CONFIRMED", doctorName, "Doctor");
+            var appointment = _db.Appointments.Find(appointmentId);
+            if (appointment == null) return false;
+
+            appointment.Status = "CONFIRMED";
+            _db.SaveChanges();
+            return true;
+        }
+
+        /// <summary>
+        /// Starts a consultation (CONFIRMED -> IN_PROGRESS)
+        /// </summary>
+        public bool StartConsultation(int appointmentId)
+        {
+            var appointment = _db.Appointments.Find(appointmentId);
+            if (appointment == null) return false;
+
+            appointment.Status = "IN_PROGRESS";
+            appointment.ConsultationStartedAt = DateTime.Now;
+            _db.SaveChanges();
+            return true;
         }
 
         #endregion
@@ -363,6 +409,16 @@ namespace RosalEHealthcare.Data.Services
             }
 
             return query.OrderByDescending(a => a.Time).ToList();
+        }
+
+        /// <summary>
+        /// Gets appointment with patient details
+        /// </summary>
+        public Appointment GetWithPatient(int appointmentId)
+        {
+            return _db.Appointments
+                .Include("Patient")
+                .FirstOrDefault(a => a.Id == appointmentId);
         }
 
         public int GetTotalCount()
@@ -464,13 +520,23 @@ namespace RosalEHealthcare.Data.Services
 
         #region Helper Methods
 
-        public IEnumerable<Appointment> GetTodayAppointments()
+        /// <summary>
+        /// Gets today's appointments for a specific status
+        /// </summary>
+        public List<Appointment> GetTodayAppointments(string status = null)
         {
             var today = DateTime.Today;
-            return _db.Appointments
-                .Where(a => DbFunctions.TruncateTime(a.Time) == today)
-                .OrderBy(a => a.Time)
-                .ToList();
+            var query = _db.Appointments.Where(a =>
+                a.Time.Year == today.Year &&
+                a.Time.Month == today.Month &&
+                a.Time.Day == today.Day);
+
+            if (!string.IsNullOrEmpty(status))
+            {
+                query = query.Where(a => a.Status == status);
+            }
+
+            return query.OrderBy(a => a.Time).ToList();
         }
 
         public IEnumerable<Appointment> GetUpcomingAppointments(int patientId)

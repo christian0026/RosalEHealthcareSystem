@@ -116,18 +116,28 @@ namespace RosalEHealthcare.UI.WPF.Views
             if (success)
             {
                 var result = MessageBox.Show(
-                    "Prescription saved successfully!\n\nWould you like to print it now?",
+                    "Prescription saved successfully!\n\n" +
+                    "Medicine stock has been deducted from inventory.\n\n" +
+                    "Would you like to create another prescription?",
                     "Success",
                     MessageBoxButton.YesNo,
                     MessageBoxImage.Information);
 
-                if (result == MessageBoxResult.Yes)
+                if (result == MessageBoxResult.No)
                 {
-                    ShowPrintPreview();
+                    // Close window if opened as dialog
+                    var window = Window.GetWindow(this);
+                    if (window != null && window.Owner != null)
+                    {
+                        window.DialogResult = true;
+                        window.Close();
+                        return;
+                    }
                 }
 
                 ViewModel.ResetForm();
                 txtSearchPatient.Clear();
+                txtSearchPatient.Focus();
             }
         }
 
@@ -137,6 +147,23 @@ namespace RosalEHealthcare.UI.WPF.Views
             if (success)
             {
                 ShowPrintPreview();
+
+                MessageBox.Show(
+                    "Prescription saved and printed successfully!\n\n" +
+                    "Medicine stock has been deducted from inventory.",
+                    "Success",
+                    MessageBoxButton.OK,
+                    MessageBoxImage.Information);
+
+                // Close window if opened as dialog
+                var window = Window.GetWindow(this);
+                if (window != null && window.Owner != null)
+                {
+                    window.DialogResult = true;
+                    window.Close();
+                    return;
+                }
+
                 ViewModel.ResetForm();
                 txtSearchPatient.Clear();
             }

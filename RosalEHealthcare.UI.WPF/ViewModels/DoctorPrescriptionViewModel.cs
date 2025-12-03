@@ -128,6 +128,11 @@ namespace RosalEHealthcare.UI.WPF.ViewModels
 
         public DoctorPrescriptionViewModel()
         {
+
+            if (System.ComponentModel.DesignerProperties.GetIsInDesignMode(new System.Windows.DependencyObject()))
+            {
+                return;
+            }
             _db = new RosalEHealthcareDbContext();
             _prescriptionService = new PrescriptionService(_db);
             _medicineService = new MedicineService(_db);

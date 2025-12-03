@@ -394,6 +394,9 @@
     <Compile Include="Views\AppointmentManagementView.xaml.cs">
       <DependentUpon>AppointmentManagementView.xaml</DependentUpon>
     </Compile>
+    <Compile Include="Views\CompleteConsultationDialog.xaml.cs">
+      <DependentUpon>CompleteConsultationDialog.xaml</DependentUpon>
+    </Compile>
     <Compile Include="Views\DoctorAppointmentLists.xaml.cs">
       <DependentUpon>DoctorAppointmentLists.xaml</DependentUpon>
     </Compile>
@@ -466,6 +469,9 @@
     <Compile Include="Views\Settings\SystemLogsTab.xaml.cs">
       <DependentUpon>SystemLogsTab.xaml</DependentUpon>
     </Compile>
+    <Compile Include="Views\StartConsultationDialog.xaml.cs">
+      <DependentUpon>StartConsultationDialog.xaml</DependentUpon>
+    </Compile>
     <Compile Include="Views\SystemSettingsView.xaml.cs">
       <DependentUpon>SystemSettingsView.xaml</DependentUpon>
     </Compile>
@@ -532,6 +538,10 @@
       <DependentUpon>MainWindow.xaml</DependentUpon>
       <SubType>Code</SubType>
     </Compile>
+    <Page Include="Styles\ConsultationStyles.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
     <Page Include="Views\AddEditMedicineDialog.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
@@ -553,6 +563,10 @@
       <Generator>MSBuild:Compile</Generator>
     </Page>
     <Page Include="Views\AppointmentManagementView.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="Views\CompleteConsultationDialog.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
@@ -649,6 +663,10 @@
       <Generator>MSBuild:Compile</Generator>
     </Page>
     <Page Include="Views\Settings\SystemLogsTab.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="Views\StartConsultationDialog.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>

@@ -32,6 +32,7 @@
                     <RowDefinition Height="Auto"/>
                     <RowDefinition Height="Auto"/>
                     <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
                 </Grid.RowDefinitions>
 
                 <!-- Header -->
@@ -58,17 +59,18 @@
                                    VerticalAlignment="Center"/>
                     </Border>
 
-                    <!-- Name & ID -->
+                    <!-- Name & Info -->
                     <StackPanel Grid.Column="1" VerticalAlignment="Center">
                         <TextBlock x:Name="txtPatientName"
                                    Text="Juan Dela Cruz"
                                    FontSize="18"
                                    FontWeight="Bold"
                                    Foreground="#333"/>
-                        <TextBlock FontSize="12" Foreground="#999" Margin="0,2,0,0">
-                            <Run Text="ID:"/>
-                            <Run x:Name="txtAppointmentId" Text="APT-2025-001"/>
-                        </TextBlock>
+                        <TextBlock x:Name="txtPatientInfo" 
+                                   Text="28 yrs • Male"
+                                   FontSize="12" 
+                                   Foreground="#666" 
+                                   Margin="0,2,0,0"/>
                     </StackPanel>
 
                     <!-- Status Chip -->
@@ -87,7 +89,26 @@
                 </Grid>
 
                 <!-- Appointment Details -->
-                <StackPanel Grid.Row="1" Margin="0,0,0,15">
+                <StackPanel Grid.Row="1" Margin="0,0,0,10">
+                    <!-- Appointment Type -->
+                    <Grid Margin="0,0,0,8">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto"/>
+                            <ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
+                        <materialDesign:PackIcon Grid.Column="0"
+                                                 Kind="ClipboardText"
+                                                 Width="16"
+                                                 Height="16"
+                                                 Foreground="#666"
+                                                 VerticalAlignment="Center"
+                                                 Margin="0,0,8,0"/>
+                        <TextBlock Grid.Column="1" VerticalAlignment="Center">
+                            <Run Text="Type: " Foreground="#999"/>
+                            <Run x:Name="txtAppointmentType" Text="General Consultation" Foreground="#333" FontWeight="SemiBold"/>
+                        </TextBlock>
+                    </Grid>
+
                     <!-- Date & Time -->
                     <Grid Margin="0,0,0,8">
                         <Grid.ColumnDefinitions>
@@ -103,30 +124,10 @@
                                                  Margin="0,0,8,0"/>
                         <TextBlock Grid.Column="1"
                                    x:Name="txtDateTime"
-                                   Text="January 15, 2025 - 10:00 AM"
-                                   FontSize="14"
-                                   FontWeight="SemiBold"
+                                   Text="January 15, 2025 • 10:00 AM"
+                                   FontSize="13"
                                    Foreground="#333"
                                    VerticalAlignment="Center"/>
-                    </Grid>
-
-                    <!-- Type -->
-                    <Grid Margin="0,0,0,8">
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="Auto"/>
-                            <ColumnDefinition Width="*"/>
-                        </Grid.ColumnDefinitions>
-                        <materialDesign:PackIcon Grid.Column="0"
-                                                 Kind="ClipboardText"
-                                                 Width="16"
-                                                 Height="16"
-                                                 Foreground="#666"
-                                                 VerticalAlignment="Center"
-                                                 Margin="0,0,8,0"/>
-                        <TextBlock Grid.Column="1">
-                            <Run Text="Type:" Foreground="#999"/>
-                            <Run x:Name="txtType" Text="General Consultation" Foreground="#333" FontWeight="SemiBold"/>
-                        </TextBlock>
                     </Grid>
 
                     <!-- Chief Complaint -->
@@ -143,13 +144,13 @@
                                                  VerticalAlignment="Top"
                                                  Margin="0,2,8,0"/>
                         <TextBlock Grid.Column="1" TextWrapping="Wrap">
-                            <Run Text="Complaint:" Foreground="#999"/>
+                            <Run Text="Complaint: " Foreground="#999"/>
                             <Run x:Name="txtCondition" Text="Fever and cough" Foreground="#333"/>
                         </TextBlock>
                     </Grid>
 
                     <!-- Contact -->
-                    <Grid Margin="0,0,0,8">
+                    <Grid>
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="Auto"/>
                             <ColumnDefinition Width="*"/>
@@ -162,34 +163,30 @@
                                                  VerticalAlignment="Center"
                                                  Margin="0,0,8,0"/>
                         <TextBlock Grid.Column="1">
-                            <Run Text="Contact:" Foreground="#999"/>
+                            <Run Text="Contact: " Foreground="#999"/>
                             <Run x:Name="txtContact" Text="+63 912 345 6789" Foreground="#333"/>
-                        </TextBlock>
-                    </Grid>
-
-                    <!-- Age & Gender -->
-                    <Grid>
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="Auto"/>
-                            <ColumnDefinition Width="*"/>
-                        </Grid.ColumnDefinitions>
-                        <materialDesign:PackIcon Grid.Column="0"
-                                                 Kind="AccountCircle"
-                                                 Width="16"
-                                                 Height="16"
-                                                 Foreground="#666"
-                                                 VerticalAlignment="Center"
-                                                 Margin="0,0,8,0"/>
-                        <TextBlock Grid.Column="1">
-                            <Run x:Name="txtAge" Text="28 years old" Foreground="#333"/>
-                            <Run Text="•" Foreground="#999"/>
-                            <Run x:Name="txtGender" Text="Male" Foreground="#333"/>
                         </TextBlock>
                     </Grid>
                 </StackPanel>
 
+                <!-- Patient Link Indicator -->
+                <Border Grid.Row="2" 
+                        Background="#F5F5F5" 
+                        CornerRadius="6" 
+                        Padding="10,6" 
+                        Margin="0,0,0,12">
+                    <TextBlock x:Name="txtPatientLink" 
+                               Text="✓ Patient Record Linked" 
+                               FontSize="12" 
+                               FontWeight="SemiBold"
+                               Foreground="#4CAF50"/>
+                </Border>
+
                 <!-- Action Buttons -->
-                <StackPanel Grid.Row="2" x:Name="ActionButtons" Orientation="Horizontal" HorizontalAlignment="Left"/>
+                <StackPanel Grid.Row="3" 
+                            x:Name="ActionButtons" 
+                            Orientation="Horizontal" 
+                            HorizontalAlignment="Left"/>
             </Grid>
         </Grid>
     </Border>

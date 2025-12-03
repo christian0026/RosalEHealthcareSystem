@@ -390,9 +390,31 @@ namespace RosalEHealthcare.UI.WPF.Views
                     // Generate new Patient ID
                     patient.PatientId = GeneratePatientId();
                     _patientService.AddPatient(patient);
-                    LinkPendingAppointments(patient);
-                    MessageBox.Show($"Patient registered successfully!\nPatient ID: {patient.PatientId}\n\nPlease proceed to schedule an appointment.",
-                                    "Registration Successful", MessageBoxButton.OK, MessageBoxImage.Information);
+
+                    // Auto-link any pending appointments with same name/contact
+                    LinkPendingAppointmentsToPatient(patient);
+
+                    // Ask if they want to schedule an appointment
+                    var result = MessageBox.Show(
+                        $"Patient registered successfully!\n\nPatient ID: {patient.PatientId}\nName: {patient.FullName}\n\nWould you like to schedule an appointment for this patient now?",
+                        "Registration Successful",
+                        MessageBoxButton.YesNo,
+                        MessageBoxImage.Information);
+
+                    if (result == MessageBoxResult.Yes)
+                    {
+                        // Find the parent window and navigate to appointments
+                        // Or you could open a quick appointment dialog here
+                        try
+                        {
+                            var mainWindow = Window.GetWindow(this);
+                            // If you have a navigation system, trigger it here
+                            // For now, just inform the user
+                            MessageBox.Show("Please use the Appointments tab to schedule an appointment.",
+                                "Navigate to Appointments", MessageBoxButton.OK, MessageBoxImage.Information);
+                        }
+                        catch { }
+                    }
                 }
 
                 ClearForm();
@@ -709,6 +731,62 @@ namespace RosalEHealthcare.UI.WPF.Views
             }
             catch { /* Ignore linking errors */ }
         }
+
+        #region Auto-Link Appointments
+
+        /// <summary>
+        /// Links any pending appointments to the newly registered patient
+        /// Matches by name and contact number
+        /// </summary>
+        private void LinkPendingAppointmentsToPatient(Patient patient)
+        {
+            try
+            {
+                if (patient == null || string.IsNullOrEmpty(patient.FullName)) return;
+
+                // Normalize contact for comparison
+                var normalizedPatientContact = NormalizePhoneNumber(patient.Contact);
+
+                var pendingAppointments = _db.Appointments
+                    .Where(a => a.PatientId == null)
+                    .ToList()
+                    .Where(a =>
+                        a.PatientName?.Trim().ToLower() == patient.FullName.Trim().ToLower() &&
+                        NormalizePhoneNumber(a.Contact) == normalizedPatientContact)
+                    .ToList();
+
+                if (pendingAppointments.Any())
+                {
+                    foreach (var appt in pendingAppointments)
+                    {
+                        appt.PatientId = patient.Id;
+                    }
+                    _db.SaveChanges();
+
+                    // Notify user
+                    MessageBox.Show(
+                        $"Found and linked {pendingAppointments.Count} existing appointment(s) to this patient.",
+                        "Appointments Linked",
+                        MessageBoxButton.OK,
+                        MessageBoxImage.Information);
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"LinkPendingAppointments error: {ex.Message}");
+            }
+        }
+
+        /// <summary>
+        /// Normalizes phone number for comparison
+        /// </summary>
+        private string NormalizePhoneNumber(string phone)
+        {
+            if (string.IsNullOrEmpty(phone)) return "";
+            return System.Text.RegularExpressions.Regex.Replace(phone, @"[\s\-\(\)\+]", "");
+        }
+
+        #endregion
     }
 
 
