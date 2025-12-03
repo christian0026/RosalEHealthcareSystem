@@ -3,24 +3,53 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:viewmodels="clr-namespace:RosalEHealthcare.UI.WPF.ViewModels"
              xmlns:converters="clr-namespace:RosalEHealthcare.UI.WPF.Converters"
+             xmlns:iconPacks="http://metro.mahapps.com/winfx/xaml/iconpacks"
              Background="#F5F5F5"
              MinWidth="900">
 
     <UserControl.DataContext>
-    <viewmodels:DoctorPrescriptionViewModel/>
-</UserControl.DataContext>
+        <viewmodels:DoctorPrescriptionViewModel/>
+    </UserControl.DataContext>
 
     <UserControl.Resources>
         <BooleanToVisibilityConverter x:Key="BoolToVis"/>
         <converters:BoolToIndexConverter x:Key="BoolToIndexConverter"/>
 
-        <!-- Textbox Style -->
+        <Style x:Key="SectionCard" TargetType="Border">
+            <Setter Property="Background" Value="White"/>
+            <Setter Property="CornerRadius" Value="8"/>
+            <Setter Property="BorderBrush" Value="#E0E0E0"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="Padding" Value="24"/>
+            <Setter Property="Margin" Value="0,0,0,20"/>
+            <Setter Property="Effect">
+                <Setter.Value>
+                    <DropShadowEffect Color="#000000" BlurRadius="8" ShadowDepth="1" Opacity="0.05"/>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <Style x:Key="SectionHeader" TargetType="TextBlock">
+            <Setter Property="FontSize" Value="14"/>
+            <Setter Property="FontWeight" Value="Bold"/>
+            <Setter Property="Foreground" Value="#2E7D32"/> <Setter Property="Margin" Value="0,0,0,12"/>
+            <Setter Property="TextDecorations" Value="Underline"/>
+        </Style>
+
+        <Style x:Key="InputLabel" TargetType="TextBlock">
+            <Setter Property="FontSize" Value="13"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="Foreground" Value="#555555"/>
+            <Setter Property="Margin" Value="0,0,0,6"/>
+        </Style>
+
         <Style x:Key="ModernTextBox" TargetType="TextBox">
-            <Setter Property="Padding" Value="12,10"/>
+            <Setter Property="Padding" Value="12,8"/>
             <Setter Property="BorderBrush" Value="#E0E0E0"/>
             <Setter Property="BorderThickness" Value="1"/>
             <Setter Property="FontSize" Value="14"/>
             <Setter Property="VerticalContentAlignment" Value="Center"/>
+            <Setter Property="Background" Value="White"/>
             <Setter Property="Template">
                 <Setter.Value>
                     <ControlTemplate TargetType="TextBox">
@@ -28,667 +57,397 @@
                                 BorderBrush="{TemplateBinding BorderBrush}"
                                 BorderThickness="{TemplateBinding BorderThickness}"
                                 CornerRadius="6">
-                            <ScrollViewer x:Name="PART_ContentHost" 
-                                        Margin="{TemplateBinding Padding}"/>
+                            <ScrollViewer x:Name="PART_ContentHost" Margin="{TemplateBinding Padding}"/>
                         </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter Property="BorderBrush" Value="#4CAF50"/>
+                            </Trigger>
+                            <Trigger Property="IsFocused" Value="True">
+                                <Setter Property="BorderBrush" Value="#2E7D32"/>
+                                <Setter Property="BorderThickness" Value="1.5"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
                     </ControlTemplate>
                 </Setter.Value>
             </Setter>
-            <Style.Triggers>
-                <Trigger Property="IsMouseOver" Value="True">
-                    <Setter Property="BorderBrush" Value="#4CAF50"/>
-                </Trigger>
-                <Trigger Property="IsFocused" Value="True">
-                    <Setter Property="BorderBrush" Value="#4CAF50"/>
-                    <Setter Property="BorderThickness" Value="2"/>
-                </Trigger>
-            </Style.Triggers>
         </Style>
 
-        <!-- ComboBox Style -->
         <Style x:Key="ModernComboBox" TargetType="ComboBox">
-            <Setter Property="Padding" Value="12,10"/>
+            <Setter Property="Padding" Value="12,8"/>
             <Setter Property="BorderBrush" Value="#E0E0E0"/>
             <Setter Property="BorderThickness" Value="1"/>
             <Setter Property="FontSize" Value="14"/>
+            <Setter Property="Background" Value="White"/>
             <Setter Property="VerticalContentAlignment" Value="Center"/>
         </Style>
 
-        <!-- DatePicker Style -->
         <Style x:Key="ModernDatePicker" TargetType="DatePicker">
-            <Setter Property="Padding" Value="12,10"/>
+            <Setter Property="Padding" Value="12,8"/>
             <Setter Property="BorderBrush" Value="#E0E0E0"/>
             <Setter Property="BorderThickness" Value="1"/>
             <Setter Property="FontSize" Value="14"/>
+            <Setter Property="Background" Value="White"/>
         </Style>
 
-        <!-- Button Style -->
         <Style x:Key="ModernButton" TargetType="Button">
             <Setter Property="Padding" Value="16,10"/>
             <Setter Property="BorderThickness" Value="0"/>
             <Setter Property="FontWeight" Value="SemiBold"/>
             <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="FontSize" Value="14"/>
             <Setter Property="Template">
                 <Setter.Value>
                     <ControlTemplate TargetType="Button">
                         <Border Background="{TemplateBinding Background}"
                                 CornerRadius="6"
                                 Padding="{TemplateBinding Padding}">
-                            <ContentPresenter HorizontalAlignment="Center" 
-                                            VerticalAlignment="Center"/>
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
                         </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter Property="Opacity" Value="0.9"/>
+                            </Trigger>
+                            <Trigger Property="IsPressed" Value="True">
+                                <Setter Property="Opacity" Value="0.8"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
                     </ControlTemplate>
                 </Setter.Value>
             </Setter>
         </Style>
+
+        <Style x:Key="PrimaryButton" TargetType="Button" BasedOn="{StaticResource ModernButton}">
+            <Setter Property="Background" Value="#2E7D32"/>
+            <Setter Property="Foreground" Value="White"/>
+        </Style>
+
+        <Style x:Key="SecondaryButton" TargetType="Button" BasedOn="{StaticResource ModernButton}">
+            <Setter Property="Background" Value="#FFFFFF"/>
+            <Setter Property="Foreground" Value="#555555"/>
+            <Setter Property="BorderBrush" Value="#E0E0E0"/>
+            <Setter Property="BorderThickness" Value="1"/>
+        </Style>
+
+        <Style x:Key="DangerButton" TargetType="Button" BasedOn="{StaticResource ModernButton}">
+            <Setter Property="Background" Value="#D32F2F"/>
+            <Setter Property="Foreground" Value="White"/>
+        </Style>
     </UserControl.Resources>
 
     <Grid>
-        <!-- Loading Overlay -->
         <Border Background="#80000000" 
                 Visibility="{Binding IsLoading, Converter={StaticResource BoolToVis}}"
                 Panel.ZIndex="999">
             <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center">
-                <TextBlock Text="⏳" FontSize="48" HorizontalAlignment="Center" Margin="0,0,0,16"/>
-                <TextBlock Text="Processing..." 
-                           Foreground="White" 
-                           FontSize="16" 
-                           FontWeight="SemiBold"/>
+                <iconPacks:PackIconMaterial Kind="Loading" Width="50" Height="50" Spin="True" Foreground="White" Margin="0,0,0,10"/>
+                <TextBlock Text="Processing..." Foreground="White" FontSize="18" FontWeight="Bold"/>
             </StackPanel>
         </Border>
 
-        <ScrollViewer VerticalScrollBarVisibility="Auto">
-            <StackPanel Margin="24">
-                <!-- Header with search + Buttons -->
-                <DockPanel LastChildFill="False" Margin="0,0,0,16">
-                    <!-- Patient Search with Autocomplete -->
-                    <Grid Width="450" Margin="0,0,12,0" DockPanel.Dock="Left">
-                        <TextBox x:Name="txtSearchPatient" 
-                                 Height="42"
-                                 Style="{StaticResource ModernTextBox}"
-                                 Text="{Binding SearchQuery, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
-                                 TextChanged="TxtSearchPatient_TextChanged"
-                                 GotFocus="TxtSearchPatient_GotFocus"/>
+        <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled" Padding="24">
+            <StackPanel MaxWidth="1200">
 
-                        <TextBlock Text="🔍 Search by Patient name or ID..." 
-                                   IsHitTestVisible="False"
-                                   Foreground="#999"
-                                   Margin="16,0,0,0"
-                                   VerticalAlignment="Center"
-                                   FontSize="14">
-                            <TextBlock.Visibility>
-                                <Binding ElementName="txtSearchPatient" Path="Text.IsEmpty">
-                                    <Binding.Converter>
-                                        <BooleanToVisibilityConverter/>
-                                    </Binding.Converter>
-                                </Binding>
-                            </TextBlock.Visibility>
-                        </TextBlock>
+                <DockPanel LastChildFill="False" Margin="0,0,0,20">
+                    <StackPanel DockPanel.Dock="Left">
+                        <TextBlock Text="Prescription Management" FontSize="24" FontWeight="Bold" Foreground="#333"/>
+                        <TextBlock Text="Create and manage patient prescriptions" FontSize="14" Foreground="#777" Margin="0,4,0,0"/>
+                    </StackPanel>
 
-                        <!-- Autocomplete Dropdown -->
-                        <Popup x:Name="popupSearchResults"
-                               PlacementTarget="{Binding ElementName=txtSearchPatient}"
-                               Placement="Bottom"
-                               Width="450"
-                               MaxHeight="300"
-                               StaysOpen="False"
-                               AllowsTransparency="True">
-                            <Border Background="White" 
-                                    BorderBrush="#E0E0E0" 
-                                    BorderThickness="1"
-                                    CornerRadius="6"
-                                    Margin="0,4,0,0">
-                                <Border.Effect>
-                                    <DropShadowEffect Color="#000000" BlurRadius="10" ShadowDepth="2" Opacity="0.2"/>
-                                </Border.Effect>
-                                <ListBox x:Name="lstSearchResults"
-                                         ItemsSource="{Binding PatientSearchResults}"
-                                         BorderThickness="0"
-                                         MaxHeight="290"
-                                         SelectionChanged="LstSearchResults_SelectionChanged">
-                                    <ListBox.ItemTemplate>
-                                        <DataTemplate>
-                                            <StackPanel Orientation="Horizontal" Margin="8">
-                                                <Border Width="40" Height="40" 
-                                                        Background="#4CAF50" 
-                                                        CornerRadius="20"
-                                                        Margin="0,0,12,0">
-                                                    <TextBlock Text="{Binding Initials}" 
-                                                               Foreground="White" 
-                                                               FontWeight="Bold"
-                                                               FontSize="14"
-                                                               HorizontalAlignment="Center" 
-                                                               VerticalAlignment="Center"/>
-                                                </Border>
-                                                <StackPanel VerticalAlignment="Center">
-                                                    <TextBlock Text="{Binding FullName}" 
-                                                               FontWeight="SemiBold"
-                                                               FontSize="13"/>
-                                                    <TextBlock Foreground="#666666" FontSize="11">
-                                                        <Run Text="ID:"/>
-                                                        <Run Text="{Binding PatientId}"/>
-                                                        <Run Text=" • "/>
-                                                        <Run Text="{Binding Age}"/>
-                                                        <Run Text=" yrs • "/>
-                                                        <Run Text="{Binding Gender}"/>
-                                                    </TextBlock>
-                                                </StackPanel>
-                                            </StackPanel>
-                                        </DataTemplate>
-                                    </ListBox.ItemTemplate>
-                                </ListBox>
-                            </Border>
-                        </Popup>
-                    </Grid>
-
-                    <!-- Action Buttons -->
                     <StackPanel Orientation="Horizontal" DockPanel.Dock="Right">
-                        <Button x:Name="btnTemplates" 
-                                Content="📋 Templates"
-                                Background="#2196F3" 
-                                Foreground="White"
-                                Style="{StaticResource ModernButton}"
-                                Margin="0,0,8,0"
-                                Click="BtnTemplates_Click"/>
-
-                        <Button x:Name="btnNewPrescription" 
-                                Content="+ New Prescription"
-                                Background="#25A44A" 
-                                Foreground="White"
-                                Style="{StaticResource ModernButton}"
-                                Click="BtnNewPrescription_Click"/>
+                        <Button x:Name="btnTemplates" Content="📋 Templates" Style="{StaticResource SecondaryButton}" Margin="0,0,12,0" Click="BtnTemplates_Click"/>
+                        <Button x:Name="btnNewPrescription" Content="+ New Prescription" Style="{StaticResource PrimaryButton}" Click="BtnNewPrescription_Click"/>
                     </StackPanel>
                 </DockPanel>
 
-                <!-- Patient summary card -->
-                <Border Background="White" 
-                        CornerRadius="8" 
-                        Padding="16" 
-                        BorderBrush="#E0E0E0" 
-                        BorderThickness="1"
-                        Visibility="{Binding HasPatientSelected, Converter={StaticResource BoolToVis}}">
-                    <Border.Effect>
-                        <DropShadowEffect Color="#000000" BlurRadius="10" ShadowDepth="2" Opacity="0.08"/>
-                    </Border.Effect>
-
-                    <DockPanel>
-                        <StackPanel Orientation="Horizontal" DockPanel.Dock="Left">
-                            <Border Width="56" Height="56" 
-                                    Background="#2E7D32" 
-                                    CornerRadius="28" 
-                                    VerticalAlignment="Center">
-                                <TextBlock Text="{Binding SelectedPatient.Initials}" 
-                                           Foreground="White" 
-                                           FontWeight="Bold"
-                                           HorizontalAlignment="Center" 
-                                           VerticalAlignment="Center" 
-                                           FontSize="18"/>
-                            </Border>
-                            <StackPanel Margin="12,0,0,0" VerticalAlignment="Center">
-                                <TextBlock Text="{Binding SelectedPatient.FullName}" 
-                                           FontSize="16" 
-                                           FontWeight="Bold"/>
-                                <TextBlock Foreground="#777" FontSize="12">
-                                    <Run Text="ID:"/>
-                                    <Run Text="{Binding SelectedPatient.PatientId}"/>
-                                    <Run Text=" • "/>
-                                    <Run Text="{Binding SelectedPatient.Age}"/>
-                                    <Run Text=" yrs • "/>
-                                    <Run Text="{Binding SelectedPatient.Gender}"/>
-                                </TextBlock>
-                            </StackPanel>
-                        </StackPanel>
-
-                        <StackPanel Orientation="Horizontal" 
-                                    HorizontalAlignment="Right" 
-                                    DockPanel.Dock="Right">
-                            <Border Background="#F6F6F6" 
-                                    CornerRadius="6" 
-                                    Padding="10" 
-                                    Margin="8">
-                                <StackPanel>
-                                    <TextBlock Text="Blood Type" 
-                                               FontSize="11" 
-                                               Foreground="#777"/>
-                                    <TextBlock Text="{Binding SelectedPatient.BloodType}" 
-                                               FontWeight="Bold"/>
-                                </StackPanel>
-                            </Border>
-                            <Border Background="#F6F6F6" 
-                                    CornerRadius="6" 
-                                    Padding="10" 
-                                    Margin="8">
-                                <StackPanel>
-                                    <TextBlock Text="Height" 
-                                               FontSize="11" 
-                                               Foreground="#777"/>
-                                    <TextBlock Text="{Binding SelectedPatient.Height}" 
-                                               FontWeight="Bold"/>
-                                </StackPanel>
-                            </Border>
-                            <Border Background="#F6F6F6" 
-                                    CornerRadius="6" 
-                                    Padding="10" 
-                                    Margin="8">
-                                <StackPanel>
-                                    <TextBlock Text="Weight" 
-                                               FontSize="11" 
-                                               Foreground="#777"/>
-                                    <TextBlock Text="{Binding SelectedPatient.Weight}" 
-                                               FontWeight="Bold"/>
-                                </StackPanel>
-                            </Border>
-                        </StackPanel>
-                    </DockPanel>
-                </Border>
-
-                <!-- Allergy Warnings -->
-                <Border Background="#FFEBEE" 
-                        CornerRadius="8" 
-                        Padding="16" 
-                        Margin="0,16,0,0"
-                        Visibility="{Binding AllergyWarnings.Count, Converter={StaticResource BoolToVis}}">
+                <Border Style="{StaticResource SectionCard}">
                     <StackPanel>
-                        <TextBlock Text="⚠ ALLERGY WARNINGS" 
-                                   FontWeight="Bold" 
-                                   Foreground="#C62828"
-                                   FontSize="14"
-                                   Margin="0,0,0,8"/>
-                        <ItemsControl ItemsSource="{Binding AllergyWarnings}">
-                            <ItemsControl.ItemTemplate>
-                                <DataTemplate>
-                                    <TextBlock Text="{Binding}" 
-                                               Foreground="#C62828"
-                                               FontWeight="SemiBold"
-                                               Margin="0,2"/>
-                                </DataTemplate>
-                            </ItemsControl.ItemTemplate>
-                        </ItemsControl>
-                    </StackPanel>
-                </Border>
-
-                <!-- Drug Interaction Warnings -->
-                <Border Background="#FFF3E0" 
-                        CornerRadius="8" 
-                        Padding="16" 
-                        Margin="0,8,0,0"
-                        Visibility="{Binding DrugInteractionWarnings.Count, Converter={StaticResource BoolToVis}}">
-                    <StackPanel>
-                        <TextBlock Text="⚠ DRUG INTERACTION WARNINGS" 
-                                   FontWeight="Bold" 
-                                   Foreground="#F57C00"
-                                   FontSize="14"
-                                   Margin="0,0,0,8"/>
-                        <ItemsControl ItemsSource="{Binding DrugInteractionWarnings}">
-                            <ItemsControl.ItemTemplate>
-                                <DataTemplate>
-                                    <TextBlock Text="{Binding}" 
-                                               Foreground="#F57C00"
-                                               FontWeight="SemiBold"
-                                               Margin="0,2"/>
-                                </DataTemplate>
-                            </ItemsControl.ItemTemplate>
-                        </ItemsControl>
-                    </StackPanel>
-                </Border>
-
-                <!-- New Prescription form -->
-                <Border Background="White" 
-                        CornerRadius="8" 
-                        Padding="20" 
-                        BorderBrush="#E0E0E0" 
-                        BorderThickness="1" 
-                        Margin="0,16,0,0">
-                    <Border.Effect>
-                        <DropShadowEffect Color="#000000" BlurRadius="10" ShadowDepth="2" Opacity="0.08"/>
-                    </Border.Effect>
-
-                    <StackPanel>
-                        <DockPanel Margin="0,0,0,16">
-                            <TextBlock Text="NEW PRESCRIPTION" 
-                                       FontSize="18" 
-                                       FontWeight="Bold"
-                                       DockPanel.Dock="Left"/>
-                            <StackPanel Orientation="Horizontal" 
-                                        HorizontalAlignment="Right" 
-                                        DockPanel.Dock="Right">
-                                <TextBlock Text="{Binding CurrentDate}" 
-                                           Foreground="#666"
-                                           VerticalAlignment="Center"
-                                           Margin="0,0,12,0"/>
-                                <TextBlock Text=" • " 
-                                           Foreground="#666"
-                                           VerticalAlignment="Center"/>
-                                <TextBlock Text="{Binding CurrentDoctor}" 
-                                           Foreground="#666"
-                                           FontWeight="SemiBold"
-                                           VerticalAlignment="Center"
-                                           Margin="12,0,0,0"/>
-                            </StackPanel>
-                        </DockPanel>
-
-                        <!-- Diagnosis row -->
-                        <StackPanel Margin="0,0,0,16">
-                            <TextBlock Text="DIAGNOSIS" 
-                                       FontWeight="Bold" 
-                                       FontSize="13"
-                                       Margin="0,0,0,8"/>
-
-                            <TextBlock Text="Primary Diagnosis *" 
-                                       FontWeight="SemiBold" 
-                                       FontSize="12"
-                                       Foreground="#666"
-                                       Margin="0,0,0,6"/>
-                            <TextBox Height="40" 
-                                     Style="{StaticResource ModernTextBox}"
-                                     Text="{Binding PrimaryDiagnosis, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
-
-                            <Grid Margin="0,12,0,0">
-                                <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="*"/>
-                                    <ColumnDefinition Width="12"/>
-                                    <ColumnDefinition Width="200"/>
-                                </Grid.ColumnDefinitions>
-
-                                <StackPanel Grid.Column="0">
-                                    <TextBlock Text="Secondary Diagnosis" 
-                                               FontWeight="SemiBold" 
-                                               FontSize="12"
-                                               Foreground="#666"
-                                               Margin="0,0,0,6"/>
-                                    <TextBox Height="40" 
-                                             Style="{StaticResource ModernTextBox}"
-                                             Text="{Binding SecondaryDiagnosis, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
-                                </StackPanel>
-
-                                <StackPanel Grid.Column="2">
-                                    <TextBlock Text="Condition Severity *" 
-                                               FontWeight="SemiBold" 
-                                               FontSize="12"
-                                               Foreground="#666"
-                                               Margin="0,0,0,6"/>
-                                    <ComboBox Height="40"
-                                              Style="{StaticResource ModernComboBox}"
-                                              SelectedValue="{Binding ConditionSeverity, Mode=TwoWay}"
-                                              SelectedValuePath="Content">
-                                        <ComboBoxItem Content="Mild"/>
-                                        <ComboBoxItem Content="Moderate" IsSelected="True"/>
-                                        <ComboBoxItem Content="Severe"/>
-                                    </ComboBox>
-                                </StackPanel>
-                            </Grid>
-                        </StackPanel>
-
-                        <!-- Medication -->
-                        <StackPanel Margin="0,0,0,16">
-                            <DockPanel Margin="0,0,0,8">
-                                <TextBlock Text="MEDICATION" 
-                                           FontWeight="Bold" 
-                                           FontSize="13"
-                                           DockPanel.Dock="Left"/>
-                                <TextBlock Text="{Binding Medicines.Count, StringFormat='({0} medicines)'}" 
-                                           Foreground="#666"
-                                           FontSize="12"
-                                           VerticalAlignment="Center"
-                                           Margin="8,0,0,0"
-                                           DockPanel.Dock="Left"/>
-                            </DockPanel>
-
-                            <Border Background="#FAFAFA" 
-                                    BorderBrush="#DDD" 
-                                    BorderThickness="1" 
-                                    CornerRadius="6" 
-                                    Padding="16">
-                                <StackPanel>
-                                    <!-- Medicine Headers -->
-                                    <Grid Margin="0,0,0,8">
-                                        <Grid.ColumnDefinitions>
-                                            <ColumnDefinition Width="260"/>
-                                            <ColumnDefinition Width="120"/>
-                                            <ColumnDefinition Width="140"/>
-                                            <ColumnDefinition Width="120"/>
-                                            <ColumnDefinition Width="80"/>
-                                            <ColumnDefinition Width="120"/>
-                                            <ColumnDefinition Width="50"/>
-                                        </Grid.ColumnDefinitions>
-
-                                        <TextBlock Text="Medicine" Grid.Column="0" FontSize="11" FontWeight="SemiBold" Foreground="#666"/>
-                                        <TextBlock Text="Dosage" Grid.Column="1" FontSize="11" FontWeight="SemiBold" Foreground="#666"/>
-                                        <TextBlock Text="Frequency" Grid.Column="2" FontSize="11" FontWeight="SemiBold" Foreground="#666"/>
-                                        <TextBlock Text="Duration" Grid.Column="3" FontSize="11" FontWeight="SemiBold" Foreground="#666"/>
-                                        <TextBlock Text="Qty" Grid.Column="4" FontSize="11" FontWeight="SemiBold" Foreground="#666"/>
-                                        <TextBlock Text="Route" Grid.Column="5" FontSize="11" FontWeight="SemiBold" Foreground="#666"/>
-                                        <TextBlock Text="Action" Grid.Column="6" FontSize="11" FontWeight="SemiBold" Foreground="#666"/>
-                                    </Grid>
-
-                                    <ScrollViewer HorizontalScrollBarVisibility="Auto" 
-                                                  VerticalScrollBarVisibility="Auto" 
-                                                  MaxHeight="400">
-                                        <ItemsControl ItemsSource="{Binding Medicines}">
-                                            <ItemsControl.ItemTemplate>
-                                                <DataTemplate>
-                                                    <Grid Margin="0,6">
-                                                        <Grid.ColumnDefinitions>
-                                                            <ColumnDefinition Width="260"/>
-                                                            <ColumnDefinition Width="120"/>
-                                                            <ColumnDefinition Width="140"/>
-                                                            <ColumnDefinition Width="120"/>
-                                                            <ColumnDefinition Width="80"/>
-                                                            <ColumnDefinition Width="120"/>
-                                                            <ColumnDefinition Width="50"/>
-                                                        </Grid.ColumnDefinitions>
-
-                                                        <!-- Medicine ComboBox with Autocomplete -->
-                                                        <ComboBox Grid.Column="0" 
-                                                                  Height="36"
-                                                                  Margin="0,0,6,0"
-                                                                  IsEditable="True"
-                                                                  ItemsSource="{Binding DataContext.MedicineLookup, RelativeSource={RelativeSource AncestorType=UserControl}}"
-                                                                  SelectedValue="{Binding MedicineName, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
-                                                                  DisplayMemberPath="Name"
-                                                                  SelectedValuePath="Name"
-                                                                  Style="{StaticResource ModernComboBox}"/>
-
-                                                        <TextBox Grid.Column="1" 
-                                                                 Height="36" 
-                                                                 Margin="0,0,6,0"
-                                                                 Text="{Binding Dosage, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" 
-                                                                 Style="{StaticResource ModernTextBox}"/>
-
-                                                        <ComboBox Grid.Column="2" 
-                                                                  Height="36" 
-                                                                  Margin="0,0,6,0"
-                                                                  SelectedValue="{Binding Frequency, Mode=TwoWay}"
-                                                                  SelectedValuePath="Content"
-                                                                  Style="{StaticResource ModernComboBox}">
-                                                            <ComboBoxItem Content="Once daily" IsSelected="True"/>
-                                                            <ComboBoxItem Content="Twice daily"/>
-                                                            <ComboBoxItem Content="Thrice daily"/>
-                                                            <ComboBoxItem Content="Four times daily"/>
-                                                            <ComboBoxItem Content="As needed"/>
-                                                            <ComboBoxItem Content="Every 4 hours"/>
-                                                            <ComboBoxItem Content="Every 6 hours"/>
-                                                            <ComboBoxItem Content="Every 8 hours"/>
-                                                        </ComboBox>
-
-                                                        <TextBox Grid.Column="3" 
-                                                                 Height="36" 
-                                                                 Margin="0,0,6,0"
-                                                                 Text="{Binding Duration, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" 
-                                                                 Style="{StaticResource ModernTextBox}"/>
-
-                                                        <TextBox Grid.Column="4" 
-                                                                 Height="36" 
-                                                                 Margin="0,0,6,0"
-                                                                 Text="{Binding Quantity, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" 
-                                                                 Style="{StaticResource ModernTextBox}"/>
-
-                                                        <ComboBox Grid.Column="5" 
-                                                                  Height="36" 
-                                                                  Margin="0,0,6,0"
-                                                                  SelectedValue="{Binding Route, Mode=TwoWay}"
-                                                                  SelectedValuePath="Content"
-                                                                  Style="{StaticResource ModernComboBox}">
-                                                            <ComboBoxItem Content="Oral" IsSelected="True"/>
-                                                            <ComboBoxItem Content="Topical"/>
-                                                            <ComboBoxItem Content="IV"/>
-                                                            <ComboBoxItem Content="IM"/>
-                                                            <ComboBoxItem Content="Subcutaneous"/>
-                                                            <ComboBoxItem Content="Inhalation"/>
-                                                        </ComboBox>
-
-                                                        <Button Grid.Column="6" 
-                                                                Content="✖" 
-                                                                Width="36" 
-                                                                Height="36"
-                                                                Background="#E05A4F" 
-                                                                Foreground="White"
-                                                                Style="{StaticResource ModernButton}"
-                                                                Click="BtnRemoveMedicine_Click"
-                                                                Tag="{Binding}"/>
-                                                    </Grid>
-                                                </DataTemplate>
-                                            </ItemsControl.ItemTemplate>
-                                        </ItemsControl>
-                                    </ScrollViewer>
-
-                                    <Button Content="+ Add Medicine" 
-                                            Width="140" 
-                                            HorizontalAlignment="Right" 
-                                            Margin="0,12,0,0"
-                                            Background="#4CAF50" 
-                                            Foreground="White"
-                                            Style="{StaticResource ModernButton}"
-                                            Click="BtnAddMedicine_Click"/>
-                                </StackPanel>
-                            </Border>
-                        </StackPanel>
-
-                        <!-- Special Instructions -->
-                        <StackPanel Margin="0,0,0,16">
-                            <TextBlock Text="SPECIAL INSTRUCTIONS" 
-                                       FontWeight="Bold" 
-                                       FontSize="13"
-                                       Margin="0,0,0,8"/>
-                            <TextBox Height="100" 
-                                     TextWrapping="Wrap" 
-                                     AcceptsReturn="True"
-                                     Style="{StaticResource ModernTextBox}"
-                                     Text="{Binding SpecialInstructions, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
-                                     VerticalScrollBarVisibility="Auto"/>
-                        </StackPanel>
-
-                        <!-- Follow-up row -->
-                        <Grid Margin="0,0,0,0">
+                        <TextBlock Text="PATIENT DETAILS" Style="{StaticResource SectionHeader}"/>
+                        
+                        <Grid Margin="0,0,0,16">
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="*"/>
-                                <ColumnDefinition Width="12"/>
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
+                            
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                </Grid.ColumnDefinitions>
+                                <TextBox x:Name="txtSearchPatient" 
+                                         Height="42"
+                                         Style="{StaticResource ModernTextBox}"
+                                         Text="{Binding SearchQuery, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                         TextChanged="TxtSearchPatient_TextChanged"
+                                         GotFocus="TxtSearchPatient_GotFocus"/>
+                                
+                                <TextBlock Text="🔍 Search by Patient Name or ID..." 
+                                           IsHitTestVisible="False" 
+                                           Foreground="#999" 
+                                           VerticalAlignment="Center" 
+                                           Margin="16,0,0,0"
+                                           FontSize="14">
+                                    <TextBlock.Visibility>
+                                        <Binding ElementName="txtSearchPatient" Path="Text.IsEmpty">
+                                            <Binding.Converter>
+                                                <BooleanToVisibilityConverter/>
+                                            </Binding.Converter>
+                                        </Binding>
+                                    </TextBlock.Visibility>
+                                </TextBlock>
+
+                                <Popup x:Name="popupSearchResults" 
+                                       PlacementTarget="{Binding ElementName=txtSearchPatient}"
+                                       Placement="Bottom"
+                                       Width="{Binding ElementName=txtSearchPatient, Path=ActualWidth}"
+                                       MaxHeight="300"
+                                       StaysOpen="False"
+                                       AllowsTransparency="True">
+                                    <Border Background="White" BorderBrush="#E0E0E0" BorderThickness="1" CornerRadius="6" Margin="0,4,0,0">
+                                        <Border.Effect>
+                                            <DropShadowEffect Color="Black" BlurRadius="10" ShadowDepth="2" Opacity="0.1"/>
+                                        </Border.Effect>
+                                        <ListBox x:Name="lstSearchResults" 
+                                                 ItemsSource="{Binding PatientSearchResults}" 
+                                                 BorderThickness="0"
+                                                 SelectionChanged="LstSearchResults_SelectionChanged"
+                                                 MaxHeight="290">
+                                            <ListBox.ItemTemplate>
+                                                <DataTemplate>
+                                                    <StackPanel Margin="8,6">
+                                                        <TextBlock Text="{Binding FullName}" FontWeight="SemiBold" FontSize="14"/>
+                                                        <TextBlock Foreground="#666" FontSize="12">
+                                                            <Run Text="ID: "/><Run Text="{Binding PatientId}"/>
+                                                            <Run Text=" • Age: "/><Run Text="{Binding Age}"/>
+                                                            <Run Text=" • "/><Run Text="{Binding Gender}"/>
+                                                        </TextBlock>
+                                                    </StackPanel>
+                                                </DataTemplate>
+                                            </ListBox.ItemTemplate>
+                                        </ListBox>
+                                    </Border>
+                                </Popup>
+                            </Grid>
+                        </Grid>
+
+                        <Border Background="#F1F8E9" 
+                                BorderBrush="#C8E6C9" 
+                                BorderThickness="1" 
+                                CornerRadius="6" 
+                                Padding="16"
+                                Visibility="{Binding HasPatientSelected, Converter={StaticResource BoolToVis}}">
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="Auto"/>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                </Grid.ColumnDefinitions>
+                                
+                                <Border Width="50" Height="50" CornerRadius="25" Background="#4CAF50" Margin="0,0,16,0">
+                                    <TextBlock Text="{Binding SelectedPatient.Initials}" 
+                                               Foreground="White" 
+                                               FontWeight="Bold" 
+                                               FontSize="20" 
+                                               HorizontalAlignment="Center" 
+                                               VerticalAlignment="Center"/>
+                                </Border>
+                                
+                                <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                                    <TextBlock Text="{Binding SelectedPatient.FullName}" FontSize="16" FontWeight="Bold" Foreground="#333"/>
+                                    <StackPanel Orientation="Horizontal">
+                                        <TextBlock Text="{Binding SelectedPatient.PatientId, StringFormat='ID: {0}'}" Foreground="#555" Margin="0,0,12,0"/>
+                                        <TextBlock Text="{Binding SelectedPatient.Age, StringFormat='Age: {0}'}" Foreground="#555" Margin="0,0,12,0"/>
+                                        <TextBlock Text="{Binding SelectedPatient.Gender}" Foreground="#555"/>
+                                    </StackPanel>
+                                </StackPanel>
+                                
+                                <StackPanel Grid.Column="2" HorizontalAlignment="Right" VerticalAlignment="Center">
+                                    <TextBlock Text="Date: " FontWeight="SemiBold" Foreground="#555"/>
+                                    <TextBlock Text="{Binding CurrentDate}" Foreground="#333"/>
+                                </StackPanel>
+                            </Grid>
+                        </Border>
+                    </StackPanel>
+                </Border>
+
+                <Border Style="{StaticResource SectionCard}">
+                    <StackPanel>
+                        <TextBlock Text="DIAGNOSIS" Style="{StaticResource SectionHeader}"/>
+                        
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="3*"/>
+                                <ColumnDefinition Width="20"/>
+                                <ColumnDefinition Width="2*"/>
+                            </Grid.ColumnDefinitions>
+
+                            <StackPanel>
+                                <TextBlock Text="Primary Diagnosis" Style="{StaticResource InputLabel}"/>
+                                <TextBox Text="{Binding PrimaryDiagnosis, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" 
+                                         Style="{StaticResource ModernTextBox}" Height="42"/>
+                            </StackPanel>
+
+                            <StackPanel Grid.Column="2">
+                                <TextBlock Text="Condition Severity" Style="{StaticResource InputLabel}"/>
+                                <ComboBox SelectedValue="{Binding ConditionSeverity, Mode=TwoWay}" 
+                                          SelectedValuePath="Content"
+                                          Style="{StaticResource ModernComboBox}" Height="42">
+                                    <ComboBoxItem Content="Mild"/>
+                                    <ComboBoxItem Content="Moderate" IsSelected="True"/>
+                                    <ComboBoxItem Content="Severe"/>
+                                    <ComboBoxItem Content="Critical"/>
+                                </ComboBox>
+                            </StackPanel>
+                        </Grid>
+                        
+                        <StackPanel Margin="0,16,0,0">
+                            <TextBlock Text="Secondary Diagnosis (Optional)" Style="{StaticResource InputLabel}"/>
+                            <TextBox Text="{Binding SecondaryDiagnosis, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" 
+                                     Style="{StaticResource ModernTextBox}" Height="42"/>
+                        </StackPanel>
+                    </StackPanel>
+                </Border>
+
+                <Border Style="{StaticResource SectionCard}">
+                    <StackPanel>
+                        <DockPanel Margin="0,0,0,12">
+                            <TextBlock Text="MEDICATION LIST" Style="{StaticResource SectionHeader}" Margin="0"/>
+                            <TextBlock Text="{Binding Medicines.Count, StringFormat='({0} items)'}" Foreground="#777" VerticalAlignment="Center" Margin="8,0,0,0"/>
+                        </DockPanel>
+
+                        <Grid Margin="0,0,0,8">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="3*"/> <ColumnDefinition Width="1.5*"/> <ColumnDefinition Width="1.5*"/> <ColumnDefinition Width="1.5*"/> <ColumnDefinition Width="1*"/>   <ColumnDefinition Width="1.5*"/> <ColumnDefinition Width="50"/>   </Grid.ColumnDefinitions>
+                            <TextBlock Text="Medicine Name" FontWeight="SemiBold" Foreground="#555" Grid.Column="0"/>
+                            <TextBlock Text="Dosage" FontWeight="SemiBold" Foreground="#555" Grid.Column="1"/>
+                            <TextBlock Text="Frequency" FontWeight="SemiBold" Foreground="#555" Grid.Column="2"/>
+                            <TextBlock Text="Duration" FontWeight="SemiBold" Foreground="#555" Grid.Column="3"/>
+                            <TextBlock Text="Qty" FontWeight="SemiBold" Foreground="#555" Grid.Column="4"/>
+                            <TextBlock Text="Route" FontWeight="SemiBold" Foreground="#555" Grid.Column="5"/>
+                        </Grid>
+
+                        <ScrollViewer MaxHeight="300" VerticalScrollBarVisibility="Auto">
+                            <ItemsControl ItemsSource="{Binding Medicines}">
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate>
+                                        <Border Background="#FAFAFA" CornerRadius="4" Margin="0,0,0,8" Padding="8">
+                                            <Grid>
+                                                <Grid.ColumnDefinitions>
+                                                    <ColumnDefinition Width="3*"/>
+                                                    <ColumnDefinition Width="1.5*"/>
+                                                    <ColumnDefinition Width="1.5*"/>
+                                                    <ColumnDefinition Width="1.5*"/>
+                                                    <ColumnDefinition Width="1*"/>
+                                                    <ColumnDefinition Width="1.5*"/>
+                                                    <ColumnDefinition Width="50"/>
+                                                </Grid.ColumnDefinitions>
+
+                                                <ComboBox Grid.Column="0" IsEditable="True" 
+                                                          ItemsSource="{Binding DataContext.MedicineLookup, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                                          SelectedValue="{Binding MedicineName, Mode=TwoWay}"
+                                                          DisplayMemberPath="Name"
+                                                          SelectedValuePath="Name"
+                                                          Style="{StaticResource ModernComboBox}" Margin="0,0,4,0"/>
+
+                                                <TextBox Grid.Column="1" Text="{Binding Dosage, Mode=TwoWay}" Style="{StaticResource ModernTextBox}" Margin="0,0,4,0"/>
+                                                
+                                                <ComboBox Grid.Column="2" SelectedValue="{Binding Frequency, Mode=TwoWay}" SelectedValuePath="Content" Style="{StaticResource ModernComboBox}" Margin="0,0,4,0">
+                                                    <ComboBoxItem Content="Once daily" IsSelected="True"/>
+                                                    <ComboBoxItem Content="Twice daily"/>
+                                                    <ComboBoxItem Content="Thrice daily"/>
+                                                    <ComboBoxItem Content="Every 4 hours"/>
+                                                    <ComboBoxItem Content="Every 6 hours"/>
+                                                    <ComboBoxItem Content="Every 8 hours"/>
+                                                    <ComboBoxItem Content="As needed"/>
+                                                </ComboBox>
+
+                                                <TextBox Grid.Column="3" Text="{Binding Duration, Mode=TwoWay}" Style="{StaticResource ModernTextBox}" Margin="0,0,4,0"/>
+                                                <TextBox Grid.Column="4" Text="{Binding Quantity, Mode=TwoWay}" Style="{StaticResource ModernTextBox}" Margin="0,0,4,0"/>
+                                                
+                                                <ComboBox Grid.Column="5" SelectedValue="{Binding Route, Mode=TwoWay}" SelectedValuePath="Content" Style="{StaticResource ModernComboBox}" Margin="0,0,4,0">
+                                                    <ComboBoxItem Content="Oral" IsSelected="True"/>
+                                                    <ComboBoxItem Content="Topical"/>
+                                                    <ComboBoxItem Content="IV"/>
+                                                    <ComboBoxItem Content="IM"/>
+                                                    <ComboBoxItem Content="Subcutaneous"/>
+                                                </ComboBox>
+
+                                                <Button Grid.Column="6" Content="✖" 
+                                                        Style="{StaticResource DangerButton}"
+                                                        Width="36" Height="36"
+                                                        ToolTip="Remove Medicine"
+                                                        Click="BtnRemoveMedicine_Click" Tag="{Binding}"/>
+                                            </Grid>
+                                        </Border>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+                        </ScrollViewer>
+
+                        <Button Content="+ Add Medicine" 
+                                Style="{StaticResource SecondaryButton}" 
+                                HorizontalAlignment="Left" 
+                                Margin="0,12,0,0" 
+                                Click="BtnAddMedicine_Click"/>
+                    </StackPanel>
+                </Border>
+
+                <Border Style="{StaticResource SectionCard}">
+                    <StackPanel>
+                        <TextBlock Text="INSTRUCTIONS &amp; FOLLOW-UP" Style="{StaticResource SectionHeader}"/>
+
+                        <TextBlock Text="Special Instructions" Style="{StaticResource InputLabel}"/>
+                        <TextBox Text="{Binding SpecialInstructions, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                 Style="{StaticResource ModernTextBox}"
+                                 Height="80"
+                                 TextWrapping="Wrap"
+                                 AcceptsReturn="True"
+                                 VerticalScrollBarVisibility="Auto"/>
+
+                        <Grid Margin="0,20,0,0">
+                            <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="*"/>
-                                <ColumnDefinition Width="12"/>
+                                <ColumnDefinition Width="20"/>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="20"/>
                                 <ColumnDefinition Width="*"/>
                             </Grid.ColumnDefinitions>
 
                             <StackPanel Grid.Column="0">
-                                <TextBlock Text="Follow-up Required" 
-                                           FontWeight="SemiBold" 
-                                           FontSize="12"
-                                           Foreground="#666"
-                                           Margin="0,0,0,6"/>
-                                <ComboBox Height="40"
-                                          Style="{StaticResource ModernComboBox}"
-                                          SelectedIndex="{Binding FollowUpRequired, Converter={StaticResource BoolToIndexConverter}}">
+                                <TextBlock Text="Follow-up Required" Style="{StaticResource InputLabel}"/>
+                                <ComboBox SelectedIndex="{Binding FollowUpRequired, Converter={StaticResource BoolToIndexConverter}}" Style="{StaticResource ModernComboBox}">
                                     <ComboBoxItem Content="No" IsSelected="True"/>
                                     <ComboBoxItem Content="Yes"/>
                                 </ComboBox>
                             </StackPanel>
 
                             <StackPanel Grid.Column="2">
-                                <TextBlock Text="Next Appointment" 
-                                           FontWeight="SemiBold" 
-                                           FontSize="12"
-                                           Foreground="#666"
-                                           Margin="0,0,0,6"/>
-                                <DatePicker Height="40"
-                                            Style="{StaticResource ModernDatePicker}"
-                                            SelectedDate="{Binding NextAppointment, Mode=TwoWay}"/>
+                                <TextBlock Text="Next Appointment" Style="{StaticResource InputLabel}"/>
+                                <DatePicker SelectedDate="{Binding NextAppointment, Mode=TwoWay}" Style="{StaticResource ModernDatePicker}"/>
                             </StackPanel>
 
                             <StackPanel Grid.Column="4">
-                                <TextBlock Text="Priority Level" 
-                                           FontWeight="SemiBold" 
-                                           FontSize="12"
-                                           Foreground="#666"
-                                           Margin="0,0,0,6"/>
-                                <ComboBox Height="40"
-          Style="{StaticResource ModernComboBox}"
-          SelectedValue="{Binding PriorityLevel, Mode=TwoWay}"
-          SelectedValuePath="Content">
+                                <TextBlock Text="Priority Level" Style="{StaticResource InputLabel}"/>
+                                <ComboBox SelectedValue="{Binding PriorityLevel, Mode=TwoWay}" SelectedValuePath="Content" Style="{StaticResource ModernComboBox}">
                                     <ComboBoxItem Content="Routine" IsSelected="True"/>
                                     <ComboBoxItem Content="Urgent"/>
-                                    <ComboBoxItem Content="High"/>
+                                    <ComboBoxItem Content="Emergency"/>
                                 </ComboBox>
                             </StackPanel>
                         </Grid>
-
-                        <!-- Action Buttons -->
-                        <StackPanel Orientation="Horizontal" 
-                                    HorizontalAlignment="Right" 
-                                    Margin="0,24,0,0">
-                            <Button Content="Cancel" 
-                                    Width="100" 
-                                    Height="40" 
-                                    Margin="0,0,8,0"
-                                    Click="BtnCancel_Click" 
-                                    Background="#9E9E9E" 
-                                    Foreground="White"
-                                    Style="{StaticResource ModernButton}"/>
-
-                            <Button Content="💾 Save Draft" 
-                                    Width="120" 
-                                    Height="40" 
-                                    Margin="0,0,8,0"
-                                    Click="BtnSaveDraft_Click" 
-                                    Background="#607D8B" 
-                                    Foreground="White"
-                                    Style="{StaticResource ModernButton}"/>
-
-                            <Button Content="📄 Save as Template" 
-                                    Width="160" 
-                                    Height="40" 
-                                    Margin="0,0,8,0"
-                                    Click="BtnSaveAsTemplate_Click" 
-                                    Background="#9C27B0" 
-                                    Foreground="White"
-                                    Style="{StaticResource ModernButton}"/>
-
-                            <Button Content="🖨️ Print Preview" 
-                                    Width="140" 
-                                    Height="40" 
-                                    Margin="0,0,8,0"
-                                    Click="BtnPrintPreview_Click" 
-                                    Background="#FFB300" 
-                                    Foreground="White"
-                                    Style="{StaticResource ModernButton}"/>
-
-                            <Button Content="💊 Save &amp; Print" 
-                                    Width="140" 
-                                    Height="40" 
-                                    Margin="0,0,8,0"
-                                    Click="BtnSaveAndPrint_Click" 
-                                    Background="#FF6F00" 
-                                    Foreground="White"
-                                    Style="{StaticResource ModernButton}"/>
-
-                            <Button Content="✅ Save Prescription" 
-                                    Width="170" 
-                                    Height="40"
-                                    Click="BtnSavePrescription_Click" 
-                                    Background="#25A44A" 
-                                    Foreground="White"
-                                    Style="{StaticResource ModernButton}"/>
-                        </StackPanel>
                     </StackPanel>
                 </Border>
+
+                <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,0,0,40">
+                    <Button Content="Cancel" Style="{StaticResource SecondaryButton}" Margin="0,0,12,0" Click="BtnCancel_Click" Width="100"/>
+                    <Button Content="💾 Save Draft" Style="{StaticResource SecondaryButton}" Margin="0,0,12,0" Click="BtnSaveDraft_Click"/>
+                    <Button Content="📄 Save as Template" Style="{StaticResource SecondaryButton}" Margin="0,0,12,0" Click="BtnSaveAsTemplate_Click"/>
+                    <Button Content="🖨️ Print Preview" Style="{StaticResource SecondaryButton}" Margin="0,0,12,0" Click="BtnPrintPreview_Click"/>
+                    <Button Content="💊 Save &amp; Print" Style="{StaticResource PrimaryButton}" Margin="0,0,12,0" Click="BtnSaveAndPrint_Click"/>
+                    <Button Content="✅ Save Prescription" Style="{StaticResource PrimaryButton}" Click="BtnSavePrescription_Click"/>
+                </StackPanel>
+
             </StackPanel>
         </ScrollViewer>
     </Grid>

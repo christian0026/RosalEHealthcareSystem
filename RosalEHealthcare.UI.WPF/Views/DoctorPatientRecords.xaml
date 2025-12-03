@@ -71,11 +71,6 @@
                     <RowDefinition Height="*"/>
                 </Grid.RowDefinitions>
 
-                <!-- Title -->
-                <TextBlock Grid.Row="0" Text="Patient Records" 
-                          FontSize="20" FontWeight="Bold" 
-                          Foreground="#2E7D32" Margin="0,0,0,15"/>
-
                 <!-- Search Box -->
                 <Border Grid.Row="1" BorderBrush="#E0E0E0" BorderThickness="1" 
                        CornerRadius="8" Margin="0,0,0,10">

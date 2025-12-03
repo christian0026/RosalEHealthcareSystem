@@ -94,9 +94,6 @@
 
     <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled" Padding="40">
         <StackPanel>
-            <TextBlock Text="Preferences" FontSize="20" FontWeight="Bold" Foreground="#333" Margin="0,0,0,4"/>
-            <TextBlock Text="Customize your experience" FontSize="13" Foreground="#888" Margin="0,0,0,24"/>
-
             <Border Style="{StaticResource SectionCard}">
                 <StackPanel>
                     <StackPanel Orientation="Horizontal" Margin="0,0,0,16">

@@ -14,6 +14,8 @@ namespace RosalEHealthcare.UI.WPF.Views.UserSettings
         private readonly ActivityLogService _activityLogService;
 
         private bool _isLoading = false;
+        private bool _isInitialized = false;
+        private bool _pendingLoadSettings = false;
 
         public UserNotificationsTab()
         {
@@ -22,18 +24,57 @@ namespace RosalEHealthcare.UI.WPF.Views.UserSettings
             _db = new RosalEHealthcareDbContext();
             _settingsService = new SystemSettingsService(_db);
             _activityLogService = new ActivityLogService(_db);
+
+            // Subscribe to Loaded event to ensure controls are ready
+            Loaded += UserNotificationsTab_Loaded;
+        }
+
+        private void UserNotificationsTab_Loaded(object sender, RoutedEventArgs e)
+        {
+            _isInitialized = true;
+
+            // If LoadSettings was called before we were loaded, do it now
+            if (_pendingLoadSettings)
+            {
+                _pendingLoadSettings = false;
+                LoadSettingsInternal();
+            }
         }
 
         #region Load Settings
 
         public void LoadSettings()
         {
+            // If controls aren't ready yet, defer the load
+            if (!_isInitialized || ChkSoundAlerts == null)
+            {
+                System.Diagnostics.Debug.WriteLine("UserNotificationsTab: Deferring LoadSettings until controls are ready");
+                _pendingLoadSettings = true;
+                return;
+            }
+
+            LoadSettingsInternal();
+        }
+
+        private void LoadSettingsInternal()
+        {
             _isLoading = true;
 
             try
             {
+                // Double-check controls are available
+                if (ChkEnableNotifications == null || ChkSoundAlerts == null)
+                {
+                    System.Diagnostics.Debug.WriteLine("UserNotificationsTab: Controls still null in LoadSettingsInternal");
+                    return;
+                }
+
                 var user = SessionManager.CurrentUser;
-                if (user == null) return;
+                if (user == null)
+                {
+                    System.Diagnostics.Debug.WriteLine("UserNotificationsTab: No current user");
+                    return;
+                }
 
                 string userId = user.Id.ToString();
 
@@ -54,10 +95,14 @@ namespace RosalEHealthcare.UI.WPF.Views.UserSettings
 
                 // Update UI based on master switch
                 UpdateNotificationStates();
+
+                System.Diagnostics.Debug.WriteLine("UserNotificationsTab: Settings loaded successfully");
             }
             catch (Exception ex)
             {
                 System.Diagnostics.Debug.WriteLine($"Error loading notification settings: {ex.Message}");
+                MessageBox.Show($"Error loading notification settings: {ex.Message}",
+                    "Error", MessageBoxButton.OK, MessageBoxImage.Warning);
             }
             finally
             {
@@ -67,8 +112,15 @@ namespace RosalEHealthcare.UI.WPF.Views.UserSettings
 
         private bool GetBoolSetting(string userId, string key, bool defaultValue)
         {
-            string value = _settingsService.GetUserSetting(userId, key, defaultValue.ToString());
-            return bool.TryParse(value, out bool result) ? result : defaultValue;
+            try
+            {
+                string value = _settingsService.GetUserSetting(userId, key, defaultValue.ToString());
+                return bool.TryParse(value, out bool result) ? result : defaultValue;
+            }
+            catch
+            {
+                return defaultValue;
+            }
         }
 
         #endregion
@@ -77,7 +129,7 @@ namespace RosalEHealthcare.UI.WPF.Views.UserSettings
 
         private void ChkEnableNotifications_Changed(object sender, RoutedEventArgs e)
         {
-            if (!_isLoading)
+            if (!_isLoading && _isInitialized)
             {
                 UpdateNotificationStates();
             }
@@ -85,10 +137,21 @@ namespace RosalEHealthcare.UI.WPF.Views.UserSettings
 
         private void UpdateNotificationStates()
         {
+            // Safety check - ensure all controls exist
+            if (ChkEnableNotifications == null || ChkSoundAlerts == null ||
+                ChkDesktopNotifications == null || ChkAppointmentReminders == null ||
+                ChkNewAppointmentAlerts == null || ChkCancellationAlerts == null ||
+                ChkLowStockAlerts == null || ChkExpiringAlerts == null ||
+                ChkSystemUpdates == null)
+            {
+                System.Diagnostics.Debug.WriteLine("UserNotificationsTab: Some controls are null in UpdateNotificationStates");
+                return;
+            }
+
             bool enabled = ChkEnableNotifications.IsChecked == true;
 
             // Enable/disable all other notification checkboxes
-           ChkSoundAlerts.IsEnabled = enabled;
+            ChkSoundAlerts.IsEnabled = enabled;
             ChkDesktopNotifications.IsEnabled = enabled;
             ChkAppointmentReminders.IsEnabled = enabled;
             ChkNewAppointmentAlerts.IsEnabled = enabled;
@@ -98,28 +161,15 @@ namespace RosalEHealthcare.UI.WPF.Views.UserSettings
             ChkSystemUpdates.IsEnabled = enabled;
 
             // Visual feedback
-            if (!enabled)
-            {
-                ChkSoundAlerts.Opacity = 0.5;
-                ChkDesktopNotifications.Opacity = 0.5;
-                ChkAppointmentReminders.Opacity = 0.5;
-                ChkNewAppointmentAlerts.Opacity = 0.5;
-                ChkCancellationAlerts.Opacity = 0.5;
-                ChkLowStockAlerts.Opacity = 0.5;
-                ChkExpiringAlerts.Opacity = 0.5;
-                ChkSystemUpdates.Opacity = 0.5;
-            }
-            else
-            {
-                ChkSoundAlerts.Opacity = 1;
-                ChkDesktopNotifications.Opacity = 1;
-                ChkAppointmentReminders.Opacity = 1;
-                ChkNewAppointmentAlerts.Opacity = 1;
-                ChkCancellationAlerts.Opacity = 1;
-                ChkLowStockAlerts.Opacity = 1;
-                ChkExpiringAlerts.Opacity = 1;
-                ChkSystemUpdates.Opacity = 1;
-            }
+            double opacity = enabled ? 1.0 : 0.5;
+            ChkSoundAlerts.Opacity = opacity;
+            ChkDesktopNotifications.Opacity = opacity;
+            ChkAppointmentReminders.Opacity = opacity;
+            ChkNewAppointmentAlerts.Opacity = opacity;
+            ChkCancellationAlerts.Opacity = opacity;
+            ChkLowStockAlerts.Opacity = opacity;
+            ChkExpiringAlerts.Opacity = opacity;
+            ChkSystemUpdates.Opacity = opacity;
         }
 
         #endregion
@@ -131,7 +181,11 @@ namespace RosalEHealthcare.UI.WPF.Views.UserSettings
             try
             {
                 var user = SessionManager.CurrentUser;
-                if (user == null) return;
+                if (user == null)
+                {
+                    MessageBox.Show("No user logged in.", "Error", MessageBoxButton.OK, MessageBoxImage.Warning);
+                    return;
+                }
 
                 string userId = user.Id.ToString();
                 string modifiedBy = user.FullName;
@@ -159,6 +213,9 @@ namespace RosalEHealthcare.UI.WPF.Views.UserSettings
                     (ChkExpiringAlerts.IsChecked == true).ToString(), modifiedBy);
                 _settingsService.SaveUserSetting(userId, "SystemUpdates",
                     (ChkSystemUpdates.IsChecked == true).ToString(), modifiedBy);
+
+                // Update sound player setting
+                NotificationSoundPlayer.SetSoundEnabled(ChkSoundAlerts.IsChecked == true);
 
                 // Log activity
                 _activityLogService.LogActivity(
@@ -191,6 +248,8 @@ namespace RosalEHealthcare.UI.WPF.Views.UserSettings
             {
                 try
                 {
+                    _isLoading = true;
+
                     // Reset to defaults
                     ChkEnableNotifications.IsChecked = true;
                     ChkSoundAlerts.IsChecked = true;
@@ -202,6 +261,7 @@ namespace RosalEHealthcare.UI.WPF.Views.UserSettings
                     ChkExpiringAlerts.IsChecked = true;
                     ChkSystemUpdates.IsChecked = false;
 
+                    _isLoading = false;
                     UpdateNotificationStates();
 
                     MessageBox.Show("Notification settings have been reset to defaults.\n\nClick 'Save Settings' to apply.",
@@ -209,6 +269,7 @@ namespace RosalEHealthcare.UI.WPF.Views.UserSettings
                 }
                 catch (Exception ex)
                 {
+                    _isLoading = false;
                     MessageBox.Show($"Error resetting notification settings: {ex.Message}",
                         "Error", MessageBoxButton.OK, MessageBoxImage.Error);
                 }

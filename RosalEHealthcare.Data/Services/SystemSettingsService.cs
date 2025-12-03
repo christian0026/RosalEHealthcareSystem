@@ -232,22 +232,27 @@ namespace RosalEHealthcare.Data.Services
 
             if (setting == null)
             {
+                // Create new setting
                 setting = new SystemSetting
                 {
                     Category = category,
                     SettingKey = key,
                     SettingValue = value,
+                    SettingType = "String",
                     DataType = "String",
                     CreatedAt = DateTime.Now,
                     ModifiedAt = DateTime.Now,
+                    LastModified = DateTime.Now,
                     ModifiedBy = modifiedBy
                 };
                 _db.SystemSettings.Add(setting);
             }
             else
             {
+                // Update existing setting
                 setting.SettingValue = value;
                 setting.ModifiedAt = DateTime.Now;
+                setting.LastModified = DateTime.Now;
                 setting.ModifiedBy = modifiedBy;
             }
 
@@ -261,8 +266,8 @@ namespace RosalEHealthcare.Data.Services
         public DateTime? GetLastModifiedDate()
         {
             return _db.SystemSettings
-                .OrderByDescending(s => s.ModifiedAt)
-                .Select(s => s.ModifiedAt)
+                .OrderByDescending(s => s.LastModified)
+                .Select(s => s.LastModified)
                 .FirstOrDefault();
         }
 

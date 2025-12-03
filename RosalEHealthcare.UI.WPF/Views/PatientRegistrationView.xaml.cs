@@ -324,14 +324,6 @@ namespace RosalEHealthcare.UI.WPF.Views
                 return false;
             }
 
-            //if (chkConsent.IsChecked != true)
-            //{
-            //    MessageBox.Show("Data Privacy Consent is required to proceed with registration.",
-            //                    "Validation Error", MessageBoxButton.OK, MessageBoxImage.Warning);
-            //    chkConsent.Focus();
-            //    return false;
-            //}
-
             return true;
         }
 
@@ -403,13 +395,9 @@ namespace RosalEHealthcare.UI.WPF.Views
 
                     if (result == MessageBoxResult.Yes)
                     {
-                        // Find the parent window and navigate to appointments
-                        // Or you could open a quick appointment dialog here
                         try
                         {
                             var mainWindow = Window.GetWindow(this);
-                            // If you have a navigation system, trigger it here
-                            // For now, just inform the user
                             MessageBox.Show("Please use the Appointments tab to schedule an appointment.",
                                 "Navigate to Appointments", MessageBoxButton.OK, MessageBoxImage.Information);
                         }
@@ -711,27 +699,6 @@ namespace RosalEHealthcare.UI.WPF.Views
 
         #endregion
 
-        private void LinkPendingAppointments(Patient patient)
-        {
-            try
-            {
-                var pendingAppointments = _db.Appointments
-                    .Where(a => a.PatientId == null &&
-                                a.PatientName.ToLower() == patient.FullName.ToLower() &&
-                                a.Contact == patient.Contact)
-                    .ToList();
-
-                foreach (var appt in pendingAppointments)
-                {
-                    appt.PatientId = patient.Id;
-                }
-
-                if (pendingAppointments.Any())
-                    _db.SaveChanges();
-            }
-            catch { /* Ignore linking errors */ }
-        }
-
         #region Auto-Link Appointments
 
         /// <summary>
@@ -788,6 +755,4 @@ namespace RosalEHealthcare.UI.WPF.Views
 
         #endregion
     }
-
-
 }

@@ -26,9 +26,7 @@ namespace RosalEHealthcare.UI.WPF.Views
         private PatientService _patientService;
         private AppointmentService _appointmentService;
         private DashboardService _dashboardService;
-
-        // Notification container for toasts
-        private Grid _notificationContainer;
+        private NotificationService _notificationService;
 
         public ReceptionistDashboard()
         {
@@ -36,16 +34,19 @@ namespace RosalEHealthcare.UI.WPF.Views
             InitializeServices();
             SetActiveButton(BtnDashboard);
             LoadDashboardData();
-
-            // Initialize notification container - CORRECTED
-            InitializeNotificationContainer();
-            InitializeNotifications();
         }
 
         public ReceptionistDashboard(User user) : this()
         {
             _currentUser = user;
+
+            // CRITICAL: Set SessionManager BEFORE initializing notifications
+            SessionManager.CurrentUser = user;
+
             ApplyUserInfo();
+
+            // Initialize notifications AFTER SessionManager is set
+            InitializeNotifications();
         }
 
         private void InitializeServices()
@@ -54,33 +55,84 @@ namespace RosalEHealthcare.UI.WPF.Views
             _patientService = new PatientService(_db);
             _appointmentService = new AppointmentService(_db);
             _dashboardService = new DashboardService(_db);
+            _notificationService = new NotificationService(_db);
         }
 
-        private void InitializeNotificationContainer()
+        #region Notifications
+
+        private void InitializeNotifications()
         {
             try
             {
-                // Find the root Grid in your XAML
-                if (this.Content is Grid rootGrid)
-                {
-                    _notificationContainer = new Grid
-                    {
-                        IsHitTestVisible = false,
-                        VerticalAlignment = VerticalAlignment.Top,
-                        HorizontalAlignment = HorizontalAlignment.Right,
-                        Margin = new Thickness(0, 60, 20, 0)
-                    };
+                System.Diagnostics.Debug.WriteLine("=== ReceptionistDashboard: InitializeNotifications START ===");
 
-                    rootGrid.Children.Add(_notificationContainer);
-                    Panel.SetZIndex(_notificationContainer, 9999);
-                    NotificationManager.Initialize(_notificationContainer);
+                var currentUser = SessionManager.CurrentUser;
+                if (currentUser == null)
+                {
+                    System.Diagnostics.Debug.WriteLine("ERROR: SessionManager.CurrentUser is NULL!");
+                    return;
+                }
+
+                System.Diagnostics.Debug.WriteLine($"Current User: {currentUser.Username}, Role: {currentUser.Role}");
+
+                // Initialize the notification bell with the toast container
+                NotificationBell.Initialize(
+                    currentUser.Username,
+                    currentUser.Role,
+                    ToastContainer
+                );
+
+                // Handle navigation requests from notifications
+                NotificationBell.OnNavigateRequested += NavigateToSection;
+
+                System.Diagnostics.Debug.WriteLine("=== ReceptionistDashboard: InitializeNotifications COMPLETE ===");
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"ERROR initializing notifications: {ex.Message}");
+                System.Diagnostics.Debug.WriteLine($"Stack trace: {ex.StackTrace}");
+            }
+        }
+
+        /// <summary>
+        /// Navigate to a section based on notification action URL
+        /// </summary>
+        private void NavigateToSection(string section)
+        {
+            try
+            {
+                System.Diagnostics.Debug.WriteLine($"ReceptionistDashboard: Navigating to section: {section}");
+
+                switch (section?.ToLower())
+                {
+                    case "dashboard":
+                        Dashboard_Click(null, null);
+                        break;
+                    case "patientmanagement":
+                    case "patients":
+                        PatientRegistration_Click(null, null);
+                        break;
+                    case "appointments":
+                        AppointmentManagement_Click(null, null);
+                        break;
+                    case "systemsettings":
+                    case "settings":
+                        Settings_Click(null, null);
+                        break;
+                    default:
+                        Dashboard_Click(null, null);
+                        break;
                 }
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine($"Error initializing notifications: {ex.Message}");
+                System.Diagnostics.Debug.WriteLine($"Error navigating to section: {ex.Message}");
             }
         }
+
+        #endregion
+
+        #region User Info
 
         private void ApplyUserInfo()
         {
@@ -88,6 +140,7 @@ namespace RosalEHealthcare.UI.WPF.Views
 
             TxtUserFullName.Text = _currentUser.FullName ?? _currentUser.Email;
             TxtUserRole.Text = _currentUser.Role ?? "Receptionist";
+            TxtUserInitials.Text = GetInitials(_currentUser.FullName ?? _currentUser.Email);
 
             if (!string.IsNullOrEmpty(_currentUser.ProfileImagePath) && File.Exists(_currentUser.ProfileImagePath))
             {
@@ -95,17 +148,32 @@ namespace RosalEHealthcare.UI.WPF.Views
                 {
                     var img = new BitmapImage(new Uri(_currentUser.ProfileImagePath, UriKind.RelativeOrAbsolute));
                     ProfileEllipse.Fill = new ImageBrush(img) { Stretch = Stretch.UniformToFill };
+                    TxtUserInitials.Visibility = Visibility.Collapsed;
                 }
                 catch
                 {
-                    ProfileEllipse.Fill = Brushes.LightGray;
+                    ProfileEllipse.Fill = Brushes.Transparent;
+                    TxtUserInitials.Visibility = Visibility.Visible;
                 }
             }
             else
             {
-                ProfileEllipse.Fill = Brushes.LightGray;
+                ProfileEllipse.Fill = Brushes.Transparent;
+                TxtUserInitials.Visibility = Visibility.Visible;
             }
         }
+
+        private string GetInitials(string name)
+        {
+            if (string.IsNullOrEmpty(name)) return "RP";
+            var parts = name.Split(' ');
+            if (parts.Length > 1) return (parts[0][0].ToString() + parts[1][0].ToString()).ToUpper();
+            return name.Substring(0, Math.Min(2, name.Length)).ToUpper();
+        }
+
+        #endregion
+
+        #region Load Dashboard Data
 
         private void LoadDashboardData()
         {
@@ -127,7 +195,6 @@ namespace RosalEHealthcare.UI.WPF.Views
                 // Update Summary Cards
                 CardTotalPatients.Value = totalPatients.ToString("N0");
 
-                // Fix: Build strings in memory, not in LINQ
                 var patientTrendText = patientChange >= 0 ?
                     "+" + patientChange.ToString("0.#") + "% from last month" :
                     patientChange.ToString("0.#") + "% from last month";
@@ -199,6 +266,8 @@ namespace RosalEHealthcare.UI.WPF.Views
             AppointmentsDataGrid.ItemsSource = appointments;
         }
 
+        #endregion
+
         #region Window Controls
 
         private void Window_StateChanged(object sender, EventArgs e)
@@ -227,10 +296,7 @@ namespace RosalEHealthcare.UI.WPF.Views
                 {
                     this.DragMove();
                 }
-                catch
-                {
-                    // Ignore exception when window is maximized
-                }
+                catch { }
             }
         }
 
@@ -264,84 +330,6 @@ namespace RosalEHealthcare.UI.WPF.Views
         }
 
         #endregion
-
-        #region Notifications
-        private void InitializeNotifications()
-        {
-            try
-            {
-                var currentUser = SessionManager.CurrentUser;
-                if (currentUser != null)
-                {
-                    // Initialize the notification bell
-                    NotificationBell.Initialize(
-                        currentUser.Username,
-                        currentUser.Role,
-                        ToastContainer
-                    );
-
-                    // Handle navigation requests from notifications
-                    NotificationBell.OnNavigateRequested += NavigateToSection;
-                }
-            }
-            catch (Exception ex)
-            {
-                System.Diagnostics.Debug.WriteLine($"Error initializing notifications: {ex.Message}");
-            }
-        }
-        #endregion
-
-        // ADD these missing navigation methods in the Navigation region:
-
-        private void PatientManagement_Click(object sender, RoutedEventArgs e)
-        {
-            PatientRegistration_Click(sender, e);
-        }
-
-        private void Appointments_Click(object sender, RoutedEventArgs e)
-        {
-            AppointmentManagement_Click(sender, e);
-        }
-
-        /// <summary>
-        /// Navigate to a section based on notification action URL
-        /// </summary>
-        private void NavigateToSection(string section)
-        {
-            try
-            {
-                switch (section)
-                {
-                    case "Dashboard":
-                        Dashboard_Click(null, null);
-                        break;
-                    case "PatientManagement":
-                    case "Patients":
-                        PatientManagement_Click(null, null);
-                        break;
-                    case "Appointments":
-                        Appointments_Click(null, null);
-                        break;
-                    case "MedicineInventory":
-                    case "Medicines":
-                        // If receptionist has medicine view
-                        // MedicineInventory_Click(null, null);
-                        break;
-                    case "Settings":
-                    case "SystemSettings":
-                        Settings_Click(null, null);
-                        break;
-                    default:
-                        Dashboard_Click(null, null);
-                        break;
-                }
-            }
-            catch (Exception ex)
-            {
-                System.Diagnostics.Debug.WriteLine($"Error navigating to section: {ex.Message}");
-            }
-        }
-
 
         #region Navigation
 
@@ -419,16 +407,28 @@ namespace RosalEHealthcare.UI.WPF.Views
 
             if (result == true && modal.RegisteredPatient != null)
             {
-                // Show success notification
-                NotificationManager.ShowNewPatient(
-                    modal.RegisteredPatient.FullName,
-                    _currentUser?.FullName ?? "Receptionist"
-                );
+                // =====================================================
+                // SAVE NOTIFICATION TO DATABASE - This triggers toast for Doctors!
+                // =====================================================
+                try
+                {
+                    _notificationService.NotifyNewPatient(
+                        modal.RegisteredPatient.FullName,
+                        modal.RegisteredPatient.PatientId,
+                        _currentUser?.FullName ?? "Receptionist"
+                    );
+
+                    System.Diagnostics.Debug.WriteLine($"Notification saved for new patient: {modal.RegisteredPatient.FullName}");
+                }
+                catch (Exception ex)
+                {
+                    System.Diagnostics.Debug.WriteLine($"Error saving notification: {ex.Message}");
+                }
 
                 // Refresh dashboard data
                 LoadDashboardData();
 
-                // Show success message - Fix: Build string in memory
+                // Show success message
                 var successMessage = "Patient " + modal.RegisteredPatient.FullName +
                     " has been successfully registered!\n\nPatient ID: " +
                     modal.RegisteredPatient.PatientId +
@@ -445,10 +445,8 @@ namespace RosalEHealthcare.UI.WPF.Views
 
         private void ScheduleAppointment_Click(object sender, RoutedEventArgs e)
         {
-            MessageBox.Show("Schedule Appointment feature will be available after Appointment Management is finalized.",
-                "Info",
-                MessageBoxButton.OK,
-                MessageBoxImage.Information);
+            // Navigate to appointment management
+            AppointmentManagement_Click(sender, e);
         }
 
         private void PrintAppointmentSlips_Click(object sender, RoutedEventArgs e)
@@ -461,25 +459,29 @@ namespace RosalEHealthcare.UI.WPF.Views
 
         #endregion
 
+        #region Cleanup
+
         protected override void OnClosing(System.ComponentModel.CancelEventArgs e)
         {
-            // Check if we're already in the process of closing via logout
             if (Application.Current.MainWindow != this)
             {
-                // Allow close without prompting (logout animation is handling it)
                 e.Cancel = false;
                 return;
             }
 
-            // Cancel the default close
             e.Cancel = true;
-
-            // Show exit animation instead
             LogoutHelper.ExitApplication(this);
-
             NotificationBell?.Stop();
 
             base.OnClosing(e);
         }
+
+        protected override void OnClosed(EventArgs e)
+        {
+            base.OnClosed(e);
+            _db?.Dispose();
+        }
+
+        #endregion
     }
 }
