@@ -96,8 +96,18 @@
         </Border>
 
         <!-- APPOINTMENT CARDS (Scrollable) -->
-        <ScrollViewer Grid.Row="2" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
-            <WrapPanel x:Name="wpAppointments" Orientation="Horizontal" Margin="30,0,30,30"/>
+        <ScrollViewer Grid.Row="2" 
+              VerticalScrollBarVisibility="Auto"
+              HorizontalScrollBarVisibility="Disabled"
+              Padding="0,0,20,20">
+            <WrapPanel x:Name="appointmentCardsPanel"
+               Orientation="Horizontal"
+               HorizontalAlignment="Left"
+               Width="1650">
+                <!-- Cards will be added here programmatically -->
+                <!-- Each card: 520px width + 20px margin = 540px -->
+                <!-- 3 columns: 540 × 3 = 1620px (with padding = 1650px) -->
+            </WrapPanel>
         </ScrollViewer>
     </Grid>
 </UserControl>

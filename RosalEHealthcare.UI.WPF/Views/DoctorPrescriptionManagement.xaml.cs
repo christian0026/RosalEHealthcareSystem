@@ -33,7 +33,8 @@ namespace RosalEHealthcare.UI.WPF.Views
 
             if (ViewModel.PatientSearchResults.Count > 0)
             {
-      popupSearchResults.IsOpen = true;
+      
+                popupSearchResults.IsOpen = true;
             }
             else
             {
