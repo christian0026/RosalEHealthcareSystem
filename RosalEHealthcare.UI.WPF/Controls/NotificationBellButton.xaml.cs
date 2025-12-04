@@ -1,92 +1,169 @@
-﻿using RosalEHealthcare.Core.Models;
-using RosalEHealthcare.UI.WPF.Helpers;
-using System;
+﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Windows;
 using System.Windows.Controls;
-using System.Windows.Media.Animation;
+using RosalEHealthcare.Core.Models;
+using RosalEHealthcare.UI.WPF.Helpers;
 
 namespace RosalEHealthcare.UI.WPF.Controls
 {
     public partial class NotificationBellButton : UserControl
     {
+        #region Fields
+
         private NotificationPollingService _pollingService;
-        private NotificationPopup _notificationPopup;
-        private string _currentUsername;
-        private string _currentRole;
+        private NotificationPopup _popupControl;
+
+        private string _username;
+        private string _role;
+        private Panel _toastContainer;
         private bool _isInitialized = false;
 
-        // Event for navigation requests from popup
+        #endregion
+
+        #region Events
+
         public event Action<string> OnNavigateRequested;
+
+        #endregion
+
+        #region Constructor
 
         public NotificationBellButton()
         {
             InitializeComponent();
+            UpdateBadge(0);
         }
+
+        #endregion
 
         #region Public Methods
 
-        /// <summary>
-        /// Initialize the notification bell with user info and start polling
-        /// </summary>
         public void Initialize(string username, string role, Panel toastContainer)
         {
-            if (_isInitialized) return;
+            try
+            {
+                System.Diagnostics.Debug.WriteLine("=== NotificationBellButton.Initialize START ===");
+                System.Diagnostics.Debug.WriteLine($"Username: {username}, Role: {role}");
 
-            _currentUsername = username;
-            _currentRole = role;
+                if (string.IsNullOrEmpty(username) || string.IsNullOrEmpty(role))
+                {
+                    System.Diagnostics.Debug.WriteLine("ERROR: Username or Role is null/empty!");
+                    return;
+                }
 
-            // Initialize notification manager for toasts
-            NotificationManager.Initialize(toastContainer);
+                _username = username;
+                _role = role;
+                _toastContainer = toastContainer;
 
-            // Initialize sound player
-            NotificationSoundPlayer.Initialize();
+                // Initialize NotificationManager for toasts
+                if (_toastContainer != null)
+                {
+                    NotificationManager.Initialize(_toastContainer);
+                    System.Diagnostics.Debug.WriteLine("NotificationManager initialized");
+                }
 
-            // Create polling service
-            _pollingService = new NotificationPollingService();
-            _pollingService.PollingIntervalSeconds = 15; // Check every 15 seconds
-            _pollingService.OnNewNotifications += HandleNewNotifications;
-            _pollingService.OnUnreadCountChanged += UpdateBadgeCount;
+                // Create and setup popup control
+                _popupControl = new NotificationPopup();
+                _popupControl.OnNotificationClicked += HandleNotificationClicked;
+                _popupControl.OnMarkAllRead += HandleMarkAllRead;
+                _popupControl.OnClearAll += HandleClearAll;
+                _popupControl.OnDeleteNotification += HandleDeleteNotification;
+                _popupControl.OnCloseRequested += () => NotificationPopup.IsOpen = false;
+                PopupContent.Content = _popupControl;
 
-            // Create popup
-            _notificationPopup = new NotificationPopup();
-            _notificationPopup.Initialize(username, role);
-            _notificationPopup.OnCloseRequested += () => NotificationPopup.IsOpen = false;
-            _notificationPopup.OnNavigateRequested += (url) => OnNavigateRequested?.Invoke(url);
-            _notificationPopup.OnNotificationsChanged += () => _pollingService.CheckNow();
+                // Create and start polling service
+                _pollingService = new NotificationPollingService();
+                _pollingService.OnNewNotifications += HandleNewNotifications;
+                _pollingService.OnUnreadCountChanged += UpdateBadge;
+                _pollingService.Start(_username, _role);
 
-            PopupContent.Content = _notificationPopup;
-
-            // Start polling
-            _pollingService.Start(username, role);
-
-            _isInitialized = true;
+                _isInitialized = true;
+                System.Diagnostics.Debug.WriteLine("=== NotificationBellButton.Initialize COMPLETE ===");
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"ERROR in Initialize: {ex.Message}");
+                System.Diagnostics.Debug.WriteLine($"Stack: {ex.StackTrace}");
+            }
         }
 
-        /// <summary>
-        /// Stop the notification service (call on logout/close)
-        /// </summary>
         public void Stop()
         {
             _pollingService?.Stop();
-            _isInitialized = false;
+            System.Diagnostics.Debug.WriteLine("NotificationBellButton stopped");
         }
 
-        /// <summary>
-        /// Force refresh notifications
-        /// </summary>
-        public void Refresh()
+        public void RefreshNotifications()
         {
             _pollingService?.CheckNow();
-            _notificationPopup?.Refresh();
         }
 
-        /// <summary>
-        /// Update badge count externally
-        /// </summary>
-        public void SetBadgeCount(int count)
+        #endregion
+
+        #region Private Methods
+
+        private void UpdateBadge(int count)
         {
-            UpdateBadgeCount(count);
+            Application.Current.Dispatcher.Invoke(() =>
+            {
+                NotificationCount.Text = count > 99 ? "99+" : count.ToString();
+                NotificationBadge.Visibility = count > 0 ? Visibility.Visible : Visibility.Collapsed;
+                _popupControl?.UpdateBadgeCounts(count);
+            });
+        }
+
+        private void LoadNotificationsToPopup()
+        {
+            if (_pollingService == null || _popupControl == null) return;
+
+            var notifications = _pollingService.GetAllNotifications(50);
+            _popupControl.LoadNotifications(notifications);
+        }
+
+        private void HandleNewNotifications(IEnumerable<Notification> notifications)
+        {
+            try
+            {
+                Application.Current.Dispatcher.Invoke(() =>
+                {
+                    foreach (var notification in notifications)
+                    {
+                        System.Diagnostics.Debug.WriteLine($"New notification: {notification.Title}");
+
+                        // Show toast using existing NotificationManager
+                        NotificationManager.ShowNotification(notification);
+
+                        // Play pulse animation
+                        PlayPulseAnimation();
+                    }
+
+                    // Refresh popup if open
+                    if (NotificationPopup.IsOpen)
+                    {
+                        LoadNotificationsToPopup();
+                    }
+                });
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Error handling notifications: {ex.Message}");
+            }
+        }
+
+        private void PlayPulseAnimation()
+        {
+            try
+            {
+                // The pulse animation is triggered by the XAML EventTrigger
+                // We can restart it by toggling visibility or using storyboard
+                PulseIndicator.Opacity = 1;
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Animation error: {ex.Message}");
+            }
         }
 
         #endregion
@@ -95,72 +172,59 @@ namespace RosalEHealthcare.UI.WPF.Controls
 
         private void BtnNotification_Click(object sender, RoutedEventArgs e)
         {
+            if (!_isInitialized) return;
+
+            // Toggle popup
+            NotificationPopup.IsOpen = !NotificationPopup.IsOpen;
+
             if (NotificationPopup.IsOpen)
             {
-                NotificationPopup.IsOpen = false;
-            }
-            else
-            {
-                _notificationPopup?.Refresh();
-                NotificationPopup.IsOpen = true;
+                LoadNotificationsToPopup();
             }
         }
 
-        private void HandleNewNotifications(IEnumerable<Notification> newNotifications)
+        private void HandleNotificationClicked(Notification notification)
         {
-            Application.Current.Dispatcher.Invoke(() =>
+            // Mark as read
+            _pollingService?.MarkAsRead(notification.Id);
+
+            // Refresh popup
+            LoadNotificationsToPopup();
+
+            // Close popup
+            NotificationPopup.IsOpen = false;
+
+            // Navigate if action URL exists
+            if (!string.IsNullOrEmpty(notification.ActionUrl))
             {
-                foreach (var notification in newNotifications)
-                {
-                    // Show toast notification
-                    NotificationManager.ShowNotification(notification);
-                }
-
-                // Play pulse animation
-                PlayPulseAnimation();
-
-                // Refresh popup if open
-                if (NotificationPopup.IsOpen)
-                {
-                    _notificationPopup?.Refresh();
-                }
-            });
+                OnNavigateRequested?.Invoke(notification.ActionUrl);
+            }
         }
 
-        private void UpdateBadgeCount(int count)
+        private void HandleMarkAllRead()
         {
-            Application.Current.Dispatcher.Invoke(() =>
-            {
-                if (count > 0)
-                {
-                    NotificationBadge.Visibility = Visibility.Visible;
-                    NotificationCount.Text = count > 99 ? "99+" : count.ToString();
-
-                    // Update popup badge too
-                    _notificationPopup?.UpdateUnreadCount(count);
-                }
-                else
-                {
-                    NotificationBadge.Visibility = Visibility.Collapsed;
-                    _notificationPopup?.UpdateUnreadCount(0);
-                }
-            });
+            _pollingService?.MarkAllAsRead();
+            LoadNotificationsToPopup();
         }
 
-        private void PlayPulseAnimation()
+        private void HandleClearAll()
         {
-            try
+            // Delete all read notifications
+            var notifications = _pollingService?.GetAllNotifications(100);
+            if (notifications != null)
             {
-                var storyboard = PulseIndicator.FindResource("PulseAnimation") as Storyboard;
-                if (storyboard != null)
+                foreach (var n in notifications.Where(x => x.IsRead))
                 {
-                    storyboard.Begin(PulseIndicator);
+                    _pollingService?.DeleteNotification(n.Id);
                 }
             }
-            catch
-            {
-                // Animation not critical, ignore errors
-            }
+            LoadNotificationsToPopup();
+        }
+
+        private void HandleDeleteNotification(int notificationId)
+        {
+            _pollingService?.DeleteNotification(notificationId);
+            LoadNotificationsToPopup();
         }
 
         #endregion

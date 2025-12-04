@@ -192,6 +192,11 @@
                             <local:NotificationBellButton x:Name="NotificationBell" Margin="0,0,20,0"/>
                             <Border Width="1" Height="30" Background="#EEE" Margin="0,0,20,0"/>
 
+                            <Button Content="🔔 Test Toast" 
+        Click="TestToast_Click"
+        Padding="10,5"
+        Margin="5"/>
+                            
                             <materialDesign:PopupBox PlacementMode="BottomAndAlignRightEdges" StaysOpen="False">
                                 <materialDesign:PopupBox.ToggleContent>
                                     <StackPanel Orientation="Horizontal" Cursor="Hand" Background="Transparent">

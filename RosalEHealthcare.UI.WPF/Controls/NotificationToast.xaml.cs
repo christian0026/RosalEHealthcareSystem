@@ -3,7 +3,6 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
 using System.Windows.Media.Animation;
-using System.Windows.Threading;
 using MaterialDesignThemes.Wpf;
 using RosalEHealthcare.UI.WPF.Helpers;
 
@@ -11,30 +10,33 @@ namespace RosalEHealthcare.UI.WPF.Controls
 {
     public partial class NotificationToast : UserControl
     {
-        private DispatcherTimer _timer;
-        private string _notificationType;
+        #region Fields
+
+        private System.Windows.Threading.DispatcherTimer _autoCloseTimer;
+        private bool _isClosing = false;
+
+        #endregion
+
+        #region Constructor
 
         public NotificationToast()
         {
             InitializeComponent();
         }
 
-        /// <summary>
-        /// Show the notification toast
-        /// </summary>
-        /// <param name="title">Notification title</param>
-        /// <param name="message">Notification message</param>
-        /// <param name="type">Type of notification (determines icon and color)</param>
-        /// <param name="duration">How long to show (in milliseconds)</param>
-        /// <param name="playSound">Whether to play notification sound</param>
-        public void Show(string title, string message, string type = "success", int duration = 5000, bool playSound = true)
-        {
-            TitleText.Text = title;
-            MessageText.Text = message;
-            _notificationType = type;
+        #endregion
 
-            // Set icon and color based on type
-            SetStyleForType(type);
+        #region Public Methods
+
+        /// <summary>
+        /// Show the toast notification with auto-close
+        /// </summary>
+        public void Show(string title, string message, string type, int duration = 5000, bool playSound = true)
+        {
+            TitleText.Text = title ?? "Notification";
+            MessageText.Text = message ?? "";
+
+            SetTypeStyle(type);
 
             // Play sound
             if (playSound)
@@ -42,146 +44,213 @@ namespace RosalEHealthcare.UI.WPF.Controls
                 NotificationSoundPlayer.PlaySoundForType(type);
             }
 
-            // Slide in animation
-            var slideAnimation = new ThicknessAnimation
+            // Slide in
+            SlideIn();
+
+            // Auto close
+            StartAutoCloseTimer(duration);
+        }
+
+        /// <summary>
+        /// Close the toast
+        /// </summary>
+        public void Close()
+        {
+            if (_isClosing) return;
+            _isClosing = true;
+
+            _autoCloseTimer?.Stop();
+            SlideOut(() =>
             {
-                From = new Thickness(400, 0, -400, 0),
-                To = new Thickness(0),
+                // Remove from parent
+                if (this.Parent is Panel panel)
+                {
+                    panel.Children.Remove(this);
+                }
+            });
+        }
+
+        #endregion
+
+        #region Private Methods
+
+        private void SetTypeStyle(string type)
+        {
+            Color color;
+            PackIconKind icon;
+
+            switch (type?.ToLower())
+            {
+                case "newpatient":
+                    color = Color.FromRgb(76, 175, 80); // Green
+                    icon = PackIconKind.AccountPlus;
+                    break;
+                case "patientupdated":
+                    color = Color.FromRgb(33, 150, 243); // Blue
+                    icon = PackIconKind.AccountEdit;
+                    break;
+                case "newappointment":
+                    color = Color.FromRgb(76, 175, 80);
+                    icon = PackIconKind.CalendarPlus;
+                    break;
+                case "appointmentupdated":
+                    color = Color.FromRgb(255, 152, 0); // Orange
+                    icon = PackIconKind.CalendarEdit;
+                    break;
+                case "appointmentcancelled":
+                    color = Color.FromRgb(244, 67, 54); // Red
+                    icon = PackIconKind.CalendarRemove;
+                    break;
+                case "appointmentconfirmed":
+                    color = Color.FromRgb(76, 175, 80);
+                    icon = PackIconKind.CalendarCheck;
+                    break;
+                case "appointmentcompleted":
+                    color = Color.FromRgb(76, 175, 80);
+                    icon = PackIconKind.CheckCircle;
+                    break;
+                case "appointmentreminder":
+                    color = Color.FromRgb(33, 150, 243);
+                    icon = PackIconKind.CalendarClock;
+                    break;
+                case "lowstock":
+                    color = Color.FromRgb(255, 152, 0);
+                    icon = PackIconKind.PackageVariant;
+                    break;
+                case "outofstock":
+                    color = Color.FromRgb(244, 67, 54);
+                    icon = PackIconKind.PackageVariantRemove;
+                    break;
+                case "expiringmedicine":
+                    color = Color.FromRgb(255, 152, 0);
+                    icon = PackIconKind.TimerSand;
+                    break;
+                case "prescriptionready":
+                    color = Color.FromRgb(156, 39, 176); // Purple
+                    icon = PackIconKind.Pill;
+                    break;
+                case "newuser":
+                    color = Color.FromRgb(33, 150, 243);
+                    icon = PackIconKind.AccountPlus;
+                    break;
+                case "securityalert":
+                    color = Color.FromRgb(244, 67, 54);
+                    icon = PackIconKind.ShieldAlert;
+                    break;
+                case "accountlocked":
+                    color = Color.FromRgb(244, 67, 54);
+                    icon = PackIconKind.AccountLock;
+                    break;
+                case "backupsuccess":
+                    color = Color.FromRgb(76, 175, 80);
+                    icon = PackIconKind.DatabaseCheck;
+                    break;
+                case "backupfailed":
+                    color = Color.FromRgb(244, 67, 54);
+                    icon = PackIconKind.DatabaseRemove;
+                    break;
+                case "success":
+                    color = Color.FromRgb(76, 175, 80);
+                    icon = PackIconKind.CheckCircle;
+                    break;
+                case "error":
+                    color = Color.FromRgb(244, 67, 54);
+                    icon = PackIconKind.AlertCircle;
+                    break;
+                case "warning":
+                    color = Color.FromRgb(255, 152, 0);
+                    icon = PackIconKind.Alert;
+                    break;
+                case "info":
+                default:
+                    color = Color.FromRgb(33, 150, 243);
+                    icon = PackIconKind.Information;
+                    break;
+            }
+
+            // Apply colors
+            var brush = new SolidColorBrush(color);
+            ToastBorder.BorderBrush = brush;
+            IconElement.Foreground = brush;
+            IconElement.Kind = icon;
+
+            // Set icon background (lighter version)
+            var lightColor = Color.FromArgb(40, color.R, color.G, color.B);
+            ((Border)IconElement.Parent).Background = new SolidColorBrush(lightColor);
+        }
+
+        private void SlideIn()
+        {
+            this.RenderTransform = new TranslateTransform(400, 0);
+            this.Opacity = 0;
+
+            var translateAnim = new DoubleAnimation
+            {
+                From = 400,
+                To = 0,
                 Duration = TimeSpan.FromMilliseconds(300),
                 EasingFunction = new CubicEase { EasingMode = EasingMode.EaseOut }
             };
 
-            var fadeAnimation = new DoubleAnimation
+            var opacityAnim = new DoubleAnimation
             {
                 From = 0,
                 To = 1,
                 Duration = TimeSpan.FromMilliseconds(300)
             };
 
-            BeginAnimation(MarginProperty, slideAnimation);
-            BeginAnimation(OpacityProperty, fadeAnimation);
-
-            // Auto-hide after duration
-            _timer = new DispatcherTimer
-            {
-                Interval = TimeSpan.FromMilliseconds(duration)
-            };
-            _timer.Tick += (s, e) =>
-            {
-                _timer.Stop();
-                Hide();
-            };
-            _timer.Start();
+            ((TranslateTransform)this.RenderTransform).BeginAnimation(TranslateTransform.XProperty, translateAnim);
+            this.BeginAnimation(OpacityProperty, opacityAnim);
         }
 
-        /// <summary>
-        /// Set icon and colors based on notification type
-        /// </summary>
-        private void SetStyleForType(string type)
+        private void SlideOut(Action onComplete = null)
         {
-            switch (type.ToLower())
+            var translateAnim = new DoubleAnimation
             {
-                // Success types
-                case "success":
-                case "newpatient":
-                case "appointmentconfirmed":
-                case "appointmentcompleted":
-                case "backupsuccess":
-                case "restoresuccess":
-                    IconElement.Kind = PackIconKind.CheckCircle;
-                    IconElement.Foreground = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#4CAF50"));
-                    ToastBorder.BorderBrush = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#4CAF50"));
-                    break;
-
-                // Error/Danger types
-                case "error":
-                case "appointmentcancelled":
-                case "outofstock":
-                case "backupfailed":
-                case "restorefailed":
-                case "securityalert":
-                case "accountlocked":
-                    IconElement.Kind = PackIconKind.AlertCircle;
-                    IconElement.Foreground = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#F44336"));
-                    ToastBorder.BorderBrush = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#F44336"));
-                    break;
-
-                // Warning types
-                case "warning":
-                case "lowstock":
-                case "expiringmedicine":
-                case "appointmentupdated":
-                    IconElement.Kind = PackIconKind.Alert;
-                    IconElement.Foreground = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#FF9800"));
-                    ToastBorder.BorderBrush = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#FF9800"));
-                    break;
-
-                // Info types
-                case "info":
-                case "newappointment":
-                case "appointmentreminder":
-                case "patientupdated":
-                case "newuser":
-                case "usermodified":
-                case "settingschanged":
-                    IconElement.Kind = PackIconKind.Information;
-                    IconElement.Foreground = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#2196F3"));
-                    ToastBorder.BorderBrush = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#2196F3"));
-                    break;
-
-                // Prescription
-                case "prescriptionready":
-                    IconElement.Kind = PackIconKind.Pill;
-                    IconElement.Foreground = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#9C27B0"));
-                    ToastBorder.BorderBrush = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#9C27B0"));
-                    break;
-
-                // Default
-                default:
-                    IconElement.Kind = PackIconKind.Bell;
-                    IconElement.Foreground = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#607D8B"));
-                    ToastBorder.BorderBrush = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#607D8B"));
-                    break;
-            }
-        }
-
-        /// <summary>
-        /// Hide the toast with animation
-        /// </summary>
-        private void Hide()
-        {
-            var slideAnimation = new ThicknessAnimation
-            {
-                From = new Thickness(0),
-                To = new Thickness(400, 0, -400, 0),
-                Duration = TimeSpan.FromMilliseconds(300),
+                To = 400,
+                Duration = TimeSpan.FromMilliseconds(250),
                 EasingFunction = new CubicEase { EasingMode = EasingMode.EaseIn }
             };
 
-            var fadeAnimation = new DoubleAnimation
+            var opacityAnim = new DoubleAnimation
             {
-                From = 1,
                 To = 0,
-                Duration = TimeSpan.FromMilliseconds(300)
+                Duration = TimeSpan.FromMilliseconds(250)
             };
 
-            slideAnimation.Completed += (s, e) =>
+            if (onComplete != null)
+                opacityAnim.Completed += (s, e) => onComplete();
+
+            if (this.RenderTransform is TranslateTransform transform)
             {
-                var parent = Parent as Panel;
-                parent?.Children.Remove(this);
-            };
-
-            BeginAnimation(MarginProperty, slideAnimation);
-            BeginAnimation(OpacityProperty, fadeAnimation);
+                transform.BeginAnimation(TranslateTransform.XProperty, translateAnim);
+            }
+            this.BeginAnimation(OpacityProperty, opacityAnim);
         }
 
-        /// <summary>
-        /// Close button click handler
-        /// </summary>
+        private void StartAutoCloseTimer(int milliseconds)
+        {
+            _autoCloseTimer = new System.Windows.Threading.DispatcherTimer
+            {
+                Interval = TimeSpan.FromMilliseconds(milliseconds)
+            };
+            _autoCloseTimer.Tick += (s, e) =>
+            {
+                _autoCloseTimer.Stop();
+                Close();
+            };
+            _autoCloseTimer.Start();
+        }
+
+        #endregion
+
+        #region Event Handlers
+
         private void CloseButton_Click(object sender, RoutedEventArgs e)
         {
-            _timer?.Stop();
-            Hide();
+            Close();
         }
+
+        #endregion
     }
 }

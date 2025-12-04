@@ -25,6 +25,7 @@ namespace RosalEHealthcare.UI.WPF.Views
         private RosalEHealthcareDbContext _db;
         private DashboardService _dashboardService;
         private ActivityLogService _activityLogService;
+        private NotificationService _notificationService;
 
         private int _activitiesCurrentPage = 1;
         private int _activitiesPageSize = 20;
@@ -36,15 +37,20 @@ namespace RosalEHealthcare.UI.WPF.Views
             InitializeServices();
             ShowDashboard();
             SetActiveButton(BtnDashboard);
-            InitializeNotifications();
         }
 
         public AdminDashboard(User user) : this()
         {
             _currentUser = user;
+
+            // CRITICAL: Set SessionManager BEFORE initializing notifications
             SessionManager.CurrentUser = user;
+
             ApplyUserInfo();
             LoadDashboardData();
+
+            // Initialize notifications AFTER SessionManager is set
+            InitializeNotifications();
         }
 
         private void InitializeServices()
@@ -52,7 +58,87 @@ namespace RosalEHealthcare.UI.WPF.Views
             _db = new RosalEHealthcareDbContext();
             _dashboardService = new DashboardService(_db);
             _activityLogService = new ActivityLogService(_db);
+            _notificationService = new NotificationService(_db);
         }
+
+        #region Notifications
+
+        private void InitializeNotifications()
+        {
+            try
+            {
+                System.Diagnostics.Debug.WriteLine("=== AdminDashboard: InitializeNotifications START ===");
+
+                var currentUser = SessionManager.CurrentUser;
+                if (currentUser == null)
+                {
+                    System.Diagnostics.Debug.WriteLine("ERROR: SessionManager.CurrentUser is NULL!");
+                    return;
+                }
+
+                System.Diagnostics.Debug.WriteLine($"Current User: {currentUser.Username}, Role: {currentUser.Role}");
+
+                // Initialize the notification bell with the toast container
+                NotificationBell.Initialize(
+                    currentUser.Username,
+                    currentUser.Role,
+                    ToastContainer
+                );
+
+                // Handle navigation requests from notifications
+                NotificationBell.OnNavigateRequested += NavigateToSection;
+
+                System.Diagnostics.Debug.WriteLine("=== AdminDashboard: InitializeNotifications COMPLETE ===");
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"ERROR initializing notifications: {ex.Message}");
+                System.Diagnostics.Debug.WriteLine($"Stack trace: {ex.StackTrace}");
+            }
+        }
+
+        private void NavigateToSection(string section)
+        {
+            try
+            {
+                System.Diagnostics.Debug.WriteLine($"AdminDashboard: Navigating to section: {section}");
+
+                switch (section?.ToLower())
+                {
+                    case "dashboard":
+                        Dashboard_Click(null, null);
+                        break;
+                    case "patientmanagement":
+                    case "patients":
+                        PatientManagement_Click(null, null);
+                        break;
+                    case "medicineinventory":
+                    case "medicines":
+                        MedicineInventory_Click(null, null);
+                        break;
+                    case "usermanagement":
+                    case "users":
+                        UserManagementView_Click(null, null);
+                        break;
+                    case "reports":
+                        Reports_Click(null, null);
+                        break;
+                    case "systemsettings":
+                    case "settings":
+                        Settings_Click(null, null);
+                        break;
+                    default:
+                        Dashboard_Click(null, null);
+                        break;
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Error navigating to section: {ex.Message}");
+            }
+        }
+
+        #endregion
 
         #region Load Dashboard Data
 
@@ -73,7 +159,6 @@ namespace RosalEHealthcare.UI.WPF.Views
 
         private void LoadSummaryCards()
         {
-            // Total Patients
             var totalPatients = _dashboardService.GetTotalPatients();
             var totalPatientsLastMonth = _dashboardService.GetTotalPatientsLastMonth();
             var patientsChange = _dashboardService.CalculatePercentageChange(totalPatients, totalPatientsLastMonth);
@@ -88,7 +173,6 @@ namespace RosalEHealthcare.UI.WPF.Views
                     new SolidColorBrush(Color.FromRgb(244, 67, 54));
             }
 
-            // Today's Appointments
             var todayAppointments = _dashboardService.GetTodayAppointments();
             var yesterdayAppointments = _dashboardService.GetYesterdayAppointments();
             var appointmentsChange = _dashboardService.CalculatePercentageChange(todayAppointments, yesterdayAppointments);
@@ -103,11 +187,9 @@ namespace RosalEHealthcare.UI.WPF.Views
                     new SolidColorBrush(Color.FromRgb(244, 67, 54));
             }
 
-            // Low Stock Medicines
             var lowStockCount = _dashboardService.GetLowStockMedicines(50);
             CardLowStock.Value = lowStockCount.ToString("N0");
 
-            // Expiring Medicines
             var expiringCount = _dashboardService.GetExpiringMedicines(30);
             CardExpiringMedicines.Value = expiringCount.ToString("N0");
         }
@@ -122,11 +204,7 @@ namespace RosalEHealthcare.UI.WPF.Views
             {
                 var illnesses = _dashboardService.GetTopCommonIllnesses(10).ToList();
 
-                if (!illnesses.Any())
-                {
-                    // Show "No Data" message
-                    return;
-                }
+                if (!illnesses.Any()) return;
 
                 var values = new ChartValues<int>(illnesses.Select(i => i.Count));
                 var labels = illnesses.Select(i => i.Illness).ToArray();
@@ -159,10 +237,7 @@ namespace RosalEHealthcare.UI.WPF.Views
             {
                 var trends = _dashboardService.GetLast7DaysVisitTrends().ToList();
 
-                if (!trends.Any())
-                {
-                    return;
-                }
+                if (!trends.Any()) return;
 
                 var values = new ChartValues<int>(trends.Select(t => t.Count));
                 var labels = trends.Select(t => t.Date).ToArray();
@@ -244,7 +319,6 @@ namespace RosalEHealthcare.UI.WPF.Views
 
                 ActivitiesList.ItemsSource = activities;
 
-                // Update pagination
                 txtActivitiesPage.Text = $"Page {_activitiesCurrentPage} of {_activitiesTotalPages}";
                 btnPrevActivities.IsEnabled = _activitiesCurrentPage > 1;
                 btnNextActivities.IsEnabled = _activitiesCurrentPage < _activitiesTotalPages;
@@ -297,7 +371,6 @@ namespace RosalEHealthcare.UI.WPF.Views
         {
             if (_currentUser == null) return;
 
-            // These names now point to the Header elements
             TxtUserFullName.Text = _currentUser.FullName ?? _currentUser.Email;
             TxtUserRole.Text = _currentUser.Role ?? "Administrator";
             TxtUserInitials.Text = GetInitials(_currentUser.FullName ?? _currentUser.Email);
@@ -357,78 +430,7 @@ namespace RosalEHealthcare.UI.WPF.Views
             }
             else if (e.ButtonState == MouseButtonState.Pressed)
             {
-                try
-                {
-                    this.DragMove();
-                }
-                catch { }
-            }
-        }
-
-        private void InitializeNotifications()
-        {
-            try
-            {
-                var currentUser = SessionManager.CurrentUser;
-                if (currentUser != null)
-                {
-                    // Initialize the notification bell
-                    NotificationBell.Initialize(
-                        currentUser.Username,
-                        currentUser.Role,
-                        ToastContainer
-                    );
-
-                    // Handle navigation requests from notifications
-                    NotificationBell.OnNavigateRequested += NavigateToSection;
-                }
-            }
-            catch (Exception ex)
-            {
-                System.Diagnostics.Debug.WriteLine($"Error initializing notifications: {ex.Message}");
-            }
-        }
-
-        /// <summary>
-        /// Navigate to a section based on notification action URL
-        /// </summary>
-        private void NavigateToSection(string section)
-        {
-            try
-            {
-                switch (section)
-                {
-                    case "Dashboard":
-                        Dashboard_Click(null, null);
-                        break;
-                    case "PatientManagement":
-                        PatientManagement_Click(null, null);
-                        break;
-                    case "MedicineInventory":
-                        MedicineInventory_Click(null, null);
-                        break;
-                    case "UserManagement":
-                        UserManagementView_Click(null, null);
-                        break;
-                    case "Reports":
-                        Reports_Click(null, null);
-                        break;
-                    case "SystemSettings":
-                        Settings_Click(null, null);
-                        break;
-                    case "Appointments":
-                        // If admin has appointments view
-                        // Appointments_Click(null, null);
-                        break;
-                    default:
-                        // Default to dashboard
-                        Dashboard_Click(null, null);
-                        break;
-                }
-            }
-            catch (Exception ex)
-            {
-                System.Diagnostics.Debug.WriteLine($"Error navigating to section: {ex.Message}");
+                try { this.DragMove(); } catch { }
             }
         }
 
@@ -548,25 +550,34 @@ namespace RosalEHealthcare.UI.WPF.Views
             LogoutHelper.Logout(this);
         }
 
+        #endregion
+
+        #region Cleanup
+
         protected override void OnClosing(System.ComponentModel.CancelEventArgs e)
         {
-            // Check if we're already in the process of closing via logout
             if (Application.Current.MainWindow != this)
             {
-                // Allow close without prompting (logout animation is handling it)
                 e.Cancel = false;
                 return;
             }
 
-            // Cancel the default close
             e.Cancel = true;
-
-            // Show exit animation instead
             LogoutHelper.ExitApplication(this);
-
             NotificationBell?.Stop();
 
             base.OnClosing(e);
+        }
+
+        protected override void OnClosed(EventArgs e)
+        {
+            base.OnClosed(e);
+            _db?.Dispose();
+        }
+        private void TestToast_Click(object sender, RoutedEventArgs e)
+        {
+            // Test local toast (immediate - no database)
+            NotificationManager.ShowSuccess("Test Notification", "Toast is working!");
         }
 
         #endregion

@@ -4,7 +4,6 @@ using RosalEHealthcare.Data.Contexts;
 using RosalEHealthcare.Data.Services;
 using RosalEHealthcare.UI.WPF.Helpers;
 using System;
-using System.Collections.Generic;
 using System.Data.Entity;
 using System.IO;
 using System.Linq;
@@ -75,14 +74,12 @@ namespace RosalEHealthcare.UI.WPF.Views
 
                 System.Diagnostics.Debug.WriteLine($"Current User: {currentUser.Username}, Role: {currentUser.Role}");
 
-                // Initialize the notification bell with the toast container
                 NotificationBell.Initialize(
                     currentUser.Username,
                     currentUser.Role,
                     ToastContainer
                 );
 
-                // Handle navigation requests from notifications
                 NotificationBell.OnNavigateRequested += NavigateToSection;
 
                 System.Diagnostics.Debug.WriteLine("=== ReceptionistDashboard: InitializeNotifications COMPLETE ===");
@@ -90,19 +87,13 @@ namespace RosalEHealthcare.UI.WPF.Views
             catch (Exception ex)
             {
                 System.Diagnostics.Debug.WriteLine($"ERROR initializing notifications: {ex.Message}");
-                System.Diagnostics.Debug.WriteLine($"Stack trace: {ex.StackTrace}");
             }
         }
 
-        /// <summary>
-        /// Navigate to a section based on notification action URL
-        /// </summary>
         private void NavigateToSection(string section)
         {
             try
             {
-                System.Diagnostics.Debug.WriteLine($"ReceptionistDashboard: Navigating to section: {section}");
-
                 switch (section?.ToLower())
                 {
                     case "dashboard":
@@ -126,7 +117,7 @@ namespace RosalEHealthcare.UI.WPF.Views
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine($"Error navigating to section: {ex.Message}");
+                System.Diagnostics.Debug.WriteLine($"Error navigating: {ex.Message}");
             }
         }
 
@@ -179,7 +170,6 @@ namespace RosalEHealthcare.UI.WPF.Views
         {
             try
             {
-                // Load Summary Cards with real data
                 var totalPatients = _dashboardService.GetTotalPatients();
                 var todayAppointments = _dashboardService.GetTodayAppointments();
                 var pendingAppointments = _dashboardService.GetPendingAppointments();
@@ -188,17 +178,13 @@ namespace RosalEHealthcare.UI.WPF.Views
                 var lastMonthPatients = _dashboardService.GetTotalPatientsLastMonth();
                 var yesterdayAppointments = _dashboardService.GetYesterdayAppointments();
 
-                // Calculate percentage changes
                 var patientChange = _dashboardService.CalculatePercentageChange(totalPatients, lastMonthPatients);
                 var appointmentChange = _dashboardService.CalculatePercentageChange(todayAppointments, yesterdayAppointments);
 
-                // Update Summary Cards
                 CardTotalPatients.Value = totalPatients.ToString("N0");
-
                 var patientTrendText = patientChange >= 0 ?
                     "+" + patientChange.ToString("0.#") + "% from last month" :
                     patientChange.ToString("0.#") + "% from last month";
-
                 CardTotalPatients.TrendText = patientTrendText;
                 CardTotalPatients.TrendColor = patientChange >= 0 ?
                     new SolidColorBrush(Color.FromRgb(76, 175, 80)) :
@@ -206,11 +192,9 @@ namespace RosalEHealthcare.UI.WPF.Views
                 CardTotalPatients.TrendIcon = patientChange >= 0 ? "✓" : "▼";
 
                 CardTodayAppointments.Value = todayAppointments.ToString("N0");
-
                 var appointmentTrendText = appointmentChange >= 0 ?
                     "+" + appointmentChange.ToString("0.#") + "% from yesterday" :
                     appointmentChange.ToString("0.#") + "% from yesterday";
-
                 CardTodayAppointments.TrendText = appointmentTrendText;
                 CardTodayAppointments.TrendColor = appointmentChange >= 0 ?
                     new SolidColorBrush(Color.FromRgb(33, 150, 243)) :
@@ -230,7 +214,6 @@ namespace RosalEHealthcare.UI.WPF.Views
                 CardCompletedToday.TrendColor = new SolidColorBrush(Color.FromRgb(76, 175, 80));
                 CardCompletedToday.TrendIcon = "✓";
 
-                // Load Today's Appointments
                 LoadTodaysAppointments();
             }
             catch (Exception ex)
@@ -272,61 +255,25 @@ namespace RosalEHealthcare.UI.WPF.Views
 
         private void Window_StateChanged(object sender, EventArgs e)
         {
-            if (this.WindowState == WindowState.Maximized)
-            {
-                btnMaximize.Content = "❐";
-                this.BorderThickness = new Thickness(0);
-            }
-            else if (this.WindowState == WindowState.Normal)
-            {
-                btnMaximize.Content = "□";
-                this.BorderThickness = new Thickness(0);
-            }
+            btnMaximize.Content = this.WindowState == WindowState.Maximized ? "❐" : "□";
+            this.BorderThickness = new Thickness(0);
         }
 
         private void TitleBar_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
         {
-            if (e.ClickCount == 2)
-            {
-                ToggleMaximize();
-            }
+            if (e.ClickCount == 2) ToggleMaximize();
             else if (e.ButtonState == MouseButtonState.Pressed)
-            {
-                try
-                {
-                    this.DragMove();
-                }
-                catch { }
-            }
+                try { this.DragMove(); } catch { }
         }
 
-        private void btnMinimize_Click(object sender, RoutedEventArgs e)
-        {
-            this.WindowState = WindowState.Minimized;
-        }
-
-        private void btnMaximize_Click(object sender, RoutedEventArgs e)
-        {
-            ToggleMaximize();
-        }
-
-        private void btnClose_Click(object sender, RoutedEventArgs e)
-        {
-            Application.Current.Shutdown();
-        }
+        private void btnMinimize_Click(object sender, RoutedEventArgs e) => this.WindowState = WindowState.Minimized;
+        private void btnMaximize_Click(object sender, RoutedEventArgs e) => ToggleMaximize();
+        private void btnClose_Click(object sender, RoutedEventArgs e) => Application.Current.Shutdown();
 
         private void ToggleMaximize()
         {
-            if (this.WindowState == WindowState.Maximized)
-            {
-                this.WindowState = WindowState.Normal;
-                btnMaximize.Content = "□";
-            }
-            else
-            {
-                this.WindowState = WindowState.Maximized;
-                btnMaximize.Content = "❐";
-            }
+            this.WindowState = this.WindowState == WindowState.Maximized ? WindowState.Normal : WindowState.Maximized;
+            btnMaximize.Content = this.WindowState == WindowState.Maximized ? "❐" : "□";
         }
 
         #endregion
@@ -359,10 +306,7 @@ namespace RosalEHealthcare.UI.WPF.Views
             LoadDashboardData();
         }
 
-        private void Dashboard_Click(object sender, RoutedEventArgs e)
-        {
-            ShowDashboard();
-        }
+        private void Dashboard_Click(object sender, RoutedEventArgs e) => ShowDashboard();
 
         private void PatientRegistration_Click(object sender, RoutedEventArgs e)
         {
@@ -391,10 +335,7 @@ namespace RosalEHealthcare.UI.WPF.Views
             SetActiveButton(BtnSettings);
         }
 
-        private void Logout_Click(object sender, RoutedEventArgs e)
-        {
-            LogoutHelper.Logout(this);
-        }
+        private void Logout_Click(object sender, RoutedEventArgs e) => LogoutHelper.Logout(this);
 
         #endregion
 
@@ -408,7 +349,7 @@ namespace RosalEHealthcare.UI.WPF.Views
             if (result == true && modal.RegisteredPatient != null)
             {
                 // =====================================================
-                // SAVE NOTIFICATION TO DATABASE - This triggers toast for Doctors!
+                // SAVE NOTIFICATION TO DATABASE - Triggers toast for Doctors!
                 // =====================================================
                 try
                 {
@@ -425,36 +366,27 @@ namespace RosalEHealthcare.UI.WPF.Views
                     System.Diagnostics.Debug.WriteLine($"Error saving notification: {ex.Message}");
                 }
 
-                // Refresh dashboard data
                 LoadDashboardData();
 
-                // Show success message
                 var successMessage = "Patient " + modal.RegisteredPatient.FullName +
                     " has been successfully registered!\n\nPatient ID: " +
                     modal.RegisteredPatient.PatientId +
                     "\nAppointment Status: Confirmed";
 
-                MessageBox.Show(
-                    successMessage,
-                    "Registration Successful",
-                    MessageBoxButton.OK,
-                    MessageBoxImage.Information
-                );
+                MessageBox.Show(successMessage, "Registration Successful",
+                    MessageBoxButton.OK, MessageBoxImage.Information);
             }
         }
 
         private void ScheduleAppointment_Click(object sender, RoutedEventArgs e)
         {
-            // Navigate to appointment management
             AppointmentManagement_Click(sender, e);
         }
 
         private void PrintAppointmentSlips_Click(object sender, RoutedEventArgs e)
         {
             MessageBox.Show("Print Appointment Slips feature coming soon!",
-                "Info",
-                MessageBoxButton.OK,
-                MessageBoxImage.Information);
+                "Info", MessageBoxButton.OK, MessageBoxImage.Information);
         }
 
         #endregion
@@ -463,24 +395,14 @@ namespace RosalEHealthcare.UI.WPF.Views
 
         protected override void OnClosing(System.ComponentModel.CancelEventArgs e)
         {
-            if (Application.Current.MainWindow != this)
-            {
-                e.Cancel = false;
-                return;
-            }
-
+            if (Application.Current.MainWindow != this) { e.Cancel = false; return; }
             e.Cancel = true;
             LogoutHelper.ExitApplication(this);
             NotificationBell?.Stop();
-
             base.OnClosing(e);
         }
 
-        protected override void OnClosed(EventArgs e)
-        {
-            base.OnClosed(e);
-            _db?.Dispose();
-        }
+        protected override void OnClosed(EventArgs e) { base.OnClosed(e); _db?.Dispose(); }
 
         #endregion
     }

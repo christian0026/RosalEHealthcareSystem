@@ -27,7 +27,6 @@ namespace RosalEHealthcare.UI.WPF.Views
         private User _currentUser;
         private Button _activeButton;
 
-        // Services
         private readonly RosalEHealthcareDbContext _db;
         private readonly DashboardService _dashboardService;
         private readonly NotificationService _notificationService;
@@ -36,13 +35,11 @@ namespace RosalEHealthcare.UI.WPF.Views
         private readonly AppointmentService _appointmentService;
         private readonly MedicineService _medicineService;
 
-        // Pagination
         private int _currentPage = 1;
         private int _pageSize = 5;
         private int _totalPages = 1;
         private int _totalRecords = 0;
 
-        // Chart data
         private SeriesCollection _illnessChartSeries;
         private SeriesCollection _appointmentStatusSeries;
 
@@ -54,7 +51,6 @@ namespace RosalEHealthcare.UI.WPF.Views
         {
             InitializeComponent();
 
-            // Initialize database context and services
             _db = new RosalEHealthcareDbContext();
             _dashboardService = new DashboardService(_db);
             _notificationService = new NotificationService(_db);
@@ -64,17 +60,20 @@ namespace RosalEHealthcare.UI.WPF.Views
             _medicineService = new MedicineService(_db);
 
             SetActiveButton(BtnDashboard);
-
-            // Load dashboard data when window loads
             this.Loaded += DoctorDashboard_Loaded;
-
-            InitializeNotifications();
         }
 
         public DoctorDashboard(User user) : this()
         {
             _currentUser = user;
+
+            // CRITICAL: Set SessionManager BEFORE initializing notifications
+            SessionManager.CurrentUser = user;
+
             ApplyUserInfo();
+
+            // Initialize notifications AFTER SessionManager is set
+            InitializeNotifications();
         }
 
         #endregion
@@ -93,11 +92,9 @@ namespace RosalEHealthcare.UI.WPF.Views
             TxtUserFullName.Text = _currentUser.FullName ?? _currentUser.Email;
             TxtUserRole.Text = _currentUser.Role ?? "Doctor";
 
-            // Set initials
             var initials = GetInitials(_currentUser.FullName ?? _currentUser.Email);
             TxtUserInitials.Text = initials;
 
-            // Try to load profile image
             if (!string.IsNullOrEmpty(_currentUser.ProfileImagePath) && File.Exists(_currentUser.ProfileImagePath))
             {
                 try
@@ -128,6 +125,75 @@ namespace RosalEHealthcare.UI.WPF.Views
                 return $"{words[0][0]}{words[words.Length - 1][0]}".ToUpper();
 
             return name.Length >= 2 ? name.Substring(0, 2).ToUpper() : name.ToUpper();
+        }
+
+        #endregion
+
+        #region Notifications
+
+        private void InitializeNotifications()
+        {
+            try
+            {
+                System.Diagnostics.Debug.WriteLine("=== DoctorDashboard: InitializeNotifications START ===");
+
+                var currentUser = SessionManager.CurrentUser;
+                if (currentUser == null)
+                {
+                    System.Diagnostics.Debug.WriteLine("ERROR: SessionManager.CurrentUser is NULL!");
+                    return;
+                }
+
+                System.Diagnostics.Debug.WriteLine($"Current User: {currentUser.Username}, Role: {currentUser.Role}");
+
+                NotificationBell.Initialize(
+                    currentUser.Username,
+                    currentUser.Role,
+                    ToastContainer
+                );
+
+                NotificationBell.OnNavigateRequested += NavigateToSection;
+
+                System.Diagnostics.Debug.WriteLine("=== DoctorDashboard: InitializeNotifications COMPLETE ===");
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"ERROR initializing notifications: {ex.Message}");
+            }
+        }
+
+        private void NavigateToSection(string section)
+        {
+            try
+            {
+                switch (section?.ToLower())
+                {
+                    case "dashboard":
+                        Dashboard_Click(null, null);
+                        break;
+                    case "patientmanagement":
+                    case "patients":
+                        PatientRecords_Click(null, null);
+                        break;
+                    case "appointments":
+                        AppointmentLists_Click(null, null);
+                        break;
+                    case "prescriptions":
+                        Prescription_Click(null, null);
+                        break;
+                    case "systemsettings":
+                    case "settings":
+                        Settings_Click(null, null);
+                        break;
+                    default:
+                        Dashboard_Click(null, null);
+                        break;
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Error navigating: {ex.Message}");
+            }
         }
 
         #endregion
@@ -166,7 +232,6 @@ namespace RosalEHealthcare.UI.WPF.Views
         {
             try
             {
-                // Total Patients
                 var totalPatients = _dashboardService.GetTotalPatients();
                 var patientGrowth = _dashboardService.GetPatientGrowthPercentage();
 
@@ -177,7 +242,6 @@ namespace RosalEHealthcare.UI.WPF.Views
                     ? new SolidColorBrush(Color.FromRgb(76, 175, 80))
                     : new SolidColorBrush(Color.FromRgb(244, 67, 54));
 
-                // Today's Appointments
                 var todayAppointments = _dashboardService.GetTodayAppointments();
                 var appointmentGrowth = _dashboardService.GetAppointmentGrowthPercentage();
 
@@ -188,14 +252,12 @@ namespace RosalEHealthcare.UI.WPF.Views
                     ? new SolidColorBrush(Color.FromRgb(33, 150, 243))
                     : new SolidColorBrush(Color.FromRgb(244, 67, 54));
 
-                // Low Stock Medicines
                 var lowStock = _dashboardService.GetLowStockMedicines();
                 CardLowStock.Value = lowStock.ToString();
                 CardLowStock.TrendText = "Requires attention";
                 CardLowStock.TrendIcon = "⚠";
                 CardLowStock.TrendColor = new SolidColorBrush(Color.FromRgb(255, 152, 0));
 
-                // Expiring Medicines
                 var expiring = _dashboardService.GetExpiringMedicines(30);
                 CardExpiringMedicines.Value = expiring.ToString();
                 CardExpiringMedicines.TrendText = "Expiring within 30 days";
@@ -245,7 +307,6 @@ namespace RosalEHealthcare.UI.WPF.Views
                 var statusData = _dashboardService.GetAppointmentStatusDistribution();
                 var percentages = _dashboardService.GetAppointmentStatusPercentages();
 
-                // Update legend text
                 TxtConfirmedPercent.Text = $"Confirmed ({percentages.GetValueOrDefault("CONFIRMED", 0)}%)";
                 TxtPendingPercent.Text = $"Pending ({percentages.GetValueOrDefault("PENDING", 0)}%)";
                 TxtCancelledPercent.Text = $"Cancelled ({percentages.GetValueOrDefault("CANCELLED", 0)}%)";
@@ -258,32 +319,28 @@ namespace RosalEHealthcare.UI.WPF.Views
                         Title = "Confirmed",
                         Values = new ChartValues<int> { statusData.GetValueOrDefault("CONFIRMED", 0) },
                         Fill = new SolidColorBrush(Color.FromRgb(76, 175, 80)),
-                        DataLabels = false,
-                        PushOut = 0
+                        DataLabels = false
                     },
                     new PieSeries
                     {
                         Title = "Pending",
                         Values = new ChartValues<int> { statusData.GetValueOrDefault("PENDING", 0) },
                         Fill = new SolidColorBrush(Color.FromRgb(255, 193, 7)),
-                        DataLabels = false,
-                        PushOut = 0
+                        DataLabels = false
                     },
                     new PieSeries
                     {
                         Title = "Cancelled",
                         Values = new ChartValues<int> { statusData.GetValueOrDefault("CANCELLED", 0) },
                         Fill = new SolidColorBrush(Color.FromRgb(244, 67, 54)),
-                        DataLabels = false,
-                        PushOut = 0
+                        DataLabels = false
                     },
                     new PieSeries
                     {
                         Title = "Completed",
                         Values = new ChartValues<int> { statusData.GetValueOrDefault("COMPLETED", 0) },
                         Fill = new SolidColorBrush(Color.FromRgb(33, 150, 243)),
-                        DataLabels = false,
-                        PushOut = 0
+                        DataLabels = false
                     }
                 };
 
@@ -291,7 +348,7 @@ namespace RosalEHealthcare.UI.WPF.Views
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine($"Error loading appointment status chart: {ex.Message}");
+                System.Diagnostics.Debug.WriteLine($"Error loading appointment chart: {ex.Message}");
             }
         }
 
@@ -320,32 +377,26 @@ namespace RosalEHealthcare.UI.WPF.Views
 
         private void UpdatePaginationUI()
         {
-            // Update showing info text
             int startRecord = ((_currentPage - 1) * _pageSize) + 1;
             int endRecord = Math.Min(_currentPage * _pageSize, _totalRecords);
             TxtShowingInfo.Text = $"    Showing {startRecord}-{endRecord} of {_totalRecords:N0} patients";
 
-            // Update page buttons
             BtnPrevPage.IsEnabled = _currentPage > 1;
             BtnNextPage.IsEnabled = _currentPage < _totalPages;
 
-            // Update page number buttons
             UpdatePageButtons();
 
-            // Update last page button
             BtnPageLast.Content = _totalPages.ToString();
             BtnPageLast.Visibility = _totalPages > 3 ? Visibility.Visible : Visibility.Collapsed;
         }
 
         private void UpdatePageButtons()
         {
-            // Reset all to default style
             BtnPage1.Style = (Style)FindResource("PaginationButton");
             BtnPage2.Style = (Style)FindResource("PaginationButton");
             BtnPage3.Style = (Style)FindResource("PaginationButton");
             BtnPageLast.Style = (Style)FindResource("PaginationButton");
 
-            // Set page numbers
             if (_totalPages <= 3)
             {
                 BtnPage1.Content = "1";
@@ -377,7 +428,6 @@ namespace RosalEHealthcare.UI.WPF.Views
                 }
             }
 
-            // Highlight current page
             if (BtnPage1.Content.ToString() == _currentPage.ToString())
                 BtnPage1.Style = (Style)FindResource("PaginationButtonActive");
             else if (BtnPage2.Content.ToString() == _currentPage.ToString())
@@ -390,20 +440,12 @@ namespace RosalEHealthcare.UI.WPF.Views
 
         private void PrevPage_Click(object sender, RoutedEventArgs e)
         {
-            if (_currentPage > 1)
-            {
-                _currentPage--;
-                LoadConsultations();
-            }
+            if (_currentPage > 1) { _currentPage--; LoadConsultations(); }
         }
 
         private void NextPage_Click(object sender, RoutedEventArgs e)
         {
-            if (_currentPage < _totalPages)
-            {
-                _currentPage++;
-                LoadConsultations();
-            }
+            if (_currentPage < _totalPages) { _currentPage++; LoadConsultations(); }
         }
 
         private void PageNumber_Click(object sender, RoutedEventArgs e)
@@ -411,11 +453,7 @@ namespace RosalEHealthcare.UI.WPF.Views
             var button = sender as Button;
             if (button != null && int.TryParse(button.Content.ToString(), out int page))
             {
-                if (page >= 1 && page <= _totalPages)
-                {
-                    _currentPage = page;
-                    LoadConsultations();
-                }
+                if (page >= 1 && page <= _totalPages) { _currentPage = page; LoadConsultations(); }
             }
         }
 
@@ -425,68 +463,28 @@ namespace RosalEHealthcare.UI.WPF.Views
 
         private void Window_StateChanged(object sender, EventArgs e)
         {
-            if (this.WindowState == WindowState.Maximized)
-            {
-                btnMaximize.Content = "❐";
-                this.BorderThickness = new Thickness(0);
-            }
-            else if (this.WindowState == WindowState.Normal)
-            {
-                btnMaximize.Content = "□";
-                this.BorderThickness = new Thickness(0);
-            }
+            btnMaximize.Content = this.WindowState == WindowState.Maximized ? "❐" : "□";
+            this.BorderThickness = new Thickness(0);
         }
 
         private void TitleBar_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
         {
-            if (e.ClickCount == 2)
-            {
-                ToggleMaximize();
-            }
+            if (e.ClickCount == 2) ToggleMaximize();
             else if (e.ButtonState == MouseButtonState.Pressed)
-            {
-                try
-                {
-                    this.DragMove();
-                }
-                catch
-                {
-                    // Ignore exception when window is maximized
-                }
-            }
+                try { this.DragMove(); } catch { }
         }
 
-        private void btnMinimize_Click(object sender, RoutedEventArgs e)
-        {
-            this.WindowState = WindowState.Minimized;
-        }
-
-        private void btnMaximize_Click(object sender, RoutedEventArgs e)
-        {
-            ToggleMaximize();
-        }
-
-        private void btnClose_Click(object sender, RoutedEventArgs e)
-        {
-            Application.Current.Shutdown();
-        }
+        private void btnMinimize_Click(object sender, RoutedEventArgs e) => this.WindowState = WindowState.Minimized;
+        private void btnMaximize_Click(object sender, RoutedEventArgs e) => ToggleMaximize();
+        private void btnClose_Click(object sender, RoutedEventArgs e) => Application.Current.Shutdown();
 
         private void ToggleMaximize()
         {
-            if (this.WindowState == WindowState.Maximized)
-            {
-                this.WindowState = WindowState.Normal;
-                btnMaximize.Content = "□";
-            }
-            else
-            {
-                this.WindowState = WindowState.Maximized;
-                btnMaximize.Content = "❐";
-            }
+            this.WindowState = this.WindowState == WindowState.Maximized ? WindowState.Normal : WindowState.Maximized;
+            btnMaximize.Content = this.WindowState == WindowState.Maximized ? "❐" : "□";
         }
 
         #endregion
-
 
         #region Navigation
 
@@ -515,15 +513,10 @@ namespace RosalEHealthcare.UI.WPF.Views
             HideAllContent();
             DashboardPanel.Visibility = Visibility.Visible;
             SetActiveButton(BtnDashboard);
-
-            // Refresh dashboard data
             await LoadDashboardDataAsync();
         }
 
-        private void Dashboard_Click(object sender, RoutedEventArgs e)
-        {
-            ShowDashboard();
-        }
+        private void Dashboard_Click(object sender, RoutedEventArgs e) => ShowDashboard();
 
         private void PatientRecords_Click(object sender, RoutedEventArgs e)
         {
@@ -572,152 +565,26 @@ namespace RosalEHealthcare.UI.WPF.Views
 
         #endregion
 
-        #region Notifications
-        private void InitializeNotifications()
-        {
-            try
-            {
-                var currentUser = SessionManager.CurrentUser;
-                if (currentUser != null)
-                {
-                    // Initialize the notification bell
-                    NotificationBell.Initialize(
-                        currentUser.Username,
-                        currentUser.Role,
-                        ToastContainer
-                    );
-
-                    // Handle navigation requests from notifications
-                    NotificationBell.OnNavigateRequested += NavigateToSection;
-                }
-            }
-            catch (Exception ex)
-            {
-                System.Diagnostics.Debug.WriteLine($"Error initializing notifications: {ex.Message}");
-            }
-        }
-
-        // ADD these missing navigation methods:
-
-        private void PatientManagement_Click(object sender, RoutedEventArgs e)
-        {
-            PatientRecords_Click(sender, e);
-        }
-
-        private void Appointments_Click(object sender, RoutedEventArgs e)
-        {
-            AppointmentLists_Click(sender, e);
-        }
-
-        private void MedicineInventory_Click(object sender, RoutedEventArgs e)
-        {
-            // If doctor has medicine inventory view, navigate to it
-            // Otherwise show a message or do nothing
-            MessageBox.Show("Medicine Inventory view.", "Info", MessageBoxButton.OK, MessageBoxImage.Information);
-        }
-
-        /// <summary>
-        /// Navigate to a section based on notification action URL
-        /// </summary>
-        private void NavigateToSection(string section)
-        {
-            try
-            {
-                switch (section)
-                {
-                    case "Dashboard":
-                        Dashboard_Click(null, null);
-                        break;
-                    case "PatientManagement":
-                    case "Patients":
-                        PatientManagement_Click(null, null);
-                        break;
-                    case "Appointments":
-                        Appointments_Click(null, null);
-                        break;
-                    case "MedicineInventory":
-                    case "Medicines":
-                        MedicineInventory_Click(null, null);
-                        break;
-                    case "Prescriptions":
-                        // If you have prescriptions view
-                        // Prescriptions_Click(null, null);
-                        break;
-                    case "Settings":
-                    case "SystemSettings":
-                        Settings_Click(null, null);
-                        break;
-                    default:
-                        Dashboard_Click(null, null);
-                        break;
-                }
-            }
-            catch (Exception ex)
-            {
-                System.Diagnostics.Debug.WriteLine($"Error navigating to section: {ex.Message}");
-            }
-        }
-        #endregion
-
-        protected override void OnClosing(System.ComponentModel.CancelEventArgs e)
-        {
-            // Check if we're already in the process of closing via logout
-            if (Application.Current.MainWindow != this)
-            {
-                // Allow close without prompting (logout animation is handling it)
-                e.Cancel = false;
-                return;
-            }
-
-            // Cancel the default close
-            e.Cancel = true;
-
-            // Show exit animation instead
-            LogoutHelper.ExitApplication(this);
-
-            NotificationBell?.Stop();
-
-            base.OnClosing(e);
-        }
-
         #region Actions
 
-        private void Logout_Click(object sender, RoutedEventArgs e)
-        {
-            LogoutHelper.Logout(this);
-        }
-
-        private void Notification_Click(object sender, RoutedEventArgs e)
-        {
-            // TODO: Show notifications popup or navigate to notifications page
-            MessageBox.Show("Notifications feature coming soon!", "Notifications",
-                MessageBoxButton.OK, MessageBoxImage.Information);
-        }
+        private void Logout_Click(object sender, RoutedEventArgs e) => LogoutHelper.Logout(this);
 
         private void ViewRecord_Click(object sender, RoutedEventArgs e)
         {
             var button = sender as Button;
             if (button?.Tag != null && int.TryParse(button.Tag.ToString(), out int recordId))
             {
-                // Navigate to patient record or show details dialog
                 var consultation = _medicalHistoryService.GetById(recordId);
                 if (consultation != null)
                 {
-                    // Show view dialog or navigate to patient records
-                    MessageBox.Show($"View record for consultation ID: {recordId}\n" +
-                                    $"Patient: {consultation.Patient?.FullName}\n" +
-                                    $"Diagnosis: {consultation.Diagnosis}\n" +
-                                    $"Date: {consultation.VisitDate:MMM dd, yyyy}",
-                                    "Consultation Details",
-                                    MessageBoxButton.OK,
-                                    MessageBoxImage.Information);
+                    MessageBox.Show($"Consultation ID: {recordId}\nPatient: {consultation.Patient?.FullName}\nDiagnosis: {consultation.Diagnosis}\nDate: {consultation.VisitDate:MMM dd, yyyy}",
+                        "Consultation Details", MessageBoxButton.OK, MessageBoxImage.Information);
                 }
             }
         }
 
         private void AppointmentStatusChart_DataClick(object sender, ChartPoint chartPoint)
         {
-            // Handle chart click if needed
             System.Diagnostics.Debug.WriteLine($"Clicked: {chartPoint.SeriesView.Title} - Value: {chartPoint.Y}");
         }
 
@@ -725,24 +592,25 @@ namespace RosalEHealthcare.UI.WPF.Views
 
         #region Helper Methods
 
-        private void ShowLoading(bool show)
-        {
-            LoadingOverlay.Visibility = show ? Visibility.Visible : Visibility.Collapsed;
-        }
+        private void ShowLoading(bool show) => LoadingOverlay.Visibility = show ? Visibility.Visible : Visibility.Collapsed;
 
         #endregion
 
         #region Cleanup
 
-        protected override void OnClosed(EventArgs e)
+        protected override void OnClosing(System.ComponentModel.CancelEventArgs e)
         {
-            base.OnClosed(e);
-            _db?.Dispose();
+            if (Application.Current.MainWindow != this) { e.Cancel = false; return; }
+            e.Cancel = true;
+            LogoutHelper.ExitApplication(this);
+            NotificationBell?.Stop();
+            base.OnClosing(e);
         }
+
+        protected override void OnClosed(EventArgs e) { base.OnClosed(e); _db?.Dispose(); }
 
         #endregion
     }
-
 
     #region Extension Methods
 
