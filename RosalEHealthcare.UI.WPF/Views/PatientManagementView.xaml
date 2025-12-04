@@ -38,10 +38,46 @@
             </Grid.RowDefinitions>
 
             <UniformGrid Grid.Row="0" Columns="4" Margin="0,0,0,24">
-                <controls:SummaryCard x:Name="CardTotalPatients" Title="Total Patients" Value="0" Icon="👥" TopColor="#4CAF50" IconBackground="#E8F5E9" Margin="0,0,16,0"/>
-                <controls:SummaryCard x:Name="CardTodayAppointments" Title="Today's Visits" Value="0" Icon="📅" TopColor="#2196F3" IconBackground="#E3F2FD" Margin="0,0,16,0"/>
-                <controls:SummaryCard x:Name="CardPendingAppointments" Title="Pending Checkups" Value="0" Icon="⏳" TopColor="#FF9800" IconBackground="#FFF3E0" Margin="0,0,16,0"/>
-                <controls:SummaryCard x:Name="CardNewPatients" Title="New (This Month)" Value="0" Icon="➕" TopColor="#9C27B0" IconBackground="#F3E5F5" TrendText="Growth" TrendColor="#9C27B0" TrendIcon="📈" Margin="0"/>
+                <controls:SummaryCard x:Name="CardTotalPatients" 
+                                      Title="Total Patients" 
+                                      Value="0" 
+                                      Icon="👥" 
+                                      TopColor="#4CAF50" 
+                                      IconBackground="#E8F5E9" 
+                                      TrendText="Total Registered" 
+                                      TrendColor="#4CAF50" 
+                                      Margin="0,0,16,0"/>
+
+                <controls:SummaryCard x:Name="CardTodayAppointments" 
+                                      Title="Today's Visits" 
+                                      Value="0" 
+                                      Icon="📅" 
+                                      TopColor="#2196F3" 
+                                      IconBackground="#E3F2FD" 
+                                      TrendText="Scheduled Today" 
+                                      TrendColor="#2196F3" 
+                                      Margin="0,0,16,0"/>
+
+                <controls:SummaryCard x:Name="CardPendingAppointments" 
+                                      Title="Pending Checkups" 
+                                      Value="0" 
+                                      Icon="⏳" 
+                                      TopColor="#FF9800" 
+                                      IconBackground="#FFF3E0" 
+                                      TrendText="Awaiting Action" 
+                                      TrendColor="#FF9800" 
+                                      Margin="0,0,16,0"/>
+
+                <controls:SummaryCard x:Name="CardNewPatients" 
+                                      Title="New (This Month)" 
+                                      Value="0" 
+                                      Icon="➕" 
+                                      TopColor="#9C27B0" 
+                                      IconBackground="#F3E5F5" 
+                                      TrendText="Monthly Growth" 
+                                      TrendColor="#9C27B0" 
+                                      TrendIcon="📈" 
+                                      Margin="0"/>
             </UniformGrid>
 
             <Grid Grid.Row="1" Margin="0,0,0,16">
@@ -285,5 +321,7 @@
                 </Grid>
             </materialDesign:Card>
         </Grid>
+
+        <Canvas x:Name="ToastContainer" IsHitTestVisible="False" HorizontalAlignment="Right" VerticalAlignment="Bottom" Margin="0,0,20,20" Panel.ZIndex="2000"/>
     </Grid>
 </UserControl>

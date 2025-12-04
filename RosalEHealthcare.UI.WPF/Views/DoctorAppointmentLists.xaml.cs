@@ -1,28 +1,48 @@
 ﻿using RosalEHealthcare.Core.Models;
 using RosalEHealthcare.Data.Contexts;
 using RosalEHealthcare.Data.Services;
-using RosalEHealthcare.UI.WPF.Controls;
+using RosalEHealthcare.UI.WPF.Helpers;
 using System;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
+using System.ComponentModel;
 using System.Linq;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Controls.Primitives;
+using System.Windows.Media;
+using System.Windows.Threading;
 
 namespace RosalEHealthcare.UI.WPF.Views
 {
-    public partial class DoctorAppointmentLists : UserControl
+    public partial class DoctorAppointmentLists : UserControl, INotifyPropertyChanged
     {
-        private readonly AppointmentService _svc;
         private readonly RosalEHealthcareDbContext _db;
+        private readonly AppointmentService _appointmentService;
+        private readonly PatientService _patientService;
+        private readonly NotificationService _notificationService;
+        private readonly DispatcherTimer _autoRefreshTimer;
 
-        // Temp vital signs storage
-        private string _tempBloodPressure;
-        private decimal? _tempTemperature;
-        private int? _tempHeartRate;
-        private int? _tempRespiratoryRate;
-        private decimal? _tempWeight;
-        private decimal? _tempHeight;
+        private ObservableCollection<Appointment> _allAppointments;
+        private ObservableCollection<Appointment> _displayedAppointments;
+        private string _currentTab = "Today";
+        private List<string> _activeStatusFilters;
+        private bool _isLoading;
+
+        public ObservableCollection<Appointment> DisplayedAppointments
+        {
+            get => _displayedAppointments;
+            set
+            {
+                _displayedAppointments = value;
+                OnPropertyChanged(nameof(DisplayedAppointments));
+            }
+        }
+
+        public event PropertyChangedEventHandler PropertyChanged;
+        protected void OnPropertyChanged(string propertyName) =>
+            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
 
         public DoctorAppointmentLists()
         {
@@ -31,151 +51,627 @@ namespace RosalEHealthcare.UI.WPF.Views
             try
             {
                 _db = new RosalEHealthcareDbContext();
-                _svc = new AppointmentService(_db);
-                Loaded += (s, e) => LoadAppointmentsAsync();
+                _appointmentService = new AppointmentService(_db);
+                _patientService = new PatientService(_db);
+                _notificationService = new NotificationService(_db);
+
+                _allAppointments = new ObservableCollection<Appointment>();
+                _displayedAppointments = new ObservableCollection<Appointment>();
+                _activeStatusFilters = new List<string> { "PENDING", "CONFIRMED", "IN_PROGRESS" };
+
+                DataContext = this;
+
+                // Auto-refresh timer (every 30 seconds)
+                _autoRefreshTimer = new DispatcherTimer
+                {
+                    Interval = TimeSpan.FromSeconds(30)
+                };
+                _autoRefreshTimer.Tick += AutoRefreshTimer_Tick;
+
+                Loaded += DoctorAppointmentLists_Loaded;
+                Unloaded += DoctorAppointmentLists_Unloaded;
+                SizeChanged += DoctorAppointmentLists_SizeChanged;
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"Error initializing:\n{ex.Message}", "Error",
-                    MessageBoxButton.OK, MessageBoxImage.Error);
-            }
-        }
-
-        private async void LoadAppointmentsAsync(string search = "", string status = "", string type = "", DateTime? date = null)
-        {
-            try
-            {
-                var list = await Task.Run(() => _svc.GetAllAppointments());
-
-                var filtered = list.Where(a =>
-                    (string.IsNullOrEmpty(search) ||
-                     (a.PatientName != null && a.PatientName.IndexOf(search, StringComparison.OrdinalIgnoreCase) >= 0)) &&
-                    (status == "All Status" || string.IsNullOrEmpty(status) ||
-                     (a.Status != null && a.Status.Equals(status, StringComparison.OrdinalIgnoreCase))) &&
-                    (type == "All Types" || string.IsNullOrEmpty(type) ||
-                     (a.Type != null && a.Type.Equals(type, StringComparison.OrdinalIgnoreCase))) &&
-                    (!date.HasValue || a.Time.Date == date.Value.Date)
-                ).OrderByDescending(a => a.Time).ToList();
-
-                UpdateSummaryCounts(list);
-
-                wpAppointments.Children.Clear();
-                foreach (var appt in filtered)
-                {
-                    var card = new AppointmentCard();
-                    card.SetAppointment(appt);
-
-                    card.ConfirmClicked += Card_ConfirmClicked;
-                    card.StartConsultationClicked += Card_StartConsultationClicked;
-                    card.CompleteClicked += Card_CompleteClicked;
-                    card.ViewDetailsClicked += Card_ViewDetailsClicked;
-                    card.CancelClicked += Card_CancelClicked;
-
-                    wpAppointments.Children.Add(card);
-                }
-
-                // Show empty state if no appointments
-                if (!filtered.Any())
-                {
-                    var emptyText = new TextBlock
-                    {
-                        Text = "No appointments found",
-                        FontSize = 16,
-                        Foreground = System.Windows.Media.Brushes.Gray,
-                        HorizontalAlignment = HorizontalAlignment.Center,
-                        Margin = new Thickness(0, 50, 0, 0)
-                    };
-                    wpAppointments.Children.Add(emptyText);
-                }
-            }
-            catch (Exception ex)
-            {
-                MessageBox.Show($"Error loading appointments:\n{ex.Message}",
+                MessageBox.Show($"Error initializing Appointment Lists:\n{ex.Message}",
                     "Error", MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
 
-        private void UpdateSummaryCounts(IEnumerable<Appointment> appointments)
+        private void DoctorAppointmentLists_Loaded(object sender, RoutedEventArgs e)
         {
-            var completed = appointments.Count(a => a.Status == "COMPLETED");
-            var confirmed = appointments.Count(a => a.Status == "CONFIRMED");
-            var inProgress = appointments.Count(a => a.Status == "IN_PROGRESS");
-            var pending = appointments.Count(a => a.Status == "PENDING");
-            var cancelled = appointments.Count(a => a.Status == "CANCELLED");
-
-            CardCompleted.Value = completed.ToString();
-            CardConfirmed.Value = (confirmed + inProgress).ToString();
-            CardPending.Value = pending.ToString();
-            CardCancelled.Value = cancelled.ToString();
-
-            CardCompleted.TrendText = "Consultations done";
-            CardConfirmed.TrendText = inProgress > 0 ? $"{inProgress} in progress" : "Ready to start";
-            CardPending.TrendText = "Awaiting confirmation";
-            CardCancelled.TrendText = "Cancelled";
+            LoadAppointments();
+            _autoRefreshTimer.Start();
+            UpdateResponsiveLayout();
         }
 
-        #region Filter Events
+        private void DoctorAppointmentLists_Unloaded(object sender, RoutedEventArgs e)
+        {
+            _autoRefreshTimer.Stop();
+        }
+
+        private void DoctorAppointmentLists_SizeChanged(object sender, SizeChangedEventArgs e)
+        {
+            UpdateResponsiveLayout();
+        }
+
+        private void AutoRefreshTimer_Tick(object sender, EventArgs e)
+        {
+            RefreshAppointmentsQuietly();
+        }
+
+        #region Responsive Layout
+
+        private void UpdateResponsiveLayout()
+        {
+            // Get the actual width of the scroll viewer
+            double availableWidth = scrollViewer.ActualWidth - 40; // Account for padding
+
+            if (availableWidth <= 0) return;
+
+            // Card width is 360 + 15 margin = 375
+            int cardWidth = 375;
+            int columns = Math.Max(1, (int)(availableWidth / cardWidth));
+
+            // Limit to 3 columns max for readability
+            columns = Math.Min(columns, 3);
+
+            // Update card widths based on available space
+            double actualCardWidth = (availableWidth - (columns - 1) * 15) / columns;
+            actualCardWidth = Math.Max(320, Math.Min(actualCardWidth, 400)); // Clamp between 320-400
+
+            // Update subtitle with layout info
+            txtSubtitle.Text = $"{_currentTab}'s Schedule • {DisplayedAppointments?.Count ?? 0} appointments";
+        }
+
+        #endregion
+
+        #region Data Loading
+
+        private async void LoadAppointments()
+        {
+            try
+            {
+                ShowLoading(true);
+
+                var appointments = await Task.Run(() =>
+                {
+                    var query = _db.Appointments
+                        .Include("Patient")
+                        .OrderBy(a => a.Time)
+                        .ToList();
+
+                    // Populate PatientName for display
+                    foreach (var apt in query)
+                    {
+                        if (apt.Patient != null)
+                        {
+                            apt.PatientName = apt.Patient.FullName;
+                        }
+                        else if (!string.IsNullOrEmpty(apt.PatientName))
+                        {
+                            // Keep existing PatientName (walk-in)
+                        }
+                        else
+                        {
+                            apt.PatientName = "Walk-in Patient";
+                        }
+                    }
+
+                    return query;
+                });
+
+                _allAppointments.Clear();
+                foreach (var apt in appointments)
+                {
+                    _allAppointments.Add(apt);
+                }
+
+                ApplyFilters();
+                UpdateStatistics();
+                ShowLoading(false);
+            }
+            catch (Exception ex)
+            {
+                ShowLoading(false);
+                MessageBox.Show($"Error loading appointments:\n{ex.Message}",
+                    "Database Error", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+        }
+
+        private async void RefreshAppointmentsQuietly()
+        {
+            try
+            {
+                var appointments = await Task.Run(() =>
+                {
+                    var query = _db.Appointments
+                        .Include("Patient")
+                        .OrderBy(a => a.Time)
+                        .ToList();
+
+                    foreach (var apt in query)
+                    {
+                        if (apt.Patient != null)
+                            apt.PatientName = apt.Patient.FullName;
+                        else if (string.IsNullOrEmpty(apt.PatientName))
+                            apt.PatientName = "Walk-in Patient";
+                    }
+
+                    return query;
+                });
+
+                // Check for changes
+                bool hasChanges = appointments.Count != _allAppointments.Count ||
+                    appointments.Any(a => !_allAppointments.Any(existing =>
+                        existing.Id == a.Id && existing.Status == a.Status));
+
+                if (hasChanges)
+                {
+                    _allAppointments.Clear();
+                    foreach (var apt in appointments)
+                    {
+                        _allAppointments.Add(apt);
+                    }
+
+                    ApplyFilters();
+                    UpdateStatistics();
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Silent refresh error: {ex.Message}");
+            }
+        }
+
+        private void ApplyFilters()
+        {
+            var filtered = _allAppointments.AsEnumerable();
+
+            // Apply tab filter
+            var today = DateTime.Today;
+            switch (_currentTab)
+            {
+                case "Today":
+                    filtered = filtered.Where(a => a.Time.Date == today);
+                    break;
+                case "Upcoming":
+                    filtered = filtered.Where(a => a.Time.Date > today);
+                    break;
+                case "Past":
+                    filtered = filtered.Where(a => a.Time.Date < today);
+                    break;
+                case "All":
+                default:
+                    // No date filter
+                    break;
+            }
+
+            // Apply status filters
+            if (_activeStatusFilters.Any())
+            {
+                filtered = filtered.Where(a => _activeStatusFilters.Contains(a.Status));
+            }
+
+            // Apply search filter
+            var searchText = txtSearch?.Text?.Trim().ToLower() ?? "";
+            if (!string.IsNullOrEmpty(searchText))
+            {
+                filtered = filtered.Where(a =>
+                    (a.PatientName?.ToLower().Contains(searchText) ?? false) ||
+                    (a.AppointmentId?.ToLower().Contains(searchText) ?? false) ||
+                    (a.Condition?.ToLower().Contains(searchText) ?? false) ||
+                    (a.Type?.ToLower().Contains(searchText) ?? false)
+                );
+            }
+
+            // Sort by time
+            filtered = _currentTab == "Past"
+                ? filtered.OrderByDescending(a => a.Time)
+                : filtered.OrderBy(a => a.Time);
+
+            DisplayedAppointments.Clear();
+            foreach (var apt in filtered)
+            {
+                DisplayedAppointments.Add(apt);
+            }
+
+            // Render cards
+            RenderAppointmentCards();
+
+            // Update empty state
+            pnlEmptyState.Visibility = DisplayedAppointments.Count == 0
+                ? Visibility.Visible
+                : Visibility.Collapsed;
+
+            txtEmptyMessage.Text = _currentTab == "Today"
+                ? "No appointments scheduled for today."
+                : "There are no appointments matching your filters.";
+
+            UpdateResponsiveLayout();
+        }
+
+        private void RenderAppointmentCards()
+        {
+            icAppointments.Items.Clear();
+
+            foreach (var appointment in DisplayedAppointments)
+            {
+                var card = CreateAppointmentCard(appointment);
+                icAppointments.Items.Add(card);
+            }
+        }
+
+        private Border CreateAppointmentCard(Appointment appointment)
+        {
+            // Main card border
+            var card = new Border
+            {
+                Background = new SolidColorBrush(Color.FromRgb(250, 250, 250)),
+                CornerRadius = new CornerRadius(10),
+                Margin = new Thickness(0, 0, 15, 15),
+                BorderThickness = new Thickness(1),
+                BorderBrush = new SolidColorBrush(Color.FromRgb(232, 232, 232)),
+                Width = 360,
+                MinHeight = 200,
+                Effect = new System.Windows.Media.Effects.DropShadowEffect
+                {
+                    Color = Colors.Black,
+                    BlurRadius = 6,
+                    ShadowDepth = 1,
+                    Opacity = 0.06
+                },
+                Tag = appointment
+            };
+
+            var mainGrid = new Grid();
+            mainGrid.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
+            mainGrid.RowDefinitions.Add(new RowDefinition { Height = new GridLength(1, GridUnitType.Star) });
+            mainGrid.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
+
+            // Status Header
+            var statusHeader = CreateStatusHeader(appointment);
+            Grid.SetRow(statusHeader, 0);
+            mainGrid.Children.Add(statusHeader);
+
+            // Content
+            var content = CreateCardContent(appointment);
+            Grid.SetRow(content, 1);
+            mainGrid.Children.Add(content);
+
+            // Actions
+            var actions = CreateActionButtons(appointment);
+            Grid.SetRow(actions, 2);
+            mainGrid.Children.Add(actions);
+
+            card.Child = mainGrid;
+            return card;
+        }
+
+        private Border CreateStatusHeader(Appointment appointment)
+        {
+            var statusColor = GetStatusColor(appointment.Status);
+
+            var header = new Border
+            {
+                Background = new SolidColorBrush(statusColor),
+                CornerRadius = new CornerRadius(10, 10, 0, 0),
+                Padding = new Thickness(15, 12, 15, 12)
+            };
+
+            var grid = new Grid();
+            grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
+            grid.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
+
+            // Time
+            var timePanel = new StackPanel { Orientation = Orientation.Horizontal };
+            timePanel.Children.Add(new MaterialDesignThemes.Wpf.PackIcon
+            {
+                Kind = MaterialDesignThemes.Wpf.PackIconKind.Clock,
+                Width = 16,
+                Height = 16,
+                Foreground = Brushes.White,
+                VerticalAlignment = VerticalAlignment.Center
+            });
+            timePanel.Children.Add(new TextBlock
+            {
+                Text = appointment.Time.ToString("hh:mm tt"),
+                FontSize = 15,
+                FontWeight = FontWeights.SemiBold,
+                Foreground = Brushes.White,
+                Margin = new Thickness(8, 0, 0, 0)
+            });
+            Grid.SetColumn(timePanel, 0);
+            grid.Children.Add(timePanel);
+
+            // Status Badge
+            var statusBadge = new Border
+            {
+                Background = Brushes.White,
+                CornerRadius = new CornerRadius(4),
+                Padding = new Thickness(8, 4, 8, 4),
+                Opacity = 0.9
+            };
+            statusBadge.Child = new TextBlock
+            {
+                Text = FormatStatus(appointment.Status),
+                FontSize = 11,
+                FontWeight = FontWeights.Bold,
+                Foreground = new SolidColorBrush(Color.FromRgb(51, 51, 51))
+            };
+            Grid.SetColumn(statusBadge, 1);
+            grid.Children.Add(statusBadge);
+
+            header.Child = grid;
+            return header;
+        }
+
+        private StackPanel CreateCardContent(Appointment appointment)
+        {
+            var content = new StackPanel { Margin = new Thickness(15, 12, 15, 10) };
+
+            // Patient Info
+            var patientGrid = new Grid { Margin = new Thickness(0, 0, 0, 12) };
+            patientGrid.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
+            patientGrid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
+
+            // Avatar
+            var avatarGrid = new Grid { Width = 42, Height = 42, Margin = new Thickness(0, 0, 12, 0) };
+            avatarGrid.Children.Add(new System.Windows.Shapes.Ellipse
+            {
+                Fill = new SolidColorBrush(Color.FromRgb(76, 175, 80))
+            });
+            var initials = GetInitials(appointment.PatientName ?? "W P");
+            avatarGrid.Children.Add(new TextBlock
+            {
+                Text = initials,
+                Foreground = Brushes.White,
+                FontWeight = FontWeights.Bold,
+                FontSize = 14,
+                HorizontalAlignment = HorizontalAlignment.Center,
+                VerticalAlignment = VerticalAlignment.Center
+            });
+            Grid.SetColumn(avatarGrid, 0);
+            patientGrid.Children.Add(avatarGrid);
+
+            // Patient Name and ID
+            var namePanel = new StackPanel { VerticalAlignment = VerticalAlignment.Center };
+            namePanel.Children.Add(new TextBlock
+            {
+                Text = appointment.PatientName ?? "Walk-in Patient",
+                FontSize = 15,
+                FontWeight = FontWeights.SemiBold,
+                Foreground = new SolidColorBrush(Color.FromRgb(51, 51, 51)),
+                TextTrimming = TextTrimming.CharacterEllipsis
+            });
+            namePanel.Children.Add(new TextBlock
+            {
+                Text = appointment.AppointmentId,
+                FontSize = 11,
+                Foreground = new SolidColorBrush(Color.FromRgb(153, 153, 153)),
+                Margin = new Thickness(0, 2, 0, 0)
+            });
+            Grid.SetColumn(namePanel, 1);
+            patientGrid.Children.Add(namePanel);
+
+            content.Children.Add(patientGrid);
+
+            // Details
+            var details = new StackPanel { Margin = new Thickness(0, 0, 0, 8) };
+
+            // Type
+            details.Children.Add(CreateDetailRow(
+                MaterialDesignThemes.Wpf.PackIconKind.Stethoscope,
+                appointment.Type ?? "General Consultation"));
+
+            // Condition
+            details.Children.Add(CreateDetailRow(
+                MaterialDesignThemes.Wpf.PackIconKind.MedicalBag,
+                appointment.Condition ?? "Not specified"));
+
+            // Date
+            details.Children.Add(CreateDetailRow(
+                MaterialDesignThemes.Wpf.PackIconKind.CalendarClock,
+                appointment.Time.ToString("dddd, MMMM dd, yyyy")));
+
+            content.Children.Add(details);
+
+            return content;
+        }
+
+        private Grid CreateDetailRow(MaterialDesignThemes.Wpf.PackIconKind iconKind, string text)
+        {
+            var grid = new Grid { Margin = new Thickness(0, 0, 0, 6) };
+            grid.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
+            grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
+
+            var icon = new MaterialDesignThemes.Wpf.PackIcon
+            {
+                Kind = iconKind,
+                Width = 14,
+                Height = 14,
+                Foreground = new SolidColorBrush(Color.FromRgb(153, 153, 153)),
+                VerticalAlignment = VerticalAlignment.Center
+            };
+            Grid.SetColumn(icon, 0);
+            grid.Children.Add(icon);
+
+            var textBlock = new TextBlock
+            {
+                Text = text,
+                FontSize = 13,
+                Foreground = new SolidColorBrush(Color.FromRgb(102, 102, 102)),
+                Margin = new Thickness(8, 0, 0, 0),
+                TextTrimming = TextTrimming.CharacterEllipsis
+            };
+            Grid.SetColumn(textBlock, 1);
+            grid.Children.Add(textBlock);
+
+            return grid;
+        }
+
+        private Border CreateActionButtons(Appointment appointment)
+        {
+            var border = new Border
+            {
+                BorderBrush = new SolidColorBrush(Color.FromRgb(232, 232, 232)),
+                BorderThickness = new Thickness(0, 1, 0, 0),
+                Padding = new Thickness(12, 10, 12, 10)
+            };
+
+            var panel = new StackPanel
+            {
+                Orientation = Orientation.Horizontal,
+                HorizontalAlignment = HorizontalAlignment.Right
+            };
+
+            // Add buttons based on status
+            switch (appointment.Status)
+            {
+                case "PENDING":
+                    panel.Children.Add(CreateActionButton("Confirm", "#4CAF50", appointment, ConfirmAppointment_Click));
+                    panel.Children.Add(CreateActionButton("Cancel", "#F44336", appointment, CancelAppointment_Click));
+                    break;
+                case "CONFIRMED":
+                    panel.Children.Add(CreateActionButton("Start", "#9C27B0", appointment, StartConsultation_Click));
+                    panel.Children.Add(CreateActionButton("Cancel", "#F44336", appointment, CancelAppointment_Click));
+                    break;
+                case "IN_PROGRESS":
+                    panel.Children.Add(CreateActionButton("Complete", "#4CAF50", appointment, CompleteConsultation_Click));
+                    break;
+                case "COMPLETED":
+                    panel.Children.Add(CreateActionButton("View", "#2196F3", appointment, ViewDetails_Click));
+                    panel.Children.Add(CreateActionButton("Prescribe", "#FF9800", appointment, Prescribe_Click));
+                    break;
+                case "CANCELLED":
+                    panel.Children.Add(CreateActionButton("Reschedule", "#2196F3", appointment, Reschedule_Click));
+                    break;
+            }
+
+            border.Child = panel;
+            return border;
+        }
+
+        private Button CreateActionButton(string content, string colorHex, Appointment appointment, RoutedEventHandler handler)
+        {
+            var color = (Color)ColorConverter.ConvertFromString(colorHex);
+            var button = new Button
+            {
+                Content = content,
+                Background = new SolidColorBrush(color),
+                Foreground = Brushes.White,
+                BorderThickness = new Thickness(0),
+                Padding = new Thickness(12, 6, 12, 6),
+                FontSize = 12,
+                FontWeight = FontWeights.Medium,
+                Cursor = System.Windows.Input.Cursors.Hand,
+                Margin = new Thickness(0, 0, 8, 0),
+                Tag = appointment
+            };
+
+            button.Template = CreateButtonTemplate();
+            button.Click += handler;
+
+            return button;
+        }
+
+        private ControlTemplate CreateButtonTemplate()
+        {
+            var template = new ControlTemplate(typeof(Button));
+            var border = new FrameworkElementFactory(typeof(Border));
+            border.SetValue(Border.BackgroundProperty, new TemplateBindingExtension(Button.BackgroundProperty));
+            border.SetValue(Border.CornerRadiusProperty, new CornerRadius(4));
+            border.SetValue(Border.PaddingProperty, new TemplateBindingExtension(Button.PaddingProperty));
+
+            var contentPresenter = new FrameworkElementFactory(typeof(ContentPresenter));
+            contentPresenter.SetValue(ContentPresenter.HorizontalAlignmentProperty, HorizontalAlignment.Center);
+            contentPresenter.SetValue(ContentPresenter.VerticalAlignmentProperty, VerticalAlignment.Center);
+
+            border.AppendChild(contentPresenter);
+            template.VisualTree = border;
+
+            return template;
+        }
+
+        #endregion
+
+        #region Event Handlers
+
+        private void BtnRefresh_Click(object sender, RoutedEventArgs e)
+        {
+            LoadAppointments();
+        }
+
+        private void BtnTab_Click(object sender, RoutedEventArgs e)
+        {
+            var button = sender as Button;
+            if (button == null) return;
+
+            _currentTab = button.Tag?.ToString() ?? "Today";
+
+            // Update tab styles
+            btnTabToday.Style = (Style)Resources["TabButtonStyle"];
+            btnTabUpcoming.Style = (Style)Resources["TabButtonStyle"];
+            btnTabPast.Style = (Style)Resources["TabButtonStyle"];
+            btnTabAll.Style = (Style)Resources["TabButtonStyle"];
+
+            button.Style = (Style)Resources["TabButtonActiveStyle"];
+
+            ApplyFilters();
+        }
+
+        private void FilterStatus_Click(object sender, RoutedEventArgs e)
+        {
+            var toggleButton = sender as ToggleButton;
+            if (toggleButton == null) return;
+
+            var status = toggleButton.Tag?.ToString();
+            if (string.IsNullOrEmpty(status)) return;
+
+            if (toggleButton.IsChecked == true)
+            {
+                if (!_activeStatusFilters.Contains(status))
+                    _activeStatusFilters.Add(status);
+            }
+            else
+            {
+                _activeStatusFilters.Remove(status);
+            }
+
+            ApplyFilters();
+        }
 
         private void TxtSearch_TextChanged(object sender, TextChangedEventArgs e)
         {
             ApplyFilters();
         }
 
-        private void CbStatus_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        private void ConfirmAppointment_Click(object sender, RoutedEventArgs e)
         {
-            if (_svc != null) ApplyFilters();
-        }
+            var button = sender as Button;
+            var appointment = button?.Tag as Appointment;
+            if (appointment == null) return;
 
-        private void CbType_SelectionChanged(object sender, SelectionChangedEventArgs e)
-        {
-            if (_svc != null) ApplyFilters();
-        }
-
-        private void DpDate_SelectedDateChanged(object sender, SelectionChangedEventArgs e)
-        {
-            if (_svc != null) ApplyFilters();
-        }
-
-        private void ApplyFilters()
-        {
-            LoadAppointmentsAsync(
-                txtSearch?.Text ?? "",
-                (cbStatus?.SelectedItem as ComboBoxItem)?.Content?.ToString() ?? "",
-                (cbType?.SelectedItem as ComboBoxItem)?.Content?.ToString() ?? "",
-                dpDate?.SelectedDate
-            );
-        }
-
-        #endregion
-
-        #region Card Actions
-
-        private void Card_ConfirmClicked(object sender, Appointment appointment)
-        {
-            var result = MessageBox.Show(
-                $"Confirm appointment for {appointment.PatientName}?\n\n" +
-                $"Date: {appointment.Time:MMMM dd, yyyy}\n" +
-                $"Time: {appointment.Time:hh:mm tt}\n" +
-                $"Type: {appointment.Type}",
-                "Confirm Appointment",
-                MessageBoxButton.YesNo,
-                MessageBoxImage.Question);
-
-            if (result == MessageBoxResult.Yes)
+            try
             {
-                _svc.ConfirmAppointment(appointment.Id);
-                LoadAppointmentsAsync();
-
-                MessageBox.Show(
-                    "✓ Appointment confirmed!\n\n" +
-                    "The appointment status is now CONFIRMED.\n" +
-                    "Click 'Start Consultation' when the patient arrives.",
-                    "Success", MessageBoxButton.OK, MessageBoxImage.Information);
+                _appointmentService.ConfirmAppointment(appointment.Id);
+                LogActivity("Confirm Appointment", $"Confirmed appointment: {appointment.AppointmentId}");
+                LoadAppointments();
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Error confirming appointment:\n{ex.Message}",
+                    "Error", MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
 
-        private void Card_StartConsultationClicked(object sender, Appointment appointment)
+        private void StartConsultation_Click(object sender, RoutedEventArgs e)
         {
+            var button = sender as Button;
+            var appointment = button?.Tag as Appointment;
+            if (appointment == null) return;
+
             try
             {
                 var dialog = new StartConsultationDialog(appointment);
@@ -183,213 +679,331 @@ namespace RosalEHealthcare.UI.WPF.Views
 
                 if (dialog.ShowDialog() == true)
                 {
-                    // Store vital signs
-                    _tempBloodPressure = dialog.BloodPressure;
-                    _tempTemperature = dialog.Temperature;
-                    _tempHeartRate = dialog.HeartRate;
-                    _tempRespiratoryRate = dialog.RespiratoryRate;
-                    _tempWeight = dialog.Weight;
-                    _tempHeight = dialog.Height;
+                    // Start consultation with vital signs
+                    _appointmentService.StartConsultation(appointment.Id);
 
-                    LoadAppointmentsAsync();
+                    // If patient exists, create medical history record with vitals
+                    if (appointment.PatientId.HasValue)
+                    {
+                        var medicalHistory = new MedicalHistory
+                        {
+                            PatientId = appointment.PatientId.Value,
+                            AppointmentId = appointment.Id,
+                            VisitDate = DateTime.Now,
+                            VisitType = appointment.Type ?? "Consultation",
+                            BloodPressure = dialog.BloodPressure,
+                            Temperature = dialog.Temperature,
+                            HeartRate = dialog.HeartRate,
+                            RespiratoryRate = dialog.RespiratoryRate,
+                            Weight = dialog.Weight,
+                            Height = dialog.Height,
+                            DoctorName = SessionManager.CurrentUser?.FullName ?? "Doctor",
+                            CreatedAt = DateTime.Now
+                        };
 
-                    MessageBox.Show(
-                        $"✓ Consultation started for {appointment.PatientName}\n\n" +
-                        "The appointment status is now IN PROGRESS.\n\n" +
-                        "When finished, click 'Complete Consultation' to:\n" +
-                        "• Record diagnosis and treatment\n" +
-                        "• Save to medical history\n" +
-                        "• Optionally create a prescription",
-                        "Consultation Started",
-                        MessageBoxButton.OK,
-                        MessageBoxImage.Information);
+                        _db.MedicalHistories.Add(medicalHistory);
+                        _db.SaveChanges();
+                    }
+
+                    LogActivity("Start Consultation", $"Started consultation: {appointment.AppointmentId}");
+                    LoadAppointments();
                 }
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"Error: {ex.Message}", "Error",
-                    MessageBoxButton.OK, MessageBoxImage.Error);
+                MessageBox.Show($"Error starting consultation:\n{ex.Message}",
+                    "Error", MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
 
-        private void Card_CompleteClicked(object sender, Appointment appointment)
+        private void CompleteConsultation_Click(object sender, RoutedEventArgs e)
         {
+            var button = sender as Button;
+            var appointment = button?.Tag as Appointment;
+            if (appointment == null) return;
+
             try
             {
                 var dialog = new CompleteConsultationDialog(appointment);
                 dialog.Owner = Window.GetWindow(this);
 
-                // Pass vital signs
-                dialog.BloodPressure = _tempBloodPressure;
-                dialog.Temperature = _tempTemperature;
-                dialog.HeartRate = _tempHeartRate;
-                dialog.RespiratoryRate = _tempRespiratoryRate;
-                dialog.Weight = _tempWeight;
-                dialog.Height = _tempHeight;
-
                 if (dialog.ShowDialog() == true)
                 {
-                    // Clear temp vital signs
-                    ClearTempVitalSigns();
+                    // Complete the appointment
+                    _appointmentService.CompleteAppointment(appointment.Id);
 
-                    LoadAppointmentsAsync();
-
-                    // Build success message
-                    string message = "✓ Consultation completed successfully!\n\n";
-
+                    // Update medical history if exists
                     if (appointment.PatientId.HasValue)
-                        message += "• Medical history record saved\n";
-                    else
-                        message += "• Note: Patient not linked - no medical history saved\n";
+                    {
+                        var medicalHistory = _db.MedicalHistories
+                            .Where(m => m.AppointmentId == appointment.Id)
+                            .OrderByDescending(m => m.VisitDate)
+                            .FirstOrDefault();
+
+                        if (medicalHistory != null)
+                        {
+                            medicalHistory.Diagnosis = dialog.PrimaryDiagnosis;
+                            medicalHistory.Treatment = dialog.Treatment;
+                            medicalHistory.FollowUpRequired = dialog.ScheduleFollowUp;
+                            medicalHistory.NextFollowUpDate = dialog.FollowUpDate;
+                        }
+                        else
+                        {
+                            // Create new medical history
+                            medicalHistory = new MedicalHistory
+                            {
+                                PatientId = appointment.PatientId.Value,
+                                AppointmentId = appointment.Id,
+                                VisitDate = DateTime.Now,
+                                VisitType = appointment.Type ?? "Consultation",
+                                Diagnosis = dialog.PrimaryDiagnosis,
+                                Treatment = dialog.Treatment,
+                                DoctorName = SessionManager.CurrentUser?.FullName ?? "Doctor",
+                                FollowUpRequired = dialog.ScheduleFollowUp,
+                                NextFollowUpDate = dialog.FollowUpDate,
+                                CreatedAt = DateTime.Now
+                            };
+                            _db.MedicalHistories.Add(medicalHistory);
+                        }
+
+                        // Update patient's primary diagnosis
+                        var patient = _db.Patients.Find(appointment.PatientId.Value);
+                        if (patient != null)
+                        {
+                            patient.PrimaryDiagnosis = dialog.PrimaryDiagnosis;
+                            patient.SecondaryDiagnosis = dialog.SecondaryDiagnosis;
+                            patient.LastVisit = DateTime.Now;
+                        }
+
+                        _db.SaveChanges();
+                    }
+
+                    LogActivity("Complete Consultation", $"Completed consultation: {appointment.AppointmentId}");
+
+                    // Handle follow-up actions
+                    if (dialog.CreatePrescription)
+                    {
+                        OpenPrescriptionForAppointment(appointment);
+                    }
 
                     if (dialog.ScheduleFollowUp && dialog.FollowUpDate.HasValue)
-                        message += $"• Follow-up scheduled for {dialog.FollowUpDate.Value:MMMM dd, yyyy}\n";
-
-                    // Ask about prescription
-                    if (dialog.CreatePrescription && appointment.PatientId.HasValue)
                     {
-                        var result = MessageBox.Show(
-                            message + "\nWould you like to create a prescription now?",
-                            "Consultation Completed",
-                            MessageBoxButton.YesNo,
-                            MessageBoxImage.Information);
+                        ScheduleFollowUpAppointment(appointment, dialog.FollowUpDate.Value);
+                    }
 
-                        if (result == MessageBoxResult.Yes)
-                        {
-                            OpenPrescriptionWindow(appointment, dialog.PrimaryDiagnosis);
-                        }
-                    }
-                    else
-                    {
-                        MessageBox.Show(message, "Consultation Completed",
-                            MessageBoxButton.OK, MessageBoxImage.Information);
-                    }
+                    LoadAppointments();
                 }
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"Error: {ex.Message}", "Error",
-                    MessageBoxButton.OK, MessageBoxImage.Error);
+                MessageBox.Show($"Error completing consultation:\n{ex.Message}",
+                    "Error", MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
 
-        private void ClearTempVitalSigns()
+        private void CancelAppointment_Click(object sender, RoutedEventArgs e)
         {
-            _tempBloodPressure = null;
-            _tempTemperature = null;
-            _tempHeartRate = null;
-            _tempRespiratoryRate = null;
-            _tempWeight = null;
-            _tempHeight = null;
+            var button = sender as Button;
+            var appointment = button?.Tag as Appointment;
+            if (appointment == null) return;
+
+            var result = MessageBox.Show(
+                $"Are you sure you want to cancel this appointment?\n\nPatient: {appointment.PatientName}\nTime: {appointment.Time:g}",
+                "Confirm Cancellation",
+                MessageBoxButton.YesNo,
+                MessageBoxImage.Question);
+
+            if (result == MessageBoxResult.Yes)
+            {
+                try
+                {
+                    _appointmentService.UpdateStatus(appointment.Id, "CANCELLED");
+                    LogActivity("Cancel Appointment", $"Cancelled appointment: {appointment.AppointmentId}");
+                    LoadAppointments();
+                }
+                catch (Exception ex)
+                {
+                    MessageBox.Show($"Error cancelling appointment:\n{ex.Message}",
+                        "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                }
+            }
         }
 
-        private void OpenPrescriptionWindow(Appointment appointment, string diagnosis)
+        private void ViewDetails_Click(object sender, RoutedEventArgs e)
+        {
+            var button = sender as Button;
+            var appointment = button?.Tag as Appointment;
+            if (appointment == null) return;
+
+            // Get medical history for this appointment
+            var medicalHistory = _db.MedicalHistories
+                .FirstOrDefault(m => m.AppointmentId == appointment.Id);
+
+            if (medicalHistory != null)
+            {
+                var dialog = new ViewVisitDialog(medicalHistory);
+                dialog.Owner = Window.GetWindow(this);
+                dialog.ShowDialog();
+            }
+            else
+            {
+                MessageBox.Show("No detailed records found for this appointment.",
+                    "No Records", MessageBoxButton.OK, MessageBoxImage.Information);
+            }
+        }
+
+        private void Prescribe_Click(object sender, RoutedEventArgs e)
+        {
+            var button = sender as Button;
+            var appointment = button?.Tag as Appointment;
+            if (appointment == null) return;
+
+            OpenPrescriptionForAppointment(appointment);
+        }
+
+        private void Reschedule_Click(object sender, RoutedEventArgs e)
+        {
+            var button = sender as Button;
+            var appointment = button?.Tag as Appointment;
+            if (appointment == null) return;
+
+            MessageBox.Show("Reschedule functionality will open a date picker dialog.\n\nThis feature is pending implementation.",
+                "Reschedule", MessageBoxButton.OK, MessageBoxImage.Information);
+        }
+
+        #endregion
+
+        #region Helper Methods
+
+        private void OpenPrescriptionForAppointment(Appointment appointment)
         {
             try
             {
-                var patient = _db.Patients.Find(appointment.PatientId.Value);
-                if (patient == null)
-                {
-                    MessageBox.Show("Patient record not found.", "Error",
-                        MessageBoxButton.OK, MessageBoxImage.Warning);
-                    return;
-                }
-
                 var prescriptionView = new DoctorPrescriptionManagement();
 
-                // Try to set patient context if ViewModel exists
-                try
+                if (appointment.PatientId.HasValue)
                 {
-                    var viewModel = prescriptionView.DataContext as ViewModels.DoctorPrescriptionViewModel;
-                    if (viewModel != null)
+                    var patient = _db.Patients.Find(appointment.PatientId.Value);
+                    if (patient != null && prescriptionView.DataContext is ViewModels.DoctorPrescriptionViewModel viewModel)
                     {
                         viewModel.SelectedPatient = patient;
-                        viewModel.PrimaryDiagnosis = diagnosis;
                     }
                 }
-                catch { }
 
                 var window = new Window
                 {
-                    Title = $"New Prescription - {patient.FullName}",
+                    Title = $"New Prescription - {appointment.PatientName}",
                     Content = prescriptionView,
-                    Width = 1150,
+                    Width = 1200,
                     Height = 850,
                     WindowStartupLocation = WindowStartupLocation.CenterScreen,
-                    Owner = Window.GetWindow(this)
+                    Owner = Window.GetWindow(this),
+                    ResizeMode = ResizeMode.CanResize
                 };
 
                 window.ShowDialog();
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"Error opening prescription: {ex.Message}",
+                MessageBox.Show($"Error opening prescription:\n{ex.Message}",
                     "Error", MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
 
-        private void Card_ViewDetailsClicked(object sender, Appointment appointment)
+        private void ScheduleFollowUpAppointment(Appointment originalAppointment, DateTime followUpDate)
         {
-            var age = appointment.BirthDate.HasValue
-                ? (DateTime.Now.Year - appointment.BirthDate.Value.Year).ToString()
-                : "N/A";
-
-            string duration = "";
-            if (appointment.ConsultationStartedAt.HasValue && appointment.ConsultationCompletedAt.HasValue)
+            try
             {
-                var dur = appointment.ConsultationCompletedAt.Value - appointment.ConsultationStartedAt.Value;
-                duration = $"\n\n📊 Consultation Duration: {(int)dur.TotalMinutes} minutes";
+                var newAppointment = new Appointment
+                {
+                    PatientId = originalAppointment.PatientId,
+                    PatientName = originalAppointment.PatientName,
+                    Time = followUpDate,
+                    Type = "Follow-up",
+                    Condition = originalAppointment.Condition,
+                    Status = "PENDING",
+                    Notes = $"Follow-up from appointment {originalAppointment.AppointmentId}",
+                    CreatedBy = SessionManager.CurrentUser?.FullName ?? "Doctor",
+                    CreatedAt = DateTime.Now
+                };
+
+                _appointmentService.Add(newAppointment);
+                LogActivity("Schedule Follow-up", $"Scheduled follow-up for {originalAppointment.PatientName} on {followUpDate:d}");
             }
-
-            string patientLink = appointment.PatientId.HasValue
-                ? "✓ Linked to patient record"
-                : "⚠ Not linked to patient record";
-
-            MessageBox.Show(
-                $"══════════════════════════════════\n" +
-                $"         APPOINTMENT DETAILS\n" +
-                $"══════════════════════════════════\n\n" +
-                $"📋 Appointment ID: {appointment.AppointmentId}\n" +
-                $"📊 Status: {appointment.Status}\n" +
-                $"🔗 {patientLink}\n\n" +
-                $"──────────────────────────────────\n" +
-                $"         PATIENT INFORMATION\n" +
-                $"──────────────────────────────────\n\n" +
-                $"👤 Name: {appointment.PatientName}\n" +
-                $"🎂 Age: {age} years old\n" +
-                $"⚥ Gender: {appointment.Gender ?? "N/A"}\n" +
-                $"📞 Contact: {appointment.Contact}\n" +
-                $"📧 Email: {appointment.Email ?? "N/A"}\n" +
-                $"🏠 Address: {appointment.Address ?? "N/A"}\n\n" +
-                $"──────────────────────────────────\n" +
-                $"         APPOINTMENT INFO\n" +
-                $"──────────────────────────────────\n\n" +
-                $"📝 Type: {appointment.Type}\n" +
-                $"📅 Date: {appointment.Time:MMMM dd, yyyy}\n" +
-                $"⏰ Time: {appointment.Time:hh:mm tt}\n" +
-                $"🩺 Complaint: {appointment.Condition ?? "None specified"}" +
-                duration,
-                "Appointment Details",
-                MessageBoxButton.OK,
-                MessageBoxImage.Information);
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Error scheduling follow-up:\n{ex.Message}",
+                    "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
         }
 
-        private void Card_CancelClicked(object sender, Appointment appointment)
+        private void UpdateStatistics()
         {
-            var result = MessageBox.Show(
-                $"Cancel appointment for {appointment.PatientName}?\n\n" +
-                $"Date: {appointment.Time:MMMM dd, yyyy hh:mm tt}\n\n" +
-                "⚠ This action cannot be undone.",
-                "Cancel Appointment",
-                MessageBoxButton.YesNo,
-                MessageBoxImage.Warning);
+            var today = DateTime.Today;
+            var todayAppointments = _allAppointments.Where(a => a.Time.Date == today).ToList();
 
-            if (result == MessageBoxResult.Yes)
+            txtTotalCount.Text = todayAppointments.Count.ToString();
+            txtPendingCount.Text = todayAppointments.Count(a => a.Status == "PENDING" || a.Status == "CONFIRMED").ToString();
+            txtCompletedCount.Text = todayAppointments.Count(a => a.Status == "COMPLETED").ToString();
+        }
+
+        private void ShowLoading(bool show)
+        {
+            pnlLoading.Visibility = show ? Visibility.Visible : Visibility.Collapsed;
+            Cursor = show ? System.Windows.Input.Cursors.Wait : System.Windows.Input.Cursors.Arrow;
+        }
+
+        private Color GetStatusColor(string status)
+        {
+            return status switch
             {
-                _svc.UpdateStatus(appointment.Id, "CANCELLED");
-                LoadAppointmentsAsync();
-                MessageBox.Show("Appointment cancelled.", "Success",
-                    MessageBoxButton.OK, MessageBoxImage.Information);
+                "PENDING" => Color.FromRgb(255, 152, 0),
+                "CONFIRMED" => Color.FromRgb(33, 150, 243),
+                "IN_PROGRESS" => Color.FromRgb(156, 39, 176),
+                "COMPLETED" => Color.FromRgb(76, 175, 80),
+                "CANCELLED" => Color.FromRgb(244, 67, 54),
+                _ => Color.FromRgb(158, 158, 158)
+            };
+        }
+
+        private string FormatStatus(string status)
+        {
+            return status?.Replace("_", " ") ?? "UNKNOWN";
+        }
+
+        private string GetInitials(string name)
+        {
+            if (string.IsNullOrWhiteSpace(name)) return "??";
+
+            var parts = name.Split(new[] { ' ' }, StringSplitOptions.RemoveEmptyEntries);
+            if (parts.Length >= 2)
+                return $"{parts[0][0]}{parts[parts.Length - 1][0]}".ToUpper();
+            if (parts.Length == 1 && parts[0].Length >= 2)
+                return parts[0].Substring(0, 2).ToUpper();
+
+            return name.Substring(0, Math.Min(2, name.Length)).ToUpper();
+        }
+
+        private void LogActivity(string activityType, string description)
+        {
+            try
+            {
+                var log = new ActivityLog
+                {
+                    ActivityType = activityType,
+                    Description = description,
+                    Module = "Appointments",
+                    PerformedBy = SessionManager.CurrentUser?.FullName ?? "Unknown",
+                    PerformedByRole = SessionManager.CurrentUser?.Role ?? "Unknown",
+                    PerformedAt = DateTime.Now
+                };
+
+                _db.ActivityLogs.Add(log);
+                _db.SaveChanges();
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Logging error: {ex.Message}");
             }
         }
 

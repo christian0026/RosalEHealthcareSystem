@@ -1,5 +1,7 @@
 ﻿using RosalEHealthcare.Core.Models;
+using RosalEHealthcare.Data.Services;
 using System.Collections.Generic;
+using System.Linq;
 using System.Windows;
 using System.Windows.Input;
 using System.Windows.Media;
@@ -9,16 +11,54 @@ namespace RosalEHealthcare.UI.WPF.Views
     public partial class TemplateSelectionDialog : Window
     {
         private List<PrescriptionTemplate> _templates;
+        private readonly PrescriptionTemplateService _templateService;
+
         public PrescriptionTemplate SelectedTemplate { get; private set; }
 
+        // Constructor accepting PrescriptionTemplateService
+        public TemplateSelectionDialog(PrescriptionTemplateService templateService)
+        {
+            InitializeComponent();
+            _templateService = templateService;
+
+            // Load templates from service
+            LoadTemplates();
+        }
+
+        // Constructor accepting list of templates (for backward compatibility)
         public TemplateSelectionDialog(List<PrescriptionTemplate> templates)
         {
             InitializeComponent();
             _templates = templates;
         }
 
+        private void LoadTemplates()
+        {
+            try
+            {
+                _templates = _templateService.GetActiveTemplates()
+                    .OrderByDescending(t => t.UsageCount)
+                    .ThenBy(t => t.TemplateName)
+                    .ToList();
+            }
+            catch (System.Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Error loading templates: {ex.Message}");
+                _templates = new List<PrescriptionTemplate>();
+            }
+        }
+
         private void Window_Loaded(object sender, RoutedEventArgs e)
         {
+            if (_templates == null || _templates.Count == 0)
+            {
+                MessageBox.Show("No templates available.", "Templates",
+                    MessageBoxButton.OK, MessageBoxImage.Information);
+                DialogResult = false;
+                Close();
+                return;
+            }
+
             // Add severity color property for display
             var templatesWithColor = new List<object>();
             foreach (var template in _templates)
@@ -35,7 +75,6 @@ namespace RosalEHealthcare.UI.WPF.Views
                     Template = template
                 });
             }
-
             icTemplates.ItemsSource = templatesWithColor;
         }
 

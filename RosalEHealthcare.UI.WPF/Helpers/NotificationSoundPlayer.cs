@@ -1,183 +1,166 @@
 ﻿using System;
 using System.IO;
-using System.Windows.Media;
+using System.Media;
+using System.Windows;
 
 namespace RosalEHealthcare.UI.WPF.Helpers
 {
-    /// <summary>
-    /// Handles playing notification sounds
-    /// </summary>
     public static class NotificationSoundPlayer
     {
-        private static MediaPlayer _mediaPlayer;
-        private static bool _isInitialized = false;
         private static bool _soundEnabled = true;
+        private static SoundPlayer _notificationSound;
+        private static SoundPlayer _alertSound;
+        private static SoundPlayer _successSound;
 
-        // Sound file paths - UPDATE THESE FILE NAMES TO MATCH YOUR ACTUAL FILES
-        private static readonly string SoundFolder = Path.Combine(
-            AppDomain.CurrentDomain.BaseDirectory,
-            "Resources",
-            "Notification Sounds"
-        );
-
-        // Map priority to sound files - CHANGE THESE FILE NAMES TO YOUR ACTUAL FILES
-        private static readonly string UrgentSound = "new-notification-024-370048.mp3";  // For urgent notifications
-        private static readonly string HighSound = "new-notification-021-370045.mp3";    // For high priority
-        private static readonly string NormalSound = "new-notification-010-352755.mp3";  // For normal notifications
-        private static readonly string LowSound = "new-notification-022-370046.mp3";     // For low priority
-
-        /// <summary>
-        /// Initialize the sound player
-        /// </summary>
-        public static void Initialize()
+        public static bool SoundEnabled
         {
-            if (_isInitialized) return;
+            get => _soundEnabled;
+            set => _soundEnabled = value;
+        }
 
+        static NotificationSoundPlayer()
+        {
             try
             {
-                _mediaPlayer = new MediaPlayer();
-                _mediaPlayer.MediaFailed += (s, e) =>
-                {
-                    System.Diagnostics.Debug.WriteLine($"Media playback failed: {e.ErrorException?.Message}");
-                };
-                _isInitialized = true;
+                // Try to load custom sounds, fall back to system sounds
+                LoadSounds();
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine($"Failed to initialize sound player: {ex.Message}");
+                System.Diagnostics.Debug.WriteLine($"Sound initialization error: {ex.Message}");
             }
         }
 
-        /// <summary>
-        /// Enable or disable notification sounds
-        /// </summary>
-        public static void SetSoundEnabled(bool enabled)
+        private static void LoadSounds()
         {
-            _soundEnabled = enabled;
+            // Check for custom sound files in application directory
+            var appPath = AppDomain.CurrentDomain.BaseDirectory;
+            var soundsPath = Path.Combine(appPath, "Sounds");
+
+            if (Directory.Exists(soundsPath))
+            {
+                var notificationPath = Path.Combine(soundsPath, "notification.wav");
+                var alertPath = Path.Combine(soundsPath, "alert.wav");
+                var successPath = Path.Combine(soundsPath, "success.wav");
+
+                if (File.Exists(notificationPath))
+                    _notificationSound = new SoundPlayer(notificationPath);
+
+                if (File.Exists(alertPath))
+                    _alertSound = new SoundPlayer(alertPath);
+
+                if (File.Exists(successPath))
+                    _successSound = new SoundPlayer(successPath);
+            }
         }
 
-        /// <summary>
-        /// Check if sounds are enabled
-        /// </summary>
-        public static bool IsSoundEnabled => _soundEnabled;
-
-        /// <summary>
-        /// Play notification sound based on priority
-        /// </summary>
-        /// <param name="priority">urgent, high, normal, or low</param>
-        public static void PlaySound(string priority = "normal")
+        public static void PlayNotification()
         {
-            if (!_soundEnabled || !_isInitialized) return;
+            if (!_soundEnabled) return;
 
             try
             {
-                string soundFile;
-
-                switch (priority.ToLower())
+                if (_notificationSound != null)
                 {
-                    case "urgent":
-                        soundFile = UrgentSound;
-                        break;
-                    case "high":
-                        soundFile = HighSound;
-                        break;
-                    case "low":
-                        soundFile = LowSound;
-                        break;
-                    case "normal":
-                    default:
-                        soundFile = NormalSound;
-                        break;
-                }
-
-                string fullPath = Path.Combine(SoundFolder, soundFile);
-
-                if (File.Exists(fullPath))
-                {
-                    _mediaPlayer.Open(new Uri(fullPath, UriKind.Absolute));
-                    _mediaPlayer.Volume = 0.7; // 70% volume
-                    _mediaPlayer.Play();
+                    _notificationSound.Play();
                 }
                 else
                 {
-                    System.Diagnostics.Debug.WriteLine($"Sound file not found: {fullPath}");
                     // Fallback to system sound
-                    System.Media.SystemSounds.Asterisk.Play();
+                    SystemSounds.Asterisk.Play();
                 }
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine($"Error playing sound: {ex.Message}");
-                // Fallback to system sound
-                try { System.Media.SystemSounds.Asterisk.Play(); } catch { }
+                System.Diagnostics.Debug.WriteLine($"Play notification error: {ex.Message}");
             }
         }
 
-        /// <summary>
-        /// Play sound for a specific notification type
-        /// </summary>
-        public static void PlaySoundForType(string notificationType)
+        public static void PlayAlert()
         {
-            string priority;
+            if (!_soundEnabled) return;
 
-            switch (notificationType)
-            {
-                // Urgent sounds
-                case "SecurityAlert":
-                case "OutOfStock":
-                case "BackupFailed":
-                case "RestoreFailed":
-                case "AccountLocked":
-                    priority = "urgent";
-                    break;
-
-                // High priority sounds
-                case "AppointmentCancelled":
-                case "AppointmentCompleted":
-                case "LowStock":
-                case "ExpiringMedicine":
-                case "AppointmentReminder":
-                    priority = "high";
-                    break;
-
-                // Low priority sounds
-                case "PatientUpdated":
-                case "UserModified":
-                case "SettingsChanged":
-                case "BackupSuccess":
-                    priority = "low";
-                    break;
-
-                // Normal sounds for everything else
-                default:
-                    priority = "normal";
-                    break;
-            }
-
-            PlaySound(priority);
-        }
-
-        /// <summary>
-        /// Stop any currently playing sound
-        /// </summary>
-        public static void Stop()
-        {
             try
             {
-                _mediaPlayer?.Stop();
+                if (_alertSound != null)
+                {
+                    _alertSound.Play();
+                }
+                else
+                {
+                    // Fallback to system sound
+                    SystemSounds.Exclamation.Play();
+                }
             }
-            catch { }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Play alert error: {ex.Message}");
+            }
         }
 
-        /// <summary>
-        /// Set volume (0.0 to 1.0)
-        /// </summary>
-        public static void SetVolume(double volume)
+        public static void PlaySuccess()
         {
-            if (_mediaPlayer != null)
+            if (!_soundEnabled) return;
+
+            try
             {
-                _mediaPlayer.Volume = Math.Max(0, Math.Min(1, volume));
+                if (_successSound != null)
+                {
+                    _successSound.Play();
+                }
+                else
+                {
+                    // Fallback to system sound
+                    SystemSounds.Asterisk.Play();
+                }
             }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Play success error: {ex.Message}");
+            }
+        }
+
+        public static void PlayError()
+        {
+            if (!_soundEnabled) return;
+
+            try
+            {
+                SystemSounds.Hand.Play();
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Play error sound error: {ex.Message}");
+            }
+        }
+
+        public static void PlayWarning()
+        {
+            if (!_soundEnabled) return;
+
+            try
+            {
+                SystemSounds.Exclamation.Play();
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Play warning error: {ex.Message}");
+            }
+        }
+
+        public static void Mute()
+        {
+            _soundEnabled = false;
+        }
+
+        public static void Unmute()
+        {
+            _soundEnabled = true;
+        }
+
+        public static void Toggle()
+        {
+            _soundEnabled = !_soundEnabled;
         }
     }
 }
