@@ -815,17 +815,19 @@ namespace RosalEHealthcare.UI.WPF.Views
             var prescription = new Prescription
             {
                 PatientId = SelectedPatient.Id,
-                Patient = SelectedPatient,
+                PatientName = SelectedPatient.FullName,
                 PrimaryDiagnosis = txtPrimaryDiagnosis.Text,
                 SecondaryDiagnosis = txtSecondaryDiagnosis.Text,
                 ConditionSeverity = (cmbSeverity.SelectedItem as ComboBoxItem)?.Content?.ToString(),
                 SpecialInstructions = txtInstructions.Text,
                 FollowUpRequired = chkFollowUp.IsChecked == true,
                 NextAppointment = chkFollowUp.IsChecked == true ? dpFollowUp.SelectedDate : null,
+                PriorityLevel = (cmbPriority.SelectedItem as ComboBoxItem)?.Content?.ToString(),
                 CreatedBy = SessionManager.CurrentUser?.FullName ?? "Doctor",
                 CreatedAt = DateTime.Now,
                 Medicines = Medicines.Select(m => new PrescriptionMedicine
                 {
+                    MedicineId = m.MedicineId,
                     MedicineName = m.MedicineName,
                     Dosage = m.Dosage,
                     Frequency = m.Frequency,
@@ -842,13 +844,8 @@ namespace RosalEHealthcare.UI.WPF.Views
         {
             try
             {
-                // Ensure patient is attached
-                if (prescription.Patient == null && SelectedPatient != null)
-                {
-                    prescription.Patient = SelectedPatient;
-                }
-
-                var dialog = new PrescriptionPrintPreviewDialog(prescription);
+                // Pass both prescription and selected patient
+                var dialog = new PrescriptionPrintPreviewDialog(prescription, SelectedPatient);
                 dialog.Owner = Window.GetWindow(this);
                 dialog.ShowDialog();
             }

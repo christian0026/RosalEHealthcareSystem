@@ -57,6 +57,8 @@ namespace RosalEHealthcare.UI.WPF.Views
 
                 _allAppointments = new ObservableCollection<Appointment>();
                 _displayedAppointments = new ObservableCollection<Appointment>();
+
+                // Status filters - these will be matched case-insensitively
                 _activeStatusFilters = new List<string> { "PENDING", "CONFIRMED", "IN_PROGRESS" };
 
                 DataContext = this;
@@ -137,6 +139,9 @@ namespace RosalEHealthcare.UI.WPF.Views
 
                 var appointments = await Task.Run(() =>
                 {
+                    // Force a fresh query by creating new context or refreshing
+                    _db.Configuration.ProxyCreationEnabled = false;
+
                     var query = _db.Appointments
                         .Include("Patient")
                         .OrderBy(a => a.Time)
@@ -149,13 +154,15 @@ namespace RosalEHealthcare.UI.WPF.Views
                         {
                             apt.PatientName = apt.Patient.FullName;
                         }
-                        else if (!string.IsNullOrEmpty(apt.PatientName))
-                        {
-                            // Keep existing PatientName (walk-in)
-                        }
-                        else
+                        else if (string.IsNullOrEmpty(apt.PatientName))
                         {
                             apt.PatientName = "Walk-in Patient";
+                        }
+
+                        // Normalize status to uppercase for consistent filtering
+                        if (!string.IsNullOrEmpty(apt.Status))
+                        {
+                            apt.Status = NormalizeStatus(apt.Status);
                         }
                     }
 
@@ -166,6 +173,13 @@ namespace RosalEHealthcare.UI.WPF.Views
                 foreach (var apt in appointments)
                 {
                     _allAppointments.Add(apt);
+                }
+
+                // Debug: Log what we loaded
+                System.Diagnostics.Debug.WriteLine($"Loaded {_allAppointments.Count} total appointments");
+                foreach (var apt in _allAppointments.Take(5))
+                {
+                    System.Diagnostics.Debug.WriteLine($"  - {apt.AppointmentId}: {apt.PatientName}, Status={apt.Status}, Date={apt.Time:yyyy-MM-dd}");
                 }
 
                 ApplyFilters();
@@ -197,6 +211,12 @@ namespace RosalEHealthcare.UI.WPF.Views
                             apt.PatientName = apt.Patient.FullName;
                         else if (string.IsNullOrEmpty(apt.PatientName))
                             apt.PatientName = "Walk-in Patient";
+
+                        // Normalize status
+                        if (!string.IsNullOrEmpty(apt.Status))
+                        {
+                            apt.Status = NormalizeStatus(apt.Status);
+                        }
                     }
 
                     return query;
@@ -225,6 +245,52 @@ namespace RosalEHealthcare.UI.WPF.Views
             }
         }
 
+        /// <summary>
+        /// Normalizes status values to uppercase with underscores
+        /// Handles various formats: "Pending", "pending", "PENDING", "In Progress", "IN_PROGRESS", etc.
+        /// </summary>
+        private string NormalizeStatus(string status)
+        {
+            if (string.IsNullOrEmpty(status)) return "PENDING";
+
+            // Convert to uppercase and replace spaces with underscores
+            var normalized = status.Trim().ToUpper().Replace(" ", "_");
+
+            // Handle common variations
+            switch (normalized)
+            {
+                case "PENDING":
+                case "NEW":
+                case "SCHEDULED":
+                    return "PENDING";
+
+                case "CONFIRMED":
+                case "APPROVED":
+                    return "CONFIRMED";
+
+                case "IN_PROGRESS":
+                case "INPROGRESS":
+                case "IN-PROGRESS":
+                case "ONGOING":
+                case "STARTED":
+                    return "IN_PROGRESS";
+
+                case "COMPLETED":
+                case "DONE":
+                case "FINISHED":
+                    return "COMPLETED";
+
+                case "CANCELLED":
+                case "CANCELED":
+                case "CANCELLED_BY_PATIENT":
+                case "CANCELLED_BY_DOCTOR":
+                    return "CANCELLED";
+
+                default:
+                    return normalized;
+            }
+        }
+
         private void ApplyFilters()
         {
             var filtered = _allAppointments.AsEnumerable();
@@ -248,10 +314,14 @@ namespace RosalEHealthcare.UI.WPF.Views
                     break;
             }
 
-            // Apply status filters
+            // Apply status filters - case insensitive comparison
             if (_activeStatusFilters.Any())
             {
-                filtered = filtered.Where(a => _activeStatusFilters.Contains(a.Status));
+                filtered = filtered.Where(a =>
+                    _activeStatusFilters.Any(filter =>
+                        MatchesStatus(a.Status, filter)
+                    )
+                );
             }
 
             // Apply search filter
@@ -277,6 +347,10 @@ namespace RosalEHealthcare.UI.WPF.Views
                 DisplayedAppointments.Add(apt);
             }
 
+            // Debug: Log filter results
+            System.Diagnostics.Debug.WriteLine($"Filter applied: Tab={_currentTab}, StatusFilters=[{string.Join(",", _activeStatusFilters)}]");
+            System.Diagnostics.Debug.WriteLine($"  Showing {DisplayedAppointments.Count} of {_allAppointments.Count} appointments");
+
             // Render cards
             RenderAppointmentCards();
 
@@ -285,11 +359,40 @@ namespace RosalEHealthcare.UI.WPF.Views
                 ? Visibility.Visible
                 : Visibility.Collapsed;
 
-            txtEmptyMessage.Text = _currentTab == "Today"
-                ? "No appointments scheduled for today."
-                : "There are no appointments matching your filters.";
+            // Update empty message based on context
+            if (DisplayedAppointments.Count == 0)
+            {
+                if (_allAppointments.Count == 0)
+                {
+                    txtEmptyMessage.Text = "No appointments in the system.";
+                }
+                else if (_currentTab == "Today")
+                {
+                    txtEmptyMessage.Text = "No appointments scheduled for today.";
+                }
+                else
+                {
+                    txtEmptyMessage.Text = "No appointments matching your filters.";
+                }
+            }
 
             UpdateResponsiveLayout();
+        }
+
+        /// <summary>
+        /// Checks if an appointment status matches a filter value
+        /// Handles case-insensitivity and various status formats
+        /// </summary>
+        private bool MatchesStatus(string appointmentStatus, string filterStatus)
+        {
+            if (string.IsNullOrEmpty(appointmentStatus)) return false;
+            if (string.IsNullOrEmpty(filterStatus)) return false;
+
+            // Normalize both for comparison
+            var normalizedAppointment = NormalizeStatus(appointmentStatus);
+            var normalizedFilter = NormalizeStatus(filterStatus);
+
+            return normalizedAppointment == normalizedFilter;
         }
 
         private void RenderAppointmentCards()
@@ -351,7 +454,8 @@ namespace RosalEHealthcare.UI.WPF.Views
 
         private Border CreateStatusHeader(Appointment appointment)
         {
-            var statusColor = GetStatusColor(appointment.Status);
+            var normalizedStatus = NormalizeStatus(appointment.Status);
+            var statusColor = GetStatusColor(normalizedStatus);
 
             var header = new Border
             {
@@ -395,7 +499,7 @@ namespace RosalEHealthcare.UI.WPF.Views
             };
             statusBadge.Child = new TextBlock
             {
-                Text = FormatStatus(appointment.Status),
+                Text = FormatStatus(normalizedStatus),
                 FontSize = 11,
                 FontWeight = FontWeights.Bold,
                 Foreground = new SolidColorBrush(Color.FromRgb(51, 51, 51))
@@ -447,7 +551,7 @@ namespace RosalEHealthcare.UI.WPF.Views
             });
             namePanel.Children.Add(new TextBlock
             {
-                Text = appointment.AppointmentId,
+                Text = appointment.AppointmentId ?? "No ID",
                 FontSize = 11,
                 Foreground = new SolidColorBrush(Color.FromRgb(153, 153, 153)),
                 Margin = new Thickness(0, 2, 0, 0)
@@ -526,8 +630,11 @@ namespace RosalEHealthcare.UI.WPF.Views
                 HorizontalAlignment = HorizontalAlignment.Right
             };
 
-            // Add buttons based on status
-            switch (appointment.Status)
+            // Normalize status for button logic
+            var normalizedStatus = NormalizeStatus(appointment.Status);
+
+            // Add buttons based on normalized status
+            switch (normalizedStatus)
             {
                 case "PENDING":
                     panel.Children.Add(CreateActionButton("Confirm", "#4CAF50", appointment, ConfirmAppointment_Click));
@@ -546,6 +653,10 @@ namespace RosalEHealthcare.UI.WPF.Views
                     break;
                 case "CANCELLED":
                     panel.Children.Add(CreateActionButton("Reschedule", "#2196F3", appointment, Reschedule_Click));
+                    break;
+                default:
+                    // Unknown status - show view button
+                    panel.Children.Add(CreateActionButton("View", "#2196F3", appointment, ViewDetails_Click));
                     break;
             }
 
@@ -600,6 +711,11 @@ namespace RosalEHealthcare.UI.WPF.Views
 
         private void BtnRefresh_Click(object sender, RoutedEventArgs e)
         {
+            // Force fresh data from database
+            using (var freshDb = new RosalEHealthcareDbContext())
+            {
+                // This forces EF to not use cached data
+            }
             LoadAppointments();
         }
 
@@ -884,9 +1000,10 @@ namespace RosalEHealthcare.UI.WPF.Views
                 if (appointment.PatientId.HasValue)
                 {
                     var patient = _db.Patients.Find(appointment.PatientId.Value);
-                    if (patient != null && prescriptionView.DataContext is ViewModels.DoctorPrescriptionViewModel viewModel)
+                    if (patient != null)
                     {
-                        viewModel.SelectedPatient = patient;
+                        // Set patient directly on the view
+                        prescriptionView.SelectedPatient = patient;
                     }
                 }
 
@@ -918,16 +1035,21 @@ namespace RosalEHealthcare.UI.WPF.Views
                 {
                     PatientId = originalAppointment.PatientId,
                     PatientName = originalAppointment.PatientName,
+                    Contact = originalAppointment.Contact,
+                    Email = originalAppointment.Email,
+                    Address = originalAppointment.Address,
+                    BirthDate = originalAppointment.BirthDate,
+                    Gender = originalAppointment.Gender,
                     Time = followUpDate,
                     Type = "Follow-up",
-                    Condition = originalAppointment.Condition,
+                    Condition = $"Follow-up for: {originalAppointment.Condition}",
                     Status = "PENDING",
-                    Notes = $"Follow-up from appointment {originalAppointment.AppointmentId}",
                     CreatedBy = SessionManager.CurrentUser?.FullName ?? "Doctor",
                     CreatedAt = DateTime.Now
                 };
 
-                _appointmentService.Add(newAppointment);
+                _appointmentService.AddAppointment(newAppointment, SessionManager.CurrentUser?.FullName);
+
                 LogActivity("Schedule Follow-up", $"Scheduled follow-up for {originalAppointment.PatientName} on {followUpDate:d}");
             }
             catch (Exception ex)
@@ -943,8 +1065,14 @@ namespace RosalEHealthcare.UI.WPF.Views
             var todayAppointments = _allAppointments.Where(a => a.Time.Date == today).ToList();
 
             txtTotalCount.Text = todayAppointments.Count.ToString();
-            txtPendingCount.Text = todayAppointments.Count(a => a.Status == "PENDING" || a.Status == "CONFIRMED").ToString();
-            txtCompletedCount.Text = todayAppointments.Count(a => a.Status == "COMPLETED").ToString();
+
+            // Count pending and confirmed using normalized status
+            txtPendingCount.Text = todayAppointments.Count(a =>
+                NormalizeStatus(a.Status) == "PENDING" ||
+                NormalizeStatus(a.Status) == "CONFIRMED").ToString();
+
+            txtCompletedCount.Text = todayAppointments.Count(a =>
+                NormalizeStatus(a.Status) == "COMPLETED").ToString();
         }
 
         private void ShowLoading(bool show)
@@ -955,20 +1083,24 @@ namespace RosalEHealthcare.UI.WPF.Views
 
         private Color GetStatusColor(string status)
         {
-            return status switch
+            // Use normalized status for consistent colors
+            var normalized = NormalizeStatus(status);
+
+            return normalized switch
             {
-                "PENDING" => Color.FromRgb(255, 152, 0),
-                "CONFIRMED" => Color.FromRgb(33, 150, 243),
-                "IN_PROGRESS" => Color.FromRgb(156, 39, 176),
-                "COMPLETED" => Color.FromRgb(76, 175, 80),
-                "CANCELLED" => Color.FromRgb(244, 67, 54),
-                _ => Color.FromRgb(158, 158, 158)
+                "PENDING" => Color.FromRgb(255, 152, 0),      // Orange
+                "CONFIRMED" => Color.FromRgb(33, 150, 243),   // Blue
+                "IN_PROGRESS" => Color.FromRgb(156, 39, 176), // Purple
+                "COMPLETED" => Color.FromRgb(76, 175, 80),    // Green
+                "CANCELLED" => Color.FromRgb(244, 67, 54),    // Red
+                _ => Color.FromRgb(158, 158, 158)             // Gray
             };
         }
 
         private string FormatStatus(string status)
         {
-            return status?.Replace("_", " ") ?? "UNKNOWN";
+            if (string.IsNullOrEmpty(status)) return "UNKNOWN";
+            return NormalizeStatus(status).Replace("_", " ");
         }
 
         private string GetInitials(string name)

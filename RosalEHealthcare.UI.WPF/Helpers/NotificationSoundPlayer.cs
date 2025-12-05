@@ -1,13 +1,13 @@
 ﻿using System;
 using System.IO;
 using System.Media;
-using System.Windows;
 
 namespace RosalEHealthcare.UI.WPF.Helpers
 {
     public static class NotificationSoundPlayer
     {
         private static bool _soundEnabled = true;
+        private static bool _initialized = false;
         private static SoundPlayer _notificationSound;
         private static SoundPlayer _alertSound;
         private static SoundPlayer _successSound;
@@ -18,12 +18,17 @@ namespace RosalEHealthcare.UI.WPF.Helpers
             set => _soundEnabled = value;
         }
 
-        static NotificationSoundPlayer()
+        /// <summary>
+        /// Initialize the sound player. Call this once at application startup.
+        /// </summary>
+        public static void Initialize()
         {
+            if (_initialized) return;
+
             try
             {
-                // Try to load custom sounds, fall back to system sounds
                 LoadSounds();
+                _initialized = true;
             }
             catch (Exception ex)
             {
@@ -31,9 +36,17 @@ namespace RosalEHealthcare.UI.WPF.Helpers
             }
         }
 
+        /// <summary>
+        /// Sets whether sound is enabled
+        /// </summary>
+        /// <param name="enabled">True to enable sounds, false to disable</param>
+        public static void SetSoundEnabled(bool enabled)
+        {
+            _soundEnabled = enabled;
+        }
+
         private static void LoadSounds()
         {
-            // Check for custom sound files in application directory
             var appPath = AppDomain.CurrentDomain.BaseDirectory;
             var soundsPath = Path.Combine(appPath, "Sounds");
 
@@ -57,18 +70,14 @@ namespace RosalEHealthcare.UI.WPF.Helpers
         public static void PlayNotification()
         {
             if (!_soundEnabled) return;
+            if (!_initialized) Initialize();
 
             try
             {
                 if (_notificationSound != null)
-                {
                     _notificationSound.Play();
-                }
                 else
-                {
-                    // Fallback to system sound
                     SystemSounds.Asterisk.Play();
-                }
             }
             catch (Exception ex)
             {
@@ -79,18 +88,14 @@ namespace RosalEHealthcare.UI.WPF.Helpers
         public static void PlayAlert()
         {
             if (!_soundEnabled) return;
+            if (!_initialized) Initialize();
 
             try
             {
                 if (_alertSound != null)
-                {
                     _alertSound.Play();
-                }
                 else
-                {
-                    // Fallback to system sound
                     SystemSounds.Exclamation.Play();
-                }
             }
             catch (Exception ex)
             {
@@ -101,18 +106,14 @@ namespace RosalEHealthcare.UI.WPF.Helpers
         public static void PlaySuccess()
         {
             if (!_soundEnabled) return;
+            if (!_initialized) Initialize();
 
             try
             {
                 if (_successSound != null)
-                {
                     _successSound.Play();
-                }
                 else
-                {
-                    // Fallback to system sound
                     SystemSounds.Asterisk.Play();
-                }
             }
             catch (Exception ex)
             {

@@ -21,7 +21,6 @@ namespace RosalEHealthcare.UI.WPF.Views
         private readonly DispatcherTimer _autoRefreshTimer;
         private Patient _selectedPatient;
         private string _currentFilter = "All";
-        private bool _isLoading;
 
         public ObservableCollection<Patient> Patients { get; set; }
         public ObservableCollection<Patient> AllPatients { get; set; }
@@ -96,7 +95,6 @@ namespace RosalEHealthcare.UI.WPF.Views
 
         private void AutoRefreshTimer_Tick(object sender, EventArgs e)
         {
-            // Silent refresh - don't show loading indicator
             RefreshPatientsQuietly();
         }
 
@@ -124,11 +122,8 @@ namespace RosalEHealthcare.UI.WPF.Views
                 }
 
                 lvPatients.ItemsSource = Patients;
-
-                // Update empty state visibility
                 pnlNoResults.Visibility = Patients.Count == 0 ? Visibility.Visible : Visibility.Collapsed;
 
-                // Select first patient if available
                 if (Patients.Count > 0 && lvPatients.SelectedItem == null)
                 {
                     lvPatients.SelectedIndex = 0;
@@ -156,7 +151,6 @@ namespace RosalEHealthcare.UI.WPF.Views
                         .OrderByDescending(p => p.LastVisit ?? p.DateCreated)
                         .ToList());
 
-                // Check if there are any changes
                 bool hasChanges = patients.Count != AllPatients.Count ||
                     patients.Any(p => !AllPatients.Any(ap => ap.Id == p.Id));
 
@@ -170,7 +164,6 @@ namespace RosalEHealthcare.UI.WPF.Views
 
                     ApplyFilter(_currentFilter);
 
-                    // Restore selection if possible
                     if (currentSelectedId.HasValue)
                     {
                         var previouslySelected = Patients.FirstOrDefault(p => p.Id == currentSelectedId);
@@ -199,7 +192,7 @@ namespace RosalEHealthcare.UI.WPF.Views
                 return;
             }
 
-            txtHeaderInitials.Text = SelectedPatient.Initials;
+            txtHeaderInitials.Text = SelectedPatient.Initials ?? "--";
             txtHeaderName.Text = SelectedPatient.FullName ?? "Unknown";
             txtHeaderPatientId.Text = SelectedPatient.PatientId ?? "--";
             txtHeaderAgeGender.Text = $"{SelectedPatient.Age} yrs • {SelectedPatient.Gender ?? "--"}";
@@ -240,13 +233,7 @@ namespace RosalEHealthcare.UI.WPF.Views
                 txtSecondaryDiagnosis.Text = SelectedPatient.SecondaryDiagnosis ?? "—";
                 txtLastVisit.Text = SelectedPatient.LastVisit?.ToString("MMMM dd, yyyy") ?? "—";
 
-                // Get next appointment
                 await LoadNextAppointment();
-
-                // Get latest clinical notes
-                await LoadClinicalNotes();
-
-                // Load related data for other tabs
                 await LoadMedicalHistory();
                 await LoadVisitHistory();
                 await LoadPrescriptions();
@@ -274,7 +261,6 @@ namespace RosalEHealthcare.UI.WPF.Views
             txtSecondaryDiagnosis.Text = "—";
             txtLastVisit.Text = "—";
             txtNextAppointment.Text = "—";
-            txtClinicalNotes.Text = "No clinical notes available.";
 
             MedicalHistories.Clear();
             VisitHistories.Clear();
@@ -313,33 +299,6 @@ namespace RosalEHealthcare.UI.WPF.Views
             }
         }
 
-        private async Task LoadClinicalNotes()
-        {
-            if (SelectedPatient == null) return;
-
-            try
-            {
-                var latestHistory = await Task.Run(() =>
-                    _db.MedicalHistories
-                        .Where(m => m.PatientId == SelectedPatient.Id && !string.IsNullOrEmpty(m.ClinicalNotes))
-                        .OrderByDescending(m => m.VisitDate)
-                        .FirstOrDefault());
-
-                if (latestHistory != null && !string.IsNullOrEmpty(latestHistory.ClinicalNotes))
-                {
-                    txtClinicalNotes.Text = latestHistory.ClinicalNotes;
-                }
-                else
-                {
-                    txtClinicalNotes.Text = "Patient shows good compliance with medication regimen. Blood pressure readings have been stable over the past 3 months. Continue current dosage of prescribed medications. Schedule follow-up in 4 weeks to monitor progress.";
-                }
-            }
-            catch (Exception ex)
-            {
-                System.Diagnostics.Debug.WriteLine($"LoadClinicalNotes error: {ex.Message}");
-            }
-        }
-
         private async Task LoadMedicalHistory()
         {
             if (SelectedPatient == null) return;
@@ -371,33 +330,10 @@ namespace RosalEHealthcare.UI.WPF.Views
             try
             {
                 var visits = await Task.Run(() =>
-                {
-                    // Get from medical history
-                    var medicalVisits = _db.MedicalHistories
+                    _db.MedicalHistories
                         .Where(m => m.PatientId == SelectedPatient.Id)
                         .OrderByDescending(m => m.VisitDate)
-                        .ToList();
-
-                    // Also get from appointments
-                    var appointmentVisits = _db.Appointments
-                        .Where(a => a.PatientId == SelectedPatient.Id && a.Status == "COMPLETED")
-                        .OrderByDescending(a => a.Time)
-                        .ToList()
-                        .Where(a => !medicalVisits.Any(m => m.AppointmentId == a.Id))
-                        .Select(a => new MedicalHistory
-                        {
-                            VisitDate = a.Time,
-                            VisitType = a.Type ?? "Consultation",
-                            Diagnosis = a.Condition ?? "N/A",
-                            DoctorName = a.CreatedBy ?? "N/A",
-                            PatientId = SelectedPatient.Id
-                        })
-                        .ToList();
-
-                    return medicalVisits.Concat(appointmentVisits)
-                        .OrderByDescending(v => v.VisitDate)
-                        .ToList();
-                });
+                        .ToList());
 
                 VisitHistories.Clear();
                 foreach (var visit in visits)
@@ -421,13 +357,11 @@ namespace RosalEHealthcare.UI.WPF.Views
             try
             {
                 var prescriptions = await Task.Run(() =>
-                {
-                    return _db.Prescriptions
+                    _db.Prescriptions
                         .Include("Medicines")
                         .Where(p => p.PatientId == SelectedPatient.Id)
                         .OrderByDescending(p => p.CreatedAt)
-                        .ToList();
-                });
+                        .ToList());
 
                 Prescriptions.Clear();
                 foreach (var prescription in prescriptions)
@@ -506,7 +440,6 @@ namespace RosalEHealthcare.UI.WPF.Views
                         .OrderByDescending(p => p.LastVisit);
                     break;
                 case "FollowUp":
-                    // Get patients with follow-up appointments
                     var patientIdsWithFollowUp = _db.Appointments
                         .Where(a => a.Type != null && a.Type.Contains("Follow") &&
                                    a.Status != "CANCELLED" && a.Status != "COMPLETED" &&
@@ -589,12 +522,8 @@ namespace RosalEHealthcare.UI.WPF.Views
 
                 if (editDialog.ShowDialog() == true)
                 {
-                    // Refresh patient list and details
                     LoadPatients();
-
-                    // Log activity
                     LogActivity("Edit Patient", $"Updated patient: {SelectedPatient.FullName}");
-
                     MessageBox.Show("Patient updated successfully!", "Success",
                         MessageBoxButton.OK, MessageBoxImage.Information);
                 }
@@ -626,13 +555,9 @@ namespace RosalEHealthcare.UI.WPF.Views
                 try
                 {
                     _patientService.ArchivePatient(SelectedPatient.Id);
-
-                    // Log activity
                     LogActivity("Archive Patient", $"Archived patient: {SelectedPatient.FullName}");
-
                     MessageBox.Show("Patient archived successfully.", "Success",
                         MessageBoxButton.OK, MessageBoxImage.Information);
-
                     LoadPatients();
                 }
                 catch (Exception ex)
@@ -658,7 +583,6 @@ namespace RosalEHealthcare.UI.WPF.Views
                 var filePath = pdfService.ExportPatientRecord(SelectedPatient,
                     MedicalHistories.ToList(), Prescriptions.ToList());
 
-                // Log activity
                 LogActivity("Print Record", $"Exported record for: {SelectedPatient.FullName}");
 
                 var printResult = MessageBox.Show(
@@ -701,13 +625,9 @@ namespace RosalEHealthcare.UI.WPF.Views
                 {
                     _ = LoadMedicalHistory();
                     _ = LoadVisitHistory();
-
-                    // Update patient's last visit display
                     SelectedPatient.LastVisit = DateTime.Now;
                     txtLastVisit.Text = DateTime.Now.ToString("MMMM dd, yyyy");
-
                     LogActivity("Add Medical History", $"Added record for: {SelectedPatient.FullName}");
-
                     MessageBox.Show("Medical history record added successfully!", "Success",
                         MessageBoxButton.OK, MessageBoxImage.Information);
                 }
@@ -744,12 +664,7 @@ namespace RosalEHealthcare.UI.WPF.Views
             try
             {
                 var prescriptionView = new DoctorPrescriptionManagement();
-
-                // Set patient context in the ViewModel
-                if (prescriptionView.DataContext is ViewModels.DoctorPrescriptionViewModel viewModel)
-                {
-                    viewModel.SelectedPatient = SelectedPatient;
-                }
+                prescriptionView.SelectedPatient = SelectedPatient;
 
                 var window = new Window
                 {
@@ -762,12 +677,7 @@ namespace RosalEHealthcare.UI.WPF.Views
                     ResizeMode = ResizeMode.CanResize
                 };
 
-                window.Closed += (s, args) =>
-                {
-                    // Refresh prescriptions after closing
-                    _ = LoadPrescriptions();
-                };
-
+                window.Closed += (s, args) => { _ = LoadPrescriptions(); };
                 window.ShowDialog();
             }
             catch (Exception ex)
@@ -784,7 +694,6 @@ namespace RosalEHealthcare.UI.WPF.Views
 
             if (prescription != null)
             {
-                // Load medicines if not loaded
                 if (prescription.Medicines == null || !prescription.Medicines.Any())
                 {
                     var fullPrescription = _db.Prescriptions
@@ -797,7 +706,7 @@ namespace RosalEHealthcare.UI.WPF.Views
                     }
                 }
 
-                var dialog = new ViewPrescriptionDialog(prescription);
+                var dialog = new PrescriptionPrintPreviewDialog(prescription, SelectedPatient);
                 dialog.Owner = Window.GetWindow(this);
                 dialog.ShowDialog();
             }
@@ -809,7 +718,6 @@ namespace RosalEHealthcare.UI.WPF.Views
 
         private void ShowLoading(bool show)
         {
-            _isLoading = show;
             pnlLoading.Visibility = show ? Visibility.Visible : Visibility.Collapsed;
             lvPatients.Visibility = show ? Visibility.Collapsed : Visibility.Visible;
             Cursor = show ? System.Windows.Input.Cursors.Wait : System.Windows.Input.Cursors.Arrow;

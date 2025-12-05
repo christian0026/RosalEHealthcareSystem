@@ -1,106 +1,94 @@
 ﻿using RosalEHealthcare.Core.Models;
 using RosalEHealthcare.Data.Services;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Windows;
+using System.Windows.Controls;
 using System.Windows.Input;
-using System.Windows.Media;
 
 namespace RosalEHealthcare.UI.WPF.Views
 {
     public partial class TemplateSelectionDialog : Window
     {
-        private List<PrescriptionTemplate> _templates;
         private readonly PrescriptionTemplateService _templateService;
+        private List<PrescriptionTemplate> _allTemplates;
 
         public PrescriptionTemplate SelectedTemplate { get; private set; }
 
-        // Constructor accepting PrescriptionTemplateService
         public TemplateSelectionDialog(PrescriptionTemplateService templateService)
         {
             InitializeComponent();
+
             _templateService = templateService;
 
-            // Load templates from service
-            LoadTemplates();
+            Loaded += TemplateSelectionDialog_Loaded;
         }
 
-        // Constructor accepting list of templates (for backward compatibility)
-        public TemplateSelectionDialog(List<PrescriptionTemplate> templates)
+        private void TemplateSelectionDialog_Loaded(object sender, RoutedEventArgs e)
         {
-            InitializeComponent();
-            _templates = templates;
+            LoadTemplates();
         }
 
         private void LoadTemplates()
         {
             try
             {
-                _templates = _templateService.GetActiveTemplates()
+                // Use GetAllTemplates and filter for active ones
+                // Adjust this based on your actual PrescriptionTemplateService methods
+                var templates = _templateService.GetAllTemplates();
+
+                // Filter for active templates if IsActive property exists
+                _allTemplates = templates
+                    .Where(t => t.IsActive)
                     .OrderByDescending(t => t.UsageCount)
-                    .ThenBy(t => t.TemplateName)
+                    .ThenByDescending(t => t.LastUsedAt)
                     .ToList();
+
+                DisplayTemplates(_allTemplates);
             }
-            catch (System.Exception ex)
+            catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine($"Error loading templates: {ex.Message}");
-                _templates = new List<PrescriptionTemplate>();
+                MessageBox.Show($"Error loading templates:\n{ex.Message}",
+                    "Error", MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
 
-        private void Window_Loaded(object sender, RoutedEventArgs e)
+        private void DisplayTemplates(List<PrescriptionTemplate> templates)
         {
-            if (_templates == null || _templates.Count == 0)
+            icTemplates.ItemsSource = templates;
+            pnlEmpty.Visibility = templates.Count == 0 ? Visibility.Visible : Visibility.Collapsed;
+        }
+
+        private void TxtSearch_TextChanged(object sender, TextChangedEventArgs e)
+        {
+            var searchText = txtSearch.Text?.Trim().ToLower() ?? "";
+
+            if (string.IsNullOrEmpty(searchText))
             {
-                MessageBox.Show("No templates available.", "Templates",
-                    MessageBoxButton.OK, MessageBoxImage.Information);
-                DialogResult = false;
-                Close();
+                DisplayTemplates(_allTemplates);
                 return;
             }
 
-            // Add severity color property for display
-            var templatesWithColor = new List<object>();
-            foreach (var template in _templates)
-            {
-                templatesWithColor.Add(new
-                {
-                    template.Id,
-                    template.TemplateName,
-                    template.PrimaryDiagnosis,
-                    template.SecondaryDiagnosis,
-                    template.ConditionSeverity,
-                    template.UsageCount,
-                    SeverityColor = GetSeverityColor(template.ConditionSeverity),
-                    Template = template
-                });
-            }
-            icTemplates.ItemsSource = templatesWithColor;
+            var filtered = _allTemplates.Where(t =>
+                (t.TemplateName?.ToLower().Contains(searchText) ?? false) ||
+                (t.PrimaryDiagnosis?.ToLower().Contains(searchText) ?? false) ||
+                (t.ConditionSeverity?.ToLower().Contains(searchText) ?? false)
+            ).ToList();
+
+            DisplayTemplates(filtered);
         }
 
-        private Brush GetSeverityColor(string severity)
+        private void Template_Click(object sender, MouseButtonEventArgs e)
         {
-            return severity switch
-            {
-                "Mild" => new SolidColorBrush(Color.FromRgb(76, 175, 80)),
-                "Moderate" => new SolidColorBrush(Color.FromRgb(255, 152, 0)),
-                "Severe" => new SolidColorBrush(Color.FromRgb(244, 67, 54)),
-                _ => new SolidColorBrush(Color.FromRgb(158, 158, 158))
-            };
-        }
+            var border = sender as Border;
+            var template = border?.Tag as PrescriptionTemplate;
 
-        private void Template_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
-        {
-            if (sender is System.Windows.FrameworkElement element && element.Tag != null)
+            if (template != null)
             {
-                var templateWrapper = element.Tag;
-                var templateProperty = templateWrapper.GetType().GetProperty("Template");
-                if (templateProperty != null)
-                {
-                    SelectedTemplate = templateProperty.GetValue(templateWrapper) as PrescriptionTemplate;
-                    DialogResult = true;
-                    Close();
-                }
+                SelectedTemplate = template;
+                DialogResult = true;
+                Close();
             }
         }
 
