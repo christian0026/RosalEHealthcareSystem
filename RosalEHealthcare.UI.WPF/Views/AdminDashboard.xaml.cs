@@ -81,7 +81,7 @@ namespace RosalEHealthcare.UI.WPF.Views
                 // Initialize the notification bell with the toast container
                 NotificationBell.Initialize(
                     currentUser.Username,
-                    currentUser.Role,
+                    "Administrator", // Explicit Role
                     ToastContainer
                 );
 
@@ -93,7 +93,6 @@ namespace RosalEHealthcare.UI.WPF.Views
             catch (Exception ex)
             {
                 System.Diagnostics.Debug.WriteLine($"ERROR initializing notifications: {ex.Message}");
-                System.Diagnostics.Debug.WriteLine($"Stack trace: {ex.StackTrace}");
             }
         }
 
@@ -492,6 +491,7 @@ namespace RosalEHealthcare.UI.WPF.Views
             HideAllContent();
             DashboardPanel.Visibility = Visibility.Visible;
             SetActiveButton(BtnDashboard);
+            LoadDashboardData();
         }
 
         private void Dashboard_Click(object sender, RoutedEventArgs e)
@@ -550,6 +550,12 @@ namespace RosalEHealthcare.UI.WPF.Views
             LogoutHelper.Logout(this);
         }
 
+        private void TestToast_Click(object sender, RoutedEventArgs e)
+        {
+            // Test local toast (immediate - no database)
+            NotificationManager.ShowSuccess("Test Notification", "Toast is working!");
+        }
+
         #endregion
 
         #region Cleanup
@@ -573,11 +579,6 @@ namespace RosalEHealthcare.UI.WPF.Views
         {
             base.OnClosed(e);
             _db?.Dispose();
-        }
-        private void TestToast_Click(object sender, RoutedEventArgs e)
-        {
-            // Test local toast (immediate - no database)
-            NotificationManager.ShowSuccess("Test Notification", "Toast is working!");
         }
 
         #endregion

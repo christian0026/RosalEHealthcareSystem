@@ -52,9 +52,9 @@ namespace RosalEHealthcare.UI.WPF.Helpers
 
             if (Directory.Exists(soundsPath))
             {
-                var notificationPath = Path.Combine(soundsPath, "notification.wav");
-                var alertPath = Path.Combine(soundsPath, "alert.wav");
-                var successPath = Path.Combine(soundsPath, "success.wav");
+                var notificationPath = Path.Combine(soundsPath, "new-notification-010-352755.mp3");
+                var alertPath = Path.Combine(soundsPath, "new-notification-021-370045.mp3");
+                var successPath = Path.Combine(soundsPath, "new-notification-021-370045.mp3");
 
                 if (File.Exists(notificationPath))
                     _notificationSound = new SoundPlayer(notificationPath);

@@ -370,7 +370,6 @@
     <Compile Include="Helpers\NotificationManager.cs" />
     <Compile Include="Helpers\NotificationPollingService.cs" />
     <Compile Include="Helpers\NotificationSoundPlayer.cs" />
-    <Compile Include="Helpers\NotificationTestHelper.cs" />
     <Compile Include="Helpers\PdfExportService.cs" />
     <Compile Include="Helpers\SessionManager.cs" />
     <Compile Include="ViewModels\AdminReportsViewModel.cs" />

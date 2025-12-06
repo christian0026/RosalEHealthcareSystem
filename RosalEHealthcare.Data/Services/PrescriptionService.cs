@@ -52,15 +52,12 @@ namespace RosalEHealthcare.Data.Services
         /// <summary>
         /// Add a new prescription and notify receptionist
         /// </summary>
-        /// <param name="prescription">Prescription to add</param>
-        /// <param name="doctorName">Name of doctor who created the prescription</param>
         public Prescription AddPrescription(Prescription prescription, string doctorName = null)
         {
             if (prescription == null) throw new ArgumentNullException(nameof(prescription));
 
             prescription.CreatedAt = DateTime.Now;
 
-            // Generate prescription ID if not set
             if (string.IsNullOrEmpty(prescription.PrescriptionId))
             {
                 prescription.PrescriptionId = GeneratePrescriptionId();
@@ -69,17 +66,16 @@ namespace RosalEHealthcare.Data.Services
             _db.Prescriptions.Add(prescription);
             _db.SaveChanges();
 
-            // Notify receptionist that prescription is ready
+            // TRIGGER NOTIFICATION
             try
             {
-                if (!string.IsNullOrEmpty(doctorName))
-                {
-                    _notificationService.NotifyPrescriptionReady(
-                        prescription.PatientName,
-                        prescription.PrescriptionId,
-                        doctorName
-                    );
-                }
+                // Doctor name defaults to 'Doctor' if null, but usually passed from Session
+                string doc = doctorName ?? "Doctor";
+                _notificationService.NotifyPrescriptionReady(
+                    prescription.PatientName,
+                    prescription.PrescriptionId,
+                    doc
+                );
             }
             catch (Exception ex)
             {
@@ -90,7 +86,7 @@ namespace RosalEHealthcare.Data.Services
         }
 
         /// <summary>
-        /// Save prescription with medicines
+        /// Save prescription with medicines and notify
         /// </summary>
         public Prescription SavePrescription(Prescription p, string doctorName = null)
         {
@@ -105,7 +101,7 @@ namespace RosalEHealthcare.Data.Services
 
             // Save prescription first
             var meds = p.Medicines != null ? p.Medicines.ToList() : new List<PrescriptionMedicine>();
-            p.Medicines = new List<PrescriptionMedicine>(); // Clear to avoid EF tracking issues
+            p.Medicines = new List<PrescriptionMedicine>();
 
             _db.Prescriptions.Add(p);
             _db.SaveChanges();
@@ -119,17 +115,15 @@ namespace RosalEHealthcare.Data.Services
 
             _db.SaveChanges();
 
-            // Notify receptionist
+            // TRIGGER NOTIFICATION
             try
             {
-                if (!string.IsNullOrEmpty(doctorName))
-                {
-                    _notificationService.NotifyPrescriptionReady(
-                        p.PatientName,
-                        p.PrescriptionId,
-                        doctorName
-                    );
-                }
+                string doc = doctorName ?? p.CreatedBy ?? "Doctor";
+                _notificationService.NotifyPrescriptionReady(
+                    p.PatientName,
+                    p.PrescriptionId,
+                    doc
+                );
             }
             catch (Exception ex)
             {
@@ -155,11 +149,9 @@ namespace RosalEHealthcare.Data.Services
             var prescription = GetById(id);
             if (prescription != null)
             {
-                // Delete medicines first
                 var medicines = _db.PrescriptionMedicines.Where(m => m.PrescriptionId == id).ToList();
                 _db.PrescriptionMedicines.RemoveRange(medicines);
 
-                // Delete prescription
                 _db.Prescriptions.Remove(prescription);
                 _db.SaveChanges();
             }

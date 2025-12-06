@@ -30,11 +30,6 @@ namespace RosalEHealthcare.Data.Services
             return _db.Appointments.Find(id);
         }
 
-        /// <summary>
-        /// Add a new appointment and notify doctors
-        /// </summary>
-        /// <param name="appt">Appointment to add</param>
-        /// <param name="scheduledBy">Name of user who scheduled the appointment</param>
         public void AddAppointment(Appointment appt, string scheduledBy = null)
         {
             if (string.IsNullOrEmpty(appt.AppointmentId))
@@ -45,7 +40,7 @@ namespace RosalEHealthcare.Data.Services
             _db.Appointments.Add(appt);
             _db.SaveChanges();
 
-            // Send notification to doctors
+            // TRIGGER NOTIFICATION
             try
             {
                 if (!string.IsNullOrEmpty(scheduledBy))
@@ -60,19 +55,15 @@ namespace RosalEHealthcare.Data.Services
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine($"Failed to send notification: {ex.Message}");
+                System.Diagnostics.Debug.WriteLine($"Notification failed: {ex.Message}");
             }
         }
 
-        // Overload for backward compatibility
         public void AddAppointment(Appointment appt)
         {
             AddAppointment(appt, null);
         }
 
-        /// <summary>
-        /// Links an appointment to a patient
-        /// </summary>
         public bool LinkToPatient(int appointmentId, int patientId)
         {
             var appointment = _db.Appointments.Find(appointmentId);
@@ -83,20 +74,12 @@ namespace RosalEHealthcare.Data.Services
             return true;
         }
 
-        /// <summary>
-        /// Update an appointment and optionally notify
-        /// </summary>
-        /// <param name="appt">Appointment to update</param>
-        /// <param name="updatedBy">Name of user who updated</param>
-        /// <param name="sendNotification">Whether to send notification</param>
         public void UpdateAppointment(Appointment appt, string updatedBy = null, bool sendNotification = true)
         {
             var existing = _db.Appointments.Find(appt.Id);
             if (existing == null) return;
 
-            // Check if time changed for notification
             bool timeChanged = existing.Time != appt.Time;
-            DateTime oldTime = existing.Time;
 
             existing.PatientId = appt.PatientId;
             existing.PatientName = appt.PatientName;
@@ -112,7 +95,7 @@ namespace RosalEHealthcare.Data.Services
 
             _db.SaveChanges();
 
-            // Send notification if time changed
+            // TRIGGER NOTIFICATION
             try
             {
                 if (sendNotification && timeChanged && !string.IsNullOrEmpty(updatedBy))
@@ -127,11 +110,10 @@ namespace RosalEHealthcare.Data.Services
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine($"Failed to send notification: {ex.Message}");
+                System.Diagnostics.Debug.WriteLine($"Notification failed: {ex.Message}");
             }
         }
 
-        // Overload for backward compatibility
         public void UpdateAppointment(Appointment appt)
         {
             UpdateAppointment(appt, null, false);
@@ -151,14 +133,6 @@ namespace RosalEHealthcare.Data.Services
 
         #region Status Updates with Notifications
 
-        /// <summary>
-        /// Update appointment status with notifications
-        /// </summary>
-        /// <param name="id">Appointment ID</param>
-        /// <param name="status">New status</param>
-        /// <param name="changedBy">Name of user who changed status</param>
-        /// <param name="userRole">Role of user (Doctor/Receptionist)</param>
-        /// <param name="reason">Reason for cancellation (if applicable)</param>
         public void UpdateStatus(int id, string status, string changedBy = null, string userRole = null, string reason = null)
         {
             var appointment = _db.Appointments.FirstOrDefault(a => a.Id == id);
@@ -168,36 +142,30 @@ namespace RosalEHealthcare.Data.Services
             appointment.Status = status;
             _db.SaveChanges();
 
-            // Send notifications based on status change
+            // TRIGGER NOTIFICATIONS
             try
             {
                 if (!string.IsNullOrEmpty(changedBy))
                 {
-                    SendStatusChangeNotification(appointment, oldStatus, status, changedBy, userRole, reason);
+                    SendStatusChangeNotification(appointment, status, changedBy, userRole, reason);
                 }
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine($"Failed to send notification: {ex.Message}");
+                System.Diagnostics.Debug.WriteLine($"Notification failed: {ex.Message}");
             }
         }
 
-        // Overload for backward compatibility
         public void UpdateStatus(int id, string status)
         {
             UpdateStatus(id, status, null, null, null);
         }
 
-        /// <summary>
-        /// Send appropriate notification based on status change
-        /// </summary>
-        private void SendStatusChangeNotification(Appointment appointment, string oldStatus, string newStatus,
-            string changedBy, string userRole, string reason)
+        private void SendStatusChangeNotification(Appointment appointment, string newStatus, string changedBy, string userRole, string reason)
         {
             switch (newStatus.ToUpper())
             {
                 case "CONFIRMED":
-                    // Doctor confirmed - notify receptionist
                     if (userRole == "Doctor")
                     {
                         _notificationService.NotifyAppointmentConfirmed(
@@ -211,7 +179,6 @@ namespace RosalEHealthcare.Data.Services
 
                 case "COMPLETED":
                 case "DONE":
-                    // Doctor completed consultation - notify receptionist
                     if (userRole == "Doctor")
                     {
                         _notificationService.NotifyAppointmentCompleted(
@@ -223,10 +190,8 @@ namespace RosalEHealthcare.Data.Services
                     break;
 
                 case "CANCELLED":
-                    // Determine who cancelled and notify the other party
                     if (userRole == "Doctor")
                     {
-                        // Doctor cancelled - notify receptionist
                         _notificationService.NotifyAppointmentCancelledByDoctor(
                             appointment.PatientName,
                             appointment.AppointmentId,
@@ -236,7 +201,6 @@ namespace RosalEHealthcare.Data.Services
                     }
                     else if (userRole == "Receptionist")
                     {
-                        // Receptionist cancelled - notify doctor
                         _notificationService.NotifyAppointmentCancelledByReceptionist(
                             appointment.PatientName,
                             appointment.AppointmentId,
@@ -245,75 +209,19 @@ namespace RosalEHealthcare.Data.Services
                         );
                     }
                     break;
-
-                case "IN PROGRESS":
-                case "ONGOING":
-                    // Patient is now with doctor - could notify receptionist
-                    // Optional: Add notification if needed
-                    break;
             }
         }
 
-        /// <summary>
-        /// Cancel an appointment with reason and notification
-        /// </summary>
-        /// <param name="id">Appointment ID</param>
-        /// <param name="reason">Cancellation reason</param>
-        /// <param name="cancelledBy">Name of user who cancelled</param>
-        /// <param name="userRole">Role of user</param>
         public void CancelAppointment(int id, string reason = null, string cancelledBy = null, string userRole = null)
         {
-            var appt = _db.Appointments.Find(id);
-            if (appt != null)
-            {
-                appt.Status = "CANCELLED";
-                if (!string.IsNullOrEmpty(reason))
-                {
-                    appt.Condition = (appt.Condition ?? "") + $"\n[CANCELLED: {reason}]";
-                }
-                _db.SaveChanges();
-
-                // Send notification
-                try
-                {
-                    if (!string.IsNullOrEmpty(cancelledBy))
-                    {
-                        if (userRole == "Doctor")
-                        {
-                            _notificationService.NotifyAppointmentCancelledByDoctor(
-                                appt.PatientName,
-                                appt.AppointmentId,
-                                cancelledBy,
-                                reason
-                            );
-                        }
-                        else
-                        {
-                            _notificationService.NotifyAppointmentCancelledByReceptionist(
-                                appt.PatientName,
-                                appt.AppointmentId,
-                                cancelledBy,
-                                reason
-                            );
-                        }
-                    }
-                }
-                catch (Exception ex)
-                {
-                    System.Diagnostics.Debug.WriteLine($"Failed to send notification: {ex.Message}");
-                }
-            }
+            UpdateStatus(id, "CANCELLED", cancelledBy, userRole, reason);
         }
 
-        // Overload for backward compatibility
         public void CancelAppointment(int id, string reason = null)
         {
             CancelAppointment(id, reason, null, null);
         }
 
-        /// <summary>
-        /// Completes an appointment (IN_PROGRESS or CONFIRMED -> COMPLETED)
-        /// </summary>
         public bool CompleteAppointment(int appointmentId)
         {
             var appointment = _db.Appointments.Find(appointmentId);
@@ -322,7 +230,6 @@ namespace RosalEHealthcare.Data.Services
             appointment.Status = "COMPLETED";
             appointment.ConsultationCompletedAt = DateTime.Now;
 
-            // If consultation wasn't formally started, set start time to now
             if (!appointment.ConsultationStartedAt.HasValue)
             {
                 appointment.ConsultationStartedAt = DateTime.Now;
@@ -332,14 +239,6 @@ namespace RosalEHealthcare.Data.Services
             return true;
         }
 
-        /// <summary>
-        /// Confirm appointment (Doctor action)
-        /// </summary>
-        /// <param name="id">Appointment ID</param>
-        /// <param name="doctorName">Name of doctor</param>
-        /// <summary>
-        /// Confirms an appointment (PENDING -> CONFIRMED)
-        /// </summary>
         public bool ConfirmAppointment(int appointmentId)
         {
             var appointment = _db.Appointments.Find(appointmentId);
@@ -350,9 +249,6 @@ namespace RosalEHealthcare.Data.Services
             return true;
         }
 
-        /// <summary>
-        /// Starts a consultation (CONFIRMED -> IN_PROGRESS)
-        /// </summary>
         public bool StartConsultation(int appointmentId)
         {
             var appointment = _db.Appointments.Find(appointmentId);
@@ -366,7 +262,7 @@ namespace RosalEHealthcare.Data.Services
 
         #endregion
 
-        #region Search & Filter
+        #region Search & Filter (Existing Methods)
 
         public IEnumerable<Appointment> Search(string keyword, DateTime? date = null, string status = null, string timeSlot = null)
         {
@@ -411,9 +307,6 @@ namespace RosalEHealthcare.Data.Services
             return query.OrderByDescending(a => a.Time).ToList();
         }
 
-        /// <summary>
-        /// Gets appointment with patient details
-        /// </summary>
         public Appointment GetWithPatient(int appointmentId)
         {
             return _db.Appointments
@@ -516,13 +409,6 @@ namespace RosalEHealthcare.Data.Services
             return query.Count();
         }
 
-        #endregion
-
-        #region Helper Methods
-
-        /// <summary>
-        /// Gets today's appointments for a specific status
-        /// </summary>
         public List<Appointment> GetTodayAppointments(string status = null)
         {
             var today = DateTime.Today;
@@ -544,8 +430,8 @@ namespace RosalEHealthcare.Data.Services
             var now = DateTime.Now;
             return _db.Appointments
                 .Where(a => a.PatientId == patientId &&
-                           a.Time >= now &&
-                           a.Status != "CANCELLED")
+                            a.Time >= now &&
+                            a.Status != "CANCELLED")
                 .OrderBy(a => a.Time)
                 .ToList();
         }
@@ -554,9 +440,9 @@ namespace RosalEHealthcare.Data.Services
         {
             var query = _db.Appointments
                 .Where(a => DbFunctions.TruncateTime(a.Time) == appointmentTime.Date &&
-                           a.Time.Hour == appointmentTime.Hour &&
-                           a.Time.Minute == appointmentTime.Minute &&
-                           a.Status != "CANCELLED");
+                            a.Time.Hour == appointmentTime.Hour &&
+                            a.Time.Minute == appointmentTime.Minute &&
+                            a.Status != "CANCELLED");
 
             if (excludeAppointmentId.HasValue)
             {

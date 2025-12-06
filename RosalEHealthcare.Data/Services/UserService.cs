@@ -4,7 +4,7 @@ using System;
 using System.Collections.Generic;
 using System.Data.Entity;
 using System.Linq;
-using Newtonsoft.Json; // Ensure Newtonsoft.Json is installed via NuGet
+using Newtonsoft.Json;
 
 namespace RosalEHealthcare.Data.Services
 {
@@ -24,7 +24,6 @@ namespace RosalEHealthcare.Data.Services
 
         #region Basic CRUD
 
-        // FIXED: Renamed from GetAll to GetAllUsers to match UserManagementView usage
         public IEnumerable<User> GetAllUsers()
         {
             return _db.Users.OrderByDescending(u => u.DateCreated).ToList();
@@ -52,15 +51,13 @@ namespace RosalEHealthcare.Data.Services
         {
             if (user == null) throw new ArgumentNullException(nameof(user));
 
-            // Generate UserCode if not provided
             if (string.IsNullOrEmpty(user.UserCode))
             {
                 user.UserCode = GenerateUserCode();
             }
 
-            // Set defaults
             user.DateCreated = DateTime.Now;
-            user.CreatedAt = DateTime.Now; // Ensure both date fields are populated if they exist
+            user.CreatedAt = DateTime.Now;
             user.Status = user.Status ?? "Active";
             user.IsActive = true;
             user.FailedLoginAttempts = 0;
@@ -69,7 +66,7 @@ namespace RosalEHealthcare.Data.Services
             _db.Users.Add(user);
             _db.SaveChanges();
 
-            // Notify admin about new user
+            // TRIGGER NOTIFICATION
             try
             {
                 if (!string.IsNullOrEmpty(createdBy))
@@ -85,15 +82,11 @@ namespace RosalEHealthcare.Data.Services
             return user;
         }
 
-        // Overload for backward compatibility
         public User AddUser(User user)
         {
             return AddUser(user, null);
         }
 
-        /// <summary>
-        /// Update user and optionally notify admin
-        /// </summary>
         public void UpdateUser(User user, string modifiedBy = null, string changes = null)
         {
             if (user == null) throw new ArgumentNullException(nameof(user));
@@ -108,7 +101,7 @@ namespace RosalEHealthcare.Data.Services
             entry.State = EntityState.Modified;
             _db.SaveChanges();
 
-            // Notify admin if changes description provided
+            // TRIGGER NOTIFICATION
             try
             {
                 if (!string.IsNullOrEmpty(modifiedBy) && !string.IsNullOrEmpty(changes))
@@ -122,7 +115,6 @@ namespace RosalEHealthcare.Data.Services
             }
         }
 
-        // Overload for backward compatibility
         public void UpdateUser(User user)
         {
             UpdateUser(user, null, null);
@@ -145,12 +137,8 @@ namespace RosalEHealthcare.Data.Services
         public string GenerateUserCode()
         {
             var year = DateTime.Now.Year;
-            // Removed specific prefix logic to ensure uniqueness check covers broadly or stick to format
-            // Assuming format USR-YYYY-XXXX
-
             var prefix = $"USR-{year}-";
 
-            // Get the last user code for this year to increment
             var lastUser = _db.Users
                 .Where(u => u.UserCode != null && u.UserCode.Contains(prefix))
                 .OrderByDescending(u => u.UserCode)
@@ -178,13 +166,11 @@ namespace RosalEHealthcare.Data.Services
             var user = GetByEmail(email);
             if (user == null) return false;
 
-            // Check if account is locked
             if (IsAccountLocked(user))
             {
                 return false;
             }
 
-            // Verify password
             bool isValid = false;
             try
             {
@@ -197,12 +183,10 @@ namespace RosalEHealthcare.Data.Services
 
             if (isValid)
             {
-                // Reset failed attempts on successful login
                 user.FailedLoginAttempts = 0;
                 user.LockoutEndTime = null;
                 user.LastLogin = DateTime.Now;
 
-                // Unlock if was locked
                 if (user.Status == "Locked")
                 {
                     user.Status = "Active";
@@ -212,7 +196,6 @@ namespace RosalEHealthcare.Data.Services
             }
             else
             {
-                // Increment failed attempts
                 RecordFailedLogin(user);
             }
 
@@ -223,10 +206,8 @@ namespace RosalEHealthcare.Data.Services
         {
             if (user.Status == "Locked")
             {
-                // Check if lockout has expired
                 if (user.LockoutEndTime.HasValue && user.LockoutEndTime.Value <= DateTime.Now)
                 {
-                    // Unlock the account
                     user.Status = "Active";
                     user.FailedLoginAttempts = 0;
                     user.LockoutEndTime = null;
@@ -247,7 +228,7 @@ namespace RosalEHealthcare.Data.Services
                 user.Status = "Locked";
                 user.LockoutEndTime = DateTime.Now.AddMinutes(LOCKOUT_DURATION_MINUTES);
 
-                // Notify admin
+                // TRIGGER NOTIFICATION
                 try
                 {
                     _notificationService.NotifyAccountLocked(user.Username, "Multiple failed login attempts");
@@ -256,7 +237,6 @@ namespace RosalEHealthcare.Data.Services
             }
             else if (user.FailedLoginAttempts >= 3)
             {
-                // Notify admin of failed attempts
                 try
                 {
                     _notificationService.NotifyLoginFailedAttempts(user.Username, user.FailedLoginAttempts, null);
@@ -269,7 +249,6 @@ namespace RosalEHealthcare.Data.Services
 
         public void RecordFailedLoginAttempt(string username, int attemptCount, string ipAddress = null)
         {
-            // Notify admin after 3 failed attempts
             if (attemptCount >= 3)
             {
                 try
@@ -301,10 +280,10 @@ namespace RosalEHealthcare.Data.Services
             if (user != null)
             {
                 user.Status = "Locked";
-                user.LockoutEndTime = DateTime.Now.AddYears(100); // Permanent lock until manual unlock
+                user.LockoutEndTime = DateTime.Now.AddYears(100);
                 UpdateUser(user);
 
-                // Notify admin
+                // TRIGGER NOTIFICATION
                 try
                 {
                     _notificationService.NotifyAccountLocked(user.Username, reason ?? "Manual lock");
@@ -316,7 +295,6 @@ namespace RosalEHealthcare.Data.Services
             }
         }
 
-        // Overload for backward compatibility
         public void LockAccount(int userId)
         {
             LockAccount(userId, null);
@@ -331,22 +309,18 @@ namespace RosalEHealthcare.Data.Services
             var user = GetById(userId);
             if (user == null) return false;
 
-            // Check password history
             if (IsPasswordInHistory(user, newPassword))
             {
-                return false; // Password was used recently
+                return false;
             }
 
-            // Add current password to history before changing
             AddPasswordToHistory(user, user.PasswordHash);
 
-            // Set new password
             user.PasswordHash = BCrypt.Net.BCrypt.HashPassword(newPassword);
             user.PasswordChangedAt = DateTime.Now;
             user.ModifiedBy = changedBy;
             user.ModifiedAt = DateTime.Now;
 
-            // If status was Pending (first login), set to Active
             if (user.Status == "Pending")
             {
                 user.Status = "Active";
@@ -366,16 +340,13 @@ namespace RosalEHealthcare.Data.Services
             var user = GetById(userId);
             if (user == null) return null;
 
-            // Generate temporary password
             string tempPassword = GenerateTemporaryPassword();
 
-            // Add current password to history
             AddPasswordToHistory(user, user.PasswordHash);
 
-            // Set new password
             user.PasswordHash = BCrypt.Net.BCrypt.HashPassword(tempPassword);
             user.PasswordChangedAt = DateTime.Now;
-            user.Status = "Pending"; // Force password change on next login
+            user.Status = "Pending";
             user.ModifiedBy = resetBy;
             user.ModifiedAt = DateTime.Now;
 
@@ -402,10 +373,9 @@ namespace RosalEHealthcare.Data.Services
             }
             catch
             {
-                // Invalid JSON, ignore
+                // Ignore errors
             }
 
-            // Also check current password
             if (!string.IsNullOrEmpty(user.PasswordHash) && BCrypt.Net.BCrypt.Verify(newPassword, user.PasswordHash))
             {
                 return true;
@@ -433,7 +403,6 @@ namespace RosalEHealthcare.Data.Services
 
             history.Insert(0, passwordHash);
 
-            // Keep only last N passwords
             if (history.Count > PASSWORD_HISTORY_COUNT)
             {
                 history = history.Take(PASSWORD_HISTORY_COUNT).ToList();
@@ -448,19 +417,16 @@ namespace RosalEHealthcare.Data.Services
             var random = new Random();
             var password = new char[12];
 
-            // Ensure at least one of each type to meet complexity requirements
             password[0] = "ABCDEFGHJKLMNPQRSTUVWXYZ"[random.Next(24)];
             password[1] = "abcdefghjkmnpqrstuvwxyz"[random.Next(23)];
             password[2] = "23456789"[random.Next(8)];
             password[3] = "!@#$%"[random.Next(5)];
 
-            // Fill the rest randomly
             for (int i = 4; i < password.Length; i++)
             {
                 password[i] = chars[random.Next(chars.Length)];
             }
 
-            // Shuffle
             return new string(password.OrderBy(x => random.Next()).ToArray());
         }
 
@@ -521,7 +487,6 @@ namespace RosalEHealthcare.Data.Services
                 q = q.Where(u => u.Status == status);
             }
 
-            // Sorting logic
             switch (sortBy)
             {
                 case "FullName":
@@ -636,7 +601,6 @@ namespace RosalEHealthcare.Data.Services
         {
             reason = null;
 
-            // Cannot delete yourself
             if (userId == currentUserId)
             {
                 reason = "You cannot delete your own account.";
@@ -650,7 +614,6 @@ namespace RosalEHealthcare.Data.Services
                 return false;
             }
 
-            // Cannot delete the last administrator
             if (user.Role == "Administrator")
             {
                 var adminCount = _db.Users.Count(u => u.Role == "Administrator");
@@ -709,22 +672,17 @@ namespace RosalEHealthcare.Data.Services
             return !query.Any();
         }
 
-        /// <summary>
-        /// Generate username from full name (firstname.lastname format)
-        /// </summary>
         public string GenerateUsername(string fullName)
         {
             if (string.IsNullOrWhiteSpace(fullName))
                 return $"user{new Random().Next(1000, 9999)}";
 
-            // Clean and split the name
             var cleanName = fullName.Trim().ToLower();
             var parts = cleanName.Split(new[] { ' ' }, StringSplitOptions.RemoveEmptyEntries);
 
             string baseUsername;
             if (parts.Length >= 2)
             {
-                // firstname.lastname
                 baseUsername = $"{parts[0]}.{parts[parts.Length - 1]}";
             }
             else
@@ -732,10 +690,8 @@ namespace RosalEHealthcare.Data.Services
                 baseUsername = parts[0];
             }
 
-            // Remove special characters
             baseUsername = System.Text.RegularExpressions.Regex.Replace(baseUsername, @"[^a-z0-9._]", "");
 
-            // Ensure it's unique
             string username = baseUsername;
             int counter = 1;
             while (!IsUsernameUnique(username))

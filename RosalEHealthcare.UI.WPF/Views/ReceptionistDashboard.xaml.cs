@@ -38,14 +38,11 @@ namespace RosalEHealthcare.UI.WPF.Views
         public ReceptionistDashboard(User user) : this()
         {
             _currentUser = user;
-
-            // CRITICAL: Set SessionManager BEFORE initializing notifications
             SessionManager.CurrentUser = user;
 
             ApplyUserInfo();
-
-            // Initialize notifications AFTER SessionManager is set
             InitializeNotifications();
+            LoadDashboardData();
         }
 
         private void InitializeServices()
@@ -76,7 +73,7 @@ namespace RosalEHealthcare.UI.WPF.Views
 
                 NotificationBell.Initialize(
                     currentUser.Username,
-                    currentUser.Role,
+                    "Receptionist", // Explicitly setting Role
                     ToastContainer
                 );
 
@@ -348,9 +345,6 @@ namespace RosalEHealthcare.UI.WPF.Views
 
             if (result == true && modal.RegisteredPatient != null)
             {
-                // =====================================================
-                // SAVE NOTIFICATION TO DATABASE - Triggers toast for Doctors!
-                // =====================================================
                 try
                 {
                     _notificationService.NotifyNewPatient(

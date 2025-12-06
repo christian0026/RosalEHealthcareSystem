@@ -4,6 +4,9 @@ using MahApps.Metro.Controls;
 using RosalEHealthcare.Core.Models;
 using RosalEHealthcare.Data.Contexts;
 using RosalEHealthcare.Data.Services;
+using RosalEHealthcare.UI.WPF.Controls;
+using RosalEHealthcare.UI.WPF.Helpers;
+using RosalEHealthcare.UI.WPF.Views.UserSettings;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -14,9 +17,6 @@ using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
-using RosalEHealthcare.UI.WPF.Views.UserSettings;
-using RosalEHealthcare.UI.WPF.Controls;
-using RosalEHealthcare.UI.WPF.Helpers;
 
 namespace RosalEHealthcare.UI.WPF.Views
 {
@@ -148,7 +148,7 @@ namespace RosalEHealthcare.UI.WPF.Views
 
                 NotificationBell.Initialize(
                     currentUser.Username,
-                    currentUser.Role,
+                    "Doctor", // Targeted role
                     ToastContainer
                 );
 
